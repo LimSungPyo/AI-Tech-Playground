@@ -7,6 +7,7 @@
 #   - Variable DISCORD_CHANNEL_COMMITS      : commits 채널 ID
 #   - Variable DISCORD_CHANNEL_BUILD_STATUS : build_status 채널 ID
 #   - Variable DISCORD_CHANNEL_RELEASE      : release 채널 ID
+#   - Variable DISCORD_USER_MAP             : 빌드 실패 시 멘션할 {"GitHub 사용자명": "Discord 사용자 ID"}
 name: Discord Notify
 
 on:
@@ -32,6 +33,7 @@ jobs:
           CHANNEL_COMMITS: ${{ vars.DISCORD_CHANNEL_COMMITS }}
           CHANNEL_BUILD_STATUS: ${{ vars.DISCORD_CHANNEL_BUILD_STATUS }}
           CHANNEL_RELEASE: ${{ vars.DISCORD_CHANNEL_RELEASE }}
+          DISCORD_USER_MAP: ${{ vars.DISCORD_USER_MAP }}
         run: |
           case "$EVENT_NAME" in
             push)
@@ -62,15 +64,27 @@ jobs:
               else
                 echo "CHANNEL_ID=$CHANNEL_BUILD_STATUS" >> "$GITHUB_ENV"
               fi
-              jq --arg repo "$REPO" '
+              # 실패 시 실행자를 멘션하기 위한 GitHub 사용자명 → Discord 사용자 ID 대응표
+              USER_MAP="$DISCORD_USER_MAP"
+              if [ -z "$USER_MAP" ] || ! echo "$USER_MAP" | jq -e 'type == "object"' > /dev/null 2>&1; then
+                USER_MAP='{}'
+              fi
+              jq --arg repo "$REPO" --argjson users "$USER_MAP" '
                 .workflow_run as $r
+                | ($r.conclusion == "failure" or $r.conclusion == "timed_out") as $failed
+                | $users[$r.actor.login] as $uid
                 | ({
                     success:   ["✅ 빌드 성공", 5763719],
                     failure:   ["❌ 빌드 실패", 15548997],
                     timed_out: ["⏱️ 빌드 시간 초과", 15548997],
                     cancelled: ["⏹️ 빌드 취소", 9807270]
                   }[$r.conclusion] // ["ℹ️ 빌드 \($r.conclusion)", 9807270]) as $s
-                | {embeds: [{
+                | {
+                  content: (if $failed then
+                      (if $uid then "<@\($uid)> " else "`\($r.actor.login)`님, " end) + "빌드가 실패했어요. 확인해 주세요!"
+                    else null end),
+                  allowed_mentions: {users: (if $failed and $uid then [$uid] else [] end)},
+                  embeds: [{
                     title: "\($s[0]) · \($r.name)",
                     url: $r.html_url,
                     color: $s[1],
@@ -81,7 +95,8 @@ jobs:
                       {name: "실행자", value: $r.actor.login, inline: true}
                     ],
                     timestamp: $r.updated_at
-                  }]}' "$GITHUB_EVENT_PATH" > payload.json
+                  }]}
+                | if .content == null then del(.content) else . end' "$GITHUB_EVENT_PATH" > payload.json
               ;;
             workflow_dispatch)
               echo "CHANNEL_ID=$CHANNEL_COMMITS" >> "$GITHUB_ENV"
