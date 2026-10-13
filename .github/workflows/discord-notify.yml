@@ -1,0 +1,102 @@
+# 커밋 푸시와 빌드 결과를 Discord 채널로 알린다.
+#   커밋 푸시        → commits
+#   dev 빌드 결과    → build_status
+#   main 빌드 결과   → release
+# 필요한 설정 (레포 Settings → Secrets and variables → Actions)
+#   - Secret   DISCORD_BOT_TOKEN            : 봇 토큰
+#   - Variable DISCORD_CHANNEL_COMMITS      : commits 채널 ID
+#   - Variable DISCORD_CHANNEL_BUILD_STATUS : build_status 채널 ID
+#   - Variable DISCORD_CHANNEL_RELEASE      : release 채널 ID
+name: Discord Notify
+
+on:
+  push:
+  # ci.yml의 name과 맞춰야 한다.
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  # Actions 탭에서 수동으로 테스트 알림을 보낼 때 쓴다.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build message
+        env:
+          REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          CHANNEL_COMMITS: ${{ vars.DISCORD_CHANNEL_COMMITS }}
+          CHANNEL_BUILD_STATUS: ${{ vars.DISCORD_CHANNEL_BUILD_STATUS }}
+          CHANNEL_RELEASE: ${{ vars.DISCORD_CHANNEL_RELEASE }}
+        run: |
+          case "$EVENT_NAME" in
+            push)
+              echo "CHANNEL_ID=$CHANNEL_COMMITS" >> "$GITHUB_ENV"
+              # 브랜치 삭제처럼 커밋이 없는 푸시는 알리지 않는다.
+              if [ "$(jq '.commits | length' "$GITHUB_EVENT_PATH")" -eq 0 ]; then
+                echo "커밋이 없는 푸시라 건너뜀"
+                exit 0
+              fi
+              jq --arg repo "$REPO" '
+                (.ref | sub("^refs/(heads|tags)/"; "")) as $branch
+                | .commits as $c
+                | {embeds: [{
+                    title: "📦 \($branch)에 커밋 \($c | length)개 푸시",
+                    url: .compare,
+                    color: 5793266,
+                    author: {name: $repo, url: .repository.html_url},
+                    description: (
+                      [$c[-10:][] | "[`\(.id[0:7])`](\(.url)) \(.message | split("\n")[0] | .[0:100]) — \(.author.name)"]
+                      + (if ($c | length) > 10 then ["…외 \(($c | length) - 10)개"] else [] end)
+                      | join("\n")),
+                    timestamp: (.head_commit.timestamp // (now | todate))
+                  }]}' "$GITHUB_EVENT_PATH" > payload.json
+              ;;
+            workflow_run)
+              if [ "$(jq -r '.workflow_run.head_branch' "$GITHUB_EVENT_PATH")" = "main" ]; then
+                echo "CHANNEL_ID=$CHANNEL_RELEASE" >> "$GITHUB_ENV"
+              else
+                echo "CHANNEL_ID=$CHANNEL_BUILD_STATUS" >> "$GITHUB_ENV"
+              fi
+              jq --arg repo "$REPO" '
+                .workflow_run as $r
+                | ({
+                    success:   ["✅ 빌드 성공", 5763719],
+                    failure:   ["❌ 빌드 실패", 15548997],
+                    timed_out: ["⏱️ 빌드 시간 초과", 15548997],
+                    cancelled: ["⏹️ 빌드 취소", 9807270]
+                  }[$r.conclusion] // ["ℹ️ 빌드 \($r.conclusion)", 9807270]) as $s
+                | {embeds: [{
+                    title: "\($s[0]) · \($r.name)",
+                    url: $r.html_url,
+                    color: $s[1],
+                    author: {name: $repo, url: .repository.html_url},
+                    description: "[`\($r.head_sha[0:7])`](\(.repository.html_url)/commit/\($r.head_sha)) \($r.head_commit.message | split("\n")[0] | .[0:100])",
+                    fields: [
+                      {name: "브랜치", value: ($r.head_branch // "-"), inline: true},
+                      {name: "실행자", value: $r.actor.login, inline: true}
+                    ],
+                    timestamp: $r.updated_at
+                  }]}' "$GITHUB_EVENT_PATH" > payload.json
+              ;;
+            workflow_dispatch)
+              echo "CHANNEL_ID=$CHANNEL_COMMITS" >> "$GITHUB_ENV"
+              jq -n --arg repo "$REPO" '{content: "🔔 \($repo) 테스트 알림이에요. 봇이 정상적으로 연결됐어요!"}' > payload.json
+              ;;
+          esac
+
+      - name: Send to Discord
+        if: hashFiles('payload.json') != ''
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          curl -sS --fail-with-body -o /dev/null \
+            -X POST "https://discord.com/api/v10/channels/${CHANNEL_ID}/messages" \
+            -H "Authorization: Bot ${DISCORD_BOT_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: DiscordBot (https://github.com/${{ github.repository }}, 1.0)" \
+            -d @payload.json
