@@ -1,24 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
 import { mergeGuestTrials } from '../../api/auth'
+import type { GuestMergeResult } from '../../api/types'
 import { GUEST_TRIALS_KEY, getGuestTrials } from '../../auth/storage'
 import { useAuth } from '../../auth/useAuth'
-import { Button, EmptyState, Icon, Mascot, Skeleton } from '../../components'
+import { Button, CHARACTERS, EmptyState, Icon, Mascot, Skeleton } from '../../components'
 import { AuthCard } from './components/AuthCard'
 import type { SignupDoneState } from './VerifyEmailPage'
 import a from './auth.module.css'
 import styles from './SignupDonePage.module.css'
 
-type MergeState = { status: 'idle' | 'pending' | 'done' | 'error'; merged: number }
+type MergeState = { status: 'idle' | 'pending' | 'done' | 'error'; result?: GuestMergeResult }
 
 // W2 auth 담당 · 경로 /signup/done
 // E-02 가입 완료 · 체험 기록 이어받기: localStorage `atp.guestTrials`를 POST /api/auth/guest/merge로 보내고 지운다
+// 응답의 성공률 · 캐릭터 레벨 · 예측으로 옮긴 항목을 보여 준다
 export default function SignupDonePage() {
   const { status, isMember } = useAuth()
   const location = useLocation()
   const imported = (location.state as SignupDoneState | null)?.importedGuestTrials ?? 0
   const [guestTrials] = useState(() => getGuestTrials())
-  const [merge, setMerge] = useState<MergeState>({ status: guestTrials > 0 ? 'pending' : 'idle', merged: 0 })
+  const [merge, setMerge] = useState<MergeState>({ status: guestTrials > 0 ? 'pending' : 'idle' })
   const started = useRef(false)
 
   useEffect(() => {
@@ -31,9 +33,9 @@ export default function SignupDonePage() {
         } catch {
           // 저장소를 못 쓰면 그대로 둔다
         }
-        setMerge({ status: 'done', merged: res.merged })
+        setMerge({ status: 'done', result: res })
       })
-      .catch(() => setMerge({ status: 'error', merged: 0 }))
+      .catch(() => setMerge({ status: 'error' }))
   }, [isMember, guestTrials])
 
   if (status === 'loading') {
@@ -58,8 +60,13 @@ export default function SignupDonePage() {
     )
   }
 
-  const count = merge.status === 'done' ? merge.merged : imported
+  const result = merge.result
+  const count = result?.merged ?? imported
   const pending = merge.status === 'pending'
+  const code = `#${result?.experimentId ?? '001'}`
+  const replays = result?.replays ?? count
+  const character = result?.character
+  const predictions = result?.predictions ?? []
 
   return (
     <AuthCard centered width={560}>
@@ -76,18 +83,32 @@ export default function SignupDonePage() {
             <Icon name="check" size={16} strokeWidth={3} className={styles.check} />
             <span>
               <strong>
-                #001 Trial 1–{count} 기록
+                {code} Trial 1–{count} 기록
               </strong>
-              <small>리플레이 {count}개 · 성장 리포트에서 다시 볼 수 있어요</small>
+              <small>
+                리플레이 {replays}개{result?.successRate !== undefined && ` · 성공률 ${result.successRate}%`}
+              </small>
             </span>
           </li>
           <li>
             <Icon name="check" size={16} strokeWidth={3} className={styles.check} />
             <span>
-              <strong>드로시</strong>
-              <small>훈련 중 상태 유지</small>
+              <strong>
+                {CHARACTERS[character?.id ?? 'drosi'].name}
+                {character && ` Lv.${character.level}`}
+              </strong>
+              <small>{character?.state ?? '훈련 중'} 상태 유지</small>
             </span>
           </li>
+          {predictions.length > 0 && (
+            <li>
+              <Icon name="check" size={16} strokeWidth={3} className={styles.check} />
+              <span>
+                <strong>예측 {predictions.length}건</strong>
+                <small>{predictions.map((p) => `"${p}"`).join(', ')} — 결과는 리포트에서</small>
+              </span>
+            </li>
+          )}
         </ul>
       )}
       {merge.status === 'error' && (

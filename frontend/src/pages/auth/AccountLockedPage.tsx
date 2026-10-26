@@ -9,7 +9,7 @@ import styles from './AccountLockedPage.module.css'
 
 const LOCK_SEC = 10 * 60
 
-/** 잠금 해제까지 남은 초. 값이 없거나 이미 지난 시각(샘플 고정일)이면 지금부터 10분으로 본다 */
+/** 잠금 해제까지 남은 초(423 응답의 unlockAt = 지금 + 10분). 값이 없거나 이미 지난 시각이면 지금부터 10분으로 본다 */
 function secondsUntil(unlockAt: string | null | undefined) {
   const t = unlockAt ? Date.parse(unlockAt) : NaN
   const left = Math.ceil((t - Date.now()) / 1000)

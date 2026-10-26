@@ -1,6 +1,7 @@
 # 인증 전역 컴포넌트 (`src/pages/auth/global/`)
 
-W2 auth가 만든 전역 팝업 · 배너다. **마운트는 master가 통합 때** 한다. 모두 `useNavigate`를 쓰므로 반드시 **라우터 안**(예: `RootLayout`)에 붙인다. 팝업 키트(`OverlayProvider`) 안이어야 한다.
+W2 auth가 만든 전역 팝업 · 배너다. 모두 `useNavigate`를 쓰므로 반드시 **라우터 안**에 붙인다. 팝업 키트(`OverlayProvider`) 안이어야 한다.
+`SessionExpiredModal` · `CookieConsentBanner` · `DormantWelcomeModal`은 W3 core가 `src/layouts/GlobalOverlays.tsx`(RootLayout)에 이미 붙였고, 헤더 "로그인"은 `LoginPopup`을 연다. **화면에서 따로 마운트하지 말 것.**
 
 ```tsx
 import { CookieConsentBanner, DormantWelcomeModal, GuestSaveModal, LoginPopup, SessionExpiredModal } from '../pages/auth/global'
@@ -10,9 +11,9 @@ import { CookieConsentBanner, DormantWelcomeModal, GuestSaveModal, LoginPopup, S
 |---|---|---|---|
 | `LoginPopup` | 08:L-01 · L-02 · L-03 · L-04 · L-05 | `open` prop | 헤더 "로그인" 버튼 · 게스트 모달 등 여는 곳 |
 | `MobileLoginSheet` | 08:M-06 | `open` prop (LoginPopup이 768px 이하에서 자동 사용) | 보통 직접 쓰지 않음 |
-| `SessionExpiredModal` | 08:M-01 | `atp:session-expired` 이벤트로 스스로 열림 | 앱에 한 번 |
-| `DormantWelcomeModal` | 07:M-07 | `open` prop | 로그인 홈(W2 hub) |
-| `CookieConsentBanner` | 08:M-07 | `atp.cookieConsent`가 없으면 스스로 보임 | 앱에 한 번 |
+| `SessionExpiredModal` | 08:M-01 | `atp:session-expired` 이벤트로 스스로 열림 | GlobalOverlays(플레이 경로 제외) |
+| `DormantWelcomeModal` | 07:M-07 | `open` prop | GlobalOverlays(`/`에서 `me/home.dormant`가 있으면 탭마다 한 번) |
+| `CookieConsentBanner` | 08:M-07 | `atp.cookieConsent`가 없으면 스스로 보임 | GlobalOverlays |
 | `GuestSaveModal` | 08:L-06 (= 07:0-03) | `open` prop | 게스트 플레이(W2 play) |
 
 ## LoginPopup
@@ -49,7 +50,7 @@ const [open, setOpen] = useState(false)
   exploreTo="/lab"                     // 기본 '/lab'
 />
 ```
-- 날 수 · 바뀐 것 목록은 데이터라 부르는 쪽이 API에서 받아 넘긴다(지금 계약에는 해당 필드가 없다 → worker_done 보고의 공통 변경 요청 참고).
+- 날 수 · 바뀐 것 목록 · 이어하기 경로는 `GET /api/me/home`의 `dormant`(`DormantInfo`)에서 받아 넘긴다. (개발 확인: 토큰에 `dormant`가 들어 있으면 샘플이 온다 — `atp.token = "sample-dormant-1"`)
 
 ## CookieConsentBanner
 ```tsx
@@ -62,9 +63,9 @@ const [open, setOpen] = useState(false)
 <GuestSaveModal open={trials >= 4 && !dismissed} onClose={() => setDismissed(true)} trials={trials} />
 ```
 - 제목 "벌써 {trials}번째 훈련이에요!". "가입하고 저장" → `/signup`, "계속 체험" → `onClose`.
-- 가입 → 인증(`/signup/verify`) → 가입 완료(`/signup/done`)에서 `atp.guestTrials`를 `POST /api/auth/guest/merge`로 보내고 지운다.
+- 가입 → 인증(`/signup/verify`) → 가입 완료(`/signup/done`)에서 `atp.guestTrials`를 `POST /api/auth/guest/merge`로 보내고 지운다. 응답의 성공률 · 캐릭터 레벨 · 예측을 가입 완료 화면에 보여 준다.
 
 ## 로그인 페이지 쿼리 (참고)
 - `/login?returnTo=/경로` 로그인 후 복귀(없으면 `/`)
 - `/login?mode=form` 기억된 계정 화면(07:M-02)을 건너뛰고 폼 바로 보기 · `&email=` 이메일 미리 채움
-- 기억된 계정: "로그인 상태 유지" 체크 시 `atp.rememberedEmail`(공용) + `atp.rememberedProfile`(닉네임 · 아바타 · 마지막 로그인 방법, 이 폴더 `lib.ts`)
+- 기억된 계정: "로그인 상태 유지" 체크 시 `atp.rememberedEmail` + `atp.rememberedProfile`(닉네임 · 아바타 · 마지막 로그인 방법 · 멈춘 Trial). 공용 헬퍼 `src/auth/remembered.ts`(`getRememberedProfile` · `rememberAccount` · `forgetAccount`)가 담당하고, 이 폴더 `lib.ts`는 다시 export만 한다

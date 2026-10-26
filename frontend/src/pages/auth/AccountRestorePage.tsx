@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
-import { restoreAccount } from '../../api/auth'
+import { getRestorePreview, restoreAccount } from '../../api/auth'
 import { isApiError } from '../../api/client'
+import type { RestorePreview } from '../../api/types'
 import { Button, Input, Mascot, useToast } from '../../components'
 import { AuthCard } from './components/AuthCard'
 import { isEmail } from './lib'
@@ -17,6 +18,7 @@ function daysUntil(iso: string) {
 
 // W2 auth 담당 · 경로 /account/restore?email=&deletionAt=<ISO>
 // 07:M-06 탈퇴 유예 계정 복구 → POST /api/auth/restore 후 /login
+// 이메일을 알면 GET /api/auth/restore/preview로 삭제 예정일 · 되살아날 기록 수를 보여 준다(deletionAt은 미리보기가 없을 때만)
 export default function AccountRestorePage() {
   const [params] = useSearchParams()
   const location = useLocation()
@@ -26,8 +28,20 @@ export default function AccountRestorePage() {
   const [email, setEmail] = useState(state?.email ?? params.get('email') ?? '')
   const deletionAt = state?.deletionAt ?? params.get('deletionAt')
   const knownEmail = !!(state?.email ?? params.get('email'))
+  const [preview, setPreview] = useState<RestorePreview | null>(null)
   const [error, setError] = useState<string | undefined>()
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!knownEmail || !isEmail(email)) return
+    const ctrl = new AbortController()
+    getRestorePreview(email.trim(), ctrl.signal)
+      .then(setPreview)
+      .catch(() => {
+        // 미리보기가 없으면 일반 문구로 둔다
+      })
+    return () => ctrl.abort()
+  }, [knownEmail, email])
 
   const restore = async () => {
     if (!isEmail(email)) {
@@ -53,12 +67,23 @@ export default function AccountRestorePage() {
         <Mascot expression="sleep" size={130} float />
       </div>
       <h1 className={a.title}>탈퇴를 신청한 계정이에요</h1>
-      {deletionAt && !Number.isNaN(Date.parse(deletionAt)) && (
+      {preview ? (
         <span className={a.pillDanger}>
-          {daysUntil(deletionAt)}일 뒤 완전히 삭제돼요 · {formatDate(deletionAt)}
+          {preview.daysLeft}일 뒤 완전히 삭제돼요 · {formatDate(preview.deletionScheduledAt)}
         </span>
+      ) : (
+        deletionAt &&
+        !Number.isNaN(Date.parse(deletionAt)) && (
+          <span className={a.pillDanger}>
+            {daysUntil(deletionAt)}일 뒤 완전히 삭제돼요 · {formatDate(deletionAt)}
+          </span>
+        )
       )}
-      <p className={a.lead}>지금 복구하면 실험 기록, 캐릭터, 도감 카드, 배지가 그대로 돌아와요.</p>
+      <p className={a.lead}>
+        {preview
+          ? `지금 복구하면 실험 기록 ${preview.counts.experiments}개, 캐릭터 ${preview.counts.characters}명, 도감 카드 ${preview.counts.cards}장, 배지 ${preview.counts.badges}개가 그대로 돌아와요.`
+          : '지금 복구하면 실험 기록, 캐릭터, 도감 카드, 배지가 그대로 돌아와요.'}
+      </p>
       {!knownEmail && (
         <Input
           label="탈퇴를 신청한 이메일"

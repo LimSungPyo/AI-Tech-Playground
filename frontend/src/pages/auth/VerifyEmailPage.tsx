@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { verifyEmail } from '../../api/auth'
+import { resendVerification, verifyEmail } from '../../api/auth'
 import { isApiError } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { Button, EmptyState, Icon, OtpInput, useToast } from '../../components'
@@ -26,6 +26,7 @@ export default function VerifyEmailPage() {
   const [code, setCode] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | undefined>()
+  const [resending, setResending] = useState(false)
   const valid = useCountdown(OTP_VALID_SEC)
   const resend = useCountdown(RESEND_COOLDOWN_SEC)
   const expired = valid.left === 0
@@ -65,18 +66,25 @@ export default function VerifyEmailPage() {
     }
   }
 
-  const resendCode = () => {
-    // TODO(공통 변경 요청): 재전송 전용 API가 없어 타이머만 다시 시작한다
-    valid.restart(OTP_VALID_SEC)
-    resend.restart(RESEND_COOLDOWN_SEC)
-    setError(undefined)
-    setCode('')
-    toast.show({ title: '새 코드를 보냈어요', description: `${email} 메일함을 확인해 주세요.`, tone: 'success' })
+  const resendCode = async () => {
+    if (resending || resend.left > 0) return
+    setResending(true)
+    try {
+      const res = await resendVerification(vid)
+      valid.restart(res.expiresInSec)
+      resend.restart(res.cooldownSec)
+      setError(undefined)
+      setCode('')
+      toast.show({ title: '새 코드를 보냈어요', description: `${email} 메일함을 확인해 주세요.`, tone: 'success' })
+    } catch (e) {
+      toast.show({ title: '코드를 보내지 못했어요', description: isApiError(e) ? e.message : '잠시 후 다시 시도해 주세요.', tone: 'danger' })
+    } finally {
+      setResending(false)
+    }
   }
 
   return (
     <AuthCard centered width={540}>
-      <p className={styles.step}>회원가입 1 / 3</p>
       <div className={styles.icon} aria-hidden>
         <Icon name="mail" size={64} strokeWidth={1.6} />
       </div>
@@ -89,7 +97,7 @@ export default function VerifyEmailPage() {
         <span className={styles.timer} aria-live="polite">
           {expired ? '코드 유효 시간이 지났어요' : `남은 시간 ${mmss(valid.left)}`}
         </span>
-        <button type="button" className={a.link} onClick={resendCode} disabled={resend.left > 0}>
+        <button type="button" className={a.link} onClick={() => void resendCode()} disabled={resend.left > 0 || resending}>
           {resend.left > 0 ? `코드 다시 받기 (${resend.left}초)` : '코드 다시 받기'}
         </button>
       </div>
