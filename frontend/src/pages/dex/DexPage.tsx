@@ -1,6 +1,6 @@
 import { Link, useLocation, useSearchParams } from 'react-router'
-import { getDex, getExperiments, getHistory, getMyExperiments, getRanking } from '../../api'
-import type { DexEntry, ExperimentSummary, MeHistory } from '../../api'
+import { getDex, getExperiment, getExperiments, getHistory, getMyBadges, getRanking } from '../../api'
+import type { DexEntry, ExperimentSummary, HistoryRecord, Mission } from '../../api'
 import { useAuth } from '../../auth/useAuth'
 import { Button, Character, EmptyState, GlassCard, Skeleton, cx } from '../../components'
 import { useApi } from '../../hooks/useApi'
@@ -12,12 +12,19 @@ const PREVIEW = 2
 
 interface RecordRow {
   id: string
+  experimentId: string
   date: string
   experiment: string
-  topic: string
+  mission: string
   trial: number
   rate: number
-  status: '완료' | '진행 중' | '열림'
+  status: '완료' | '진행 중' | '잠김'
+}
+
+const RECORD_STATUS: Record<HistoryRecord['status'], RecordRow['status']> = {
+  cleared: '완료',
+  in_progress: '진행 중',
+  locked: '잠김',
 }
 
 // 최근 등록순: 획득한 카드(획득일 내림차순) → 미획득
@@ -28,28 +35,35 @@ function sortEntries(list: DexEntry[]) {
   })
 }
 
-function toRows(exps: ExperimentSummary[], history: MeHistory | undefined): RecordRow[] {
-  return exps
-    .filter((e) => e.progress)
-    .map((e) => {
-      const p = e.progress!
-      const last = history?.logs.find((l) => l.experimentId === e.id)?.date ?? ''
+/** GET /me/history records → B-11 내 실험 기록 표(최근 플레이순) */
+function toRows(records: HistoryRecord[], exps: ExperimentSummary[], missions: Record<string, Mission[]>): RecordRow[] {
+  return [...records]
+    .sort((a, b) => b.lastPlayedAt.localeCompare(a.lastPlayedAt))
+    .map((r) => {
+      const e = exps.find((x) => x.id === r.experimentId)
+      const d = r.lastPlayedAt
       return {
-        id: e.id,
-        date: last ? `${last.slice(5, 7)}.${last.slice(8, 10)}` : '—',
-        experiment: `${e.code} ${e.title}`,
-        topic: e.subtitle,
-        trial: p.trial,
-        rate: Math.round(p.successRate),
-        status: p.trial >= p.maxTrial ? '완료' : e.status === 'in_progress' ? '진행 중' : '열림',
-      } satisfies RecordRow
+        id: `${r.experimentId}-${r.missionId}`,
+        experimentId: r.experimentId,
+        date: `${d.slice(5, 7)}.${d.slice(8, 10)}`,
+        experiment: e ? `${e.code} ${e.title}` : `#${r.experimentId}`,
+        mission: missions[r.experimentId]?.find((m) => m.id === r.missionId)?.title ?? r.missionId,
+        trial: r.trial,
+        rate: Math.round(r.bestRate),
+        status: RECORD_STATUS[r.status],
+      }
     })
-    .sort((a, b) => b.date.localeCompare(a.date))
+}
+
+/** 기록에 나온 실험들의 미션 이름(GET /experiments/{id}) */
+async function loadMissions(ids: string[], signal: AbortSignal) {
+  const details = await Promise.all(ids.map((id) => getExperiment(id, signal)))
+  return Object.fromEntries(details.map((d) => [d.id, d.missions])) as Record<string, Mission[]>
 }
 
 function downloadCsv(rows: RecordRow[]) {
-  const head = ['날짜', '실험', '주제', '회차', '최고 성공률', '상태']
-  const body = rows.map((r) => [r.date, r.experiment, r.topic, r.trial, `${r.rate}%`, r.status])
+  const head = ['날짜', '실험', '미션', '회차', '최고 성공률', '상태']
+  const body = rows.map((r) => [r.date, r.experiment, r.mission, r.trial, `${r.rate}%`, r.status])
   const csv = [head, ...body].map((line) => line.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
   const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }))
   const a = document.createElement('a')
@@ -66,9 +80,12 @@ export default function DexPage() {
   const [params, setParams] = useSearchParams()
   const dex = useApi((signal) => getDex(signal), [])
   const exps = useApi((signal) => getExperiments({}, signal), [])
-  const mine = useApi(isMember ? (signal) => getMyExperiments(signal) : null, [isMember])
   const history = useApi(isMember ? (signal) => getHistory(signal) : null, [isMember])
-  const ranking = useApi((signal) => getRanking('001', signal), [])
+  const badges = useApi(isMember ? (signal) => getMyBadges(signal) : null, [isMember])
+  const ranking = useApi((signal) => getRanking('001', signal, { period: 'week' }), [])
+  const records = history.data?.records ?? []
+  const recordIds = [...new Set(records.map((r) => r.experimentId))].join(',')
+  const missions = useApi(recordIds ? (signal) => loadMissions(recordIds.split(','), signal) : null, [recordIds])
 
   const guest = status === 'guest'
   const loginTo = `/login?returnTo=${encodeURIComponent(location.pathname)}`
@@ -96,7 +113,7 @@ export default function DexPage() {
     return guest && i >= PREVIEW ? { ...e, obtained: false, obtainedAt: undefined } : e
   }
 
-  const rows = toRows(mine.data ?? [], history.data)
+  const rows = toRows(records, exps.data ?? [], missions.data ?? {})
   const top = ranking.data ?? []
   const me = top.find((r) => r.isMe)
   const board = [...top.filter((r) => !r.isMe).slice(0, me ? 4 : 5), ...(me ? [me] : [])]
@@ -197,7 +214,7 @@ export default function DexPage() {
                 </Button>
               }
             />
-          ) : mine.loading && !mine.data ? (
+          ) : history.loading && !history.data ? (
             <Skeleton shape="text" lines={4} />
           ) : rows.length === 0 ? (
             <EmptyState
@@ -216,7 +233,7 @@ export default function DexPage() {
                 <tr>
                   <th>날짜</th>
                   <th>실험</th>
-                  <th>주제</th>
+                  <th>미션</th>
                   <th>회차</th>
                   <th>최고 성공률</th>
                   <th>상태</th>
@@ -227,12 +244,12 @@ export default function DexPage() {
                   <tr key={r.id}>
                     <td>{r.date}</td>
                     <td>{r.experiment}</td>
-                    <td>{r.topic}</td>
+                    <td>{r.mission}</td>
                     <td>{r.trial}</td>
-                    <td>{r.rate}%</td>
+                    <td>{r.rate > 0 ? `${r.rate}%` : '–'}</td>
                     <td>
                       {r.status === '진행 중' ? (
-                        <Link to={`/experiments/${r.id}/play`} className={styles.live}>
+                        <Link to={`/experiments/${r.experimentId}/play`} className={styles.live}>
                           진행 중
                         </Link>
                       ) : (
@@ -278,6 +295,7 @@ export default function DexPage() {
       <DexCardModal
         entry={openEntry ? shown(openEntry) : undefined}
         color={openEntry ? colorOf(openEntry.experimentId) : undefined}
+        badges={badges.data ?? []}
         loginTo={guest ? loginTo : undefined}
         onClose={() => setCard(null)}
         onMove={move}

@@ -125,9 +125,9 @@ export default function PartnerPage() {
                   </li>
                 )}
               </ul>
-              {pEntry && (
+              {(primary.greeting ?? pEntry?.why) && (
                 <p className={styles.quote}>
-                  {pName}: "{pEntry.why}"
+                  {pName}: "{primary.greeting ?? pEntry?.why}"
                 </p>
               )}
               <div className={styles.actions}>
@@ -163,6 +163,7 @@ export default function PartnerPage() {
                           {i + 2}순위{exp ? ` · ${LEVEL_LABEL[exp.level]} · ${exp.subtitle}` : ''}
                         </Badge>
                       </div>
+                      {a.score !== undefined && <span className={styles.altScore}>{a.score.toFixed(2)}</span>}
                     </div>
                     <p className={styles.altReason}>{a.reason}</p>
                     <Button

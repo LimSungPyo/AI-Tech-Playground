@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router'
-import { getCards, getDex, getExperiments, getTree } from '../../api'
+import { getCards, getExperiments, getTree } from '../../api'
 import type { TreeNode } from '../../api'
 import { useAuth } from '../../auth/useAuth'
 import { Badge, Button, EmptyState, GlassCard, Mascot, Skeleton, cx } from '../../components'
@@ -26,7 +26,6 @@ export default function TreePage() {
   const tree = useApi((signal) => getTree(signal), [])
   const exps = useApi((signal) => getExperiments({}, signal), [])
   const cards = useApi((signal) => getCards(signal), [])
-  const dex = useApi(isMember ? (signal) => getDex(signal) : null, [isMember])
   const [focusId, setFocusId] = useState<string>()
   const [highlight, setHighlight] = useState<TreeNode['status'] | null>(null)
 
@@ -142,7 +141,6 @@ export default function TreePage() {
         nodes={nodes}
         experiments={exps.data ?? []}
         cards={cards.data ?? []}
-        dex={dex.data ?? []}
         isMember={isMember}
         loginTo={loginTo}
         onClose={close}

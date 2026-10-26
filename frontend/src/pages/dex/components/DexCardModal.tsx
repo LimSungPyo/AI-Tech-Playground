@@ -1,4 +1,4 @@
-import type { DexEntry } from '../../../api'
+import type { Badge as BadgeData, DexEntry } from '../../../api'
 import { Badge, Button, Character, IconButton, Modal } from '../../../components'
 import { DEX_STATE_LABEL } from '../dexMeta'
 import styles from './DexCardModal.module.css'
@@ -7,6 +7,8 @@ interface Props {
   entry: DexEntry | undefined
   /** 카드 왼쪽 배경색(실험 thumbnailColor) */
   color?: string
+  /** GET /me/badges — entry.badges(id)의 이름 · 아이콘 찾기 */
+  badges: BadgeData[]
   /** 비회원 맛보기면 버튼을 로그인 유도로 */
   loginTo?: string
   onClose: () => void
@@ -16,7 +18,8 @@ interface Props {
 const fmtDate = (iso?: string) => (iso ? iso.slice(0, 10).replace(/-/g, '.') : '')
 
 /** H-02 AI 도감 · 카드 상세 */
-export function DexCardModal({ entry, color, loginTo, onClose, onMove }: Props) {
+export function DexCardModal({ entry, color, badges, loginTo, onClose, onMove }: Props) {
+  const earned = (entry?.badges ?? []).map((id) => badges.find((b) => b.id === id)).filter((b): b is BadgeData => !!b)
   return (
     <Modal open={!!entry} onClose={onClose} size="xl" showClose className={styles.modal}>
       {entry && (
@@ -48,7 +51,7 @@ export function DexCardModal({ entry, color, loginTo, onClose, onMove }: Props) 
               <div className={styles.stats}>
                 <Stat label="최고 성공률" value={entry.bestRate !== undefined ? `${Math.round(entry.bestRate)}%` : '—'} />
                 <Stat label="총 훈련" value={entry.trials !== undefined ? `${entry.trials}회` : '—'} />
-                <Stat label="레벨" value={`Lv.${entry.level}`} />
+                <Stat label="WHY? 사용" value={entry.whyCount !== undefined ? `${entry.whyCount}번` : '—'} />
               </div>
             ) : (
               <div className={styles.locked}>아직 만나지 못한 친구예요 · {entry.meetCondition}</div>
@@ -58,6 +61,19 @@ export function DexCardModal({ entry, color, loginTo, onClose, onMove }: Props) 
             <p className={styles.text}>{entry.personality}</p>
             <h3 className={styles.h3}>만나는 방법</h3>
             <p className={styles.text}>{entry.meetCondition}</p>
+
+            {earned.length > 0 && (
+              <>
+                <h3 className={styles.h3}>획득한 배지</h3>
+                <ul className={styles.earned}>
+                  {earned.map((b) => (
+                    <li key={b.id} className={styles.earnedChip}>
+                      <span aria-hidden>{b.icon}</span> {b.name}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
 
             <div className={styles.footer}>
               {loginTo ? (

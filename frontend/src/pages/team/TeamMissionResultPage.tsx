@@ -92,7 +92,7 @@ export default function TeamMissionResultPage() {
         <h2 className={styles.h2}>협업 기록</h2>
         <div className={styles.stats}>
           <Stat label="참여 친구" value={`${mission.members.length}명`} />
-          <Stat label="메시지 교환" value={`${messages.length}회`} />
+          <Stat label="메시지 교환" value={`${res.data.metrics?.messages ?? messages.length}회`} />
           <Stat label="소요 시간" value={`${Math.round(duration)}초`} />
           <Stat label="결과" value={mission.status === 'done' ? '완료' : '진행 중'} />
         </div>
