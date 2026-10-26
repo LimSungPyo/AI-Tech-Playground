@@ -18,6 +18,8 @@ export interface WhyDrawerProps {
   onClose: () => void
   experimentId: string
   trial: number
+  /** 머리글에 보일 회차(게스트는 체험 순번). 없으면 trial */
+  trialLabel?: number
   step?: number
   /** 재생한 회차의 뉴런 활성도(없으면 경로만 강조) */
   neurons?: NeuronActivation[]
@@ -27,7 +29,7 @@ export interface WhyDrawerProps {
 }
 
 /** B-05 WHY? 딥다이브 — 오른쪽 서랍. 쉬운 말 / 자세히 / 숫자만 = GET .../why?level= */
-export function WhyDrawer({ open, onClose, experimentId, trial, step, neurons, defaultLevel = 'beginner', cardId, onReplay }: WhyDrawerProps) {
+export function WhyDrawer({ open, onClose, experimentId, trial, trialLabel = trial, step, neurons, defaultLevel = 'beginner', cardId, onReplay }: WhyDrawerProps) {
   const [level, setLevel] = useState<SkillLevel>(defaultLevel)
   const { data, error, loading, reload } = useApi(
     open ? (signal) => getWhy(experimentId, trial, level, signal) : null,
@@ -45,7 +47,7 @@ export function WhyDrawer({ open, onClose, experimentId, trial, step, neurons, d
       title={<span className={styles.title}>WHY?</span>}
       description={
         <span className={styles.meta}>
-          TRIAL {trial}
+          TRIAL {trialLabel}
           {at !== undefined && ` · STEP ${at}`} · 0.4초 전의 선택
         </span>
       }

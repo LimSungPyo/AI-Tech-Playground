@@ -38,6 +38,7 @@ export default function PlayPage() {
   const { id = '001' } = useParams()
   const [sp] = useSearchParams()
   const { data, error, loading, reload } = useApi((signal) => getExperiment(id, signal), [id])
+  const { isMember } = useAuth()
   const missionId = sp.get('mission') ?? 'm1'
 
   if (loading && !data) {
@@ -69,8 +70,8 @@ export default function PlayPage() {
       />
     )
   }
-  // 실험 · 미션이 바뀌면 플레이 상태를 처음부터
-  return <PlayView key={`${id}-${missionId}`} experiment={data} missionId={missionId} />
+  // 실험 · 미션이 바뀌거나 게스트가 로그인하면 플레이 상태를 처음부터
+  return <PlayView key={`${id}-${missionId}-${isMember}`} experiment={data} missionId={missionId} />
 }
 
 interface JournalEntry {
@@ -95,7 +96,9 @@ function PlayView({ experiment, missionId }: { experiment: ExperimentDetail; mis
   const location = useLocation()
   const [sp, setSp] = useSearchParams()
   const returnTo = location.pathname + location.search
-  const startTrial = experiment.progress?.trial ?? 0
+  const guest = !isMember
+  // 실험 응답의 progress는 회원 기록이라 게스트는 0회차부터 센다
+  const startTrial = guest ? 0 : (experiment.progress?.trial ?? 0)
   const mission = experiment.missions.find((m) => m.id === missionId)
 
   // ── 회차 상태 ──
@@ -104,11 +107,15 @@ function PlayView({ experiment, missionId }: { experiment: ExperimentDetail; mis
   const [prevResult, setPrevResult] = useState<TrialResult | null>(null)
   const [journal, setJournal] = useState<JournalEntry[]>([])
   const [batchCurve, setBatchCurve] = useState<CurvePoint[]>([])
-  const [lastTrial, setLastTrial] = useState(experiment.progress?.trial ?? 0)
+  const [lastTrial, setLastTrial] = useState(startTrial)
   const [speed, setSpeed] = useState(1)
   const [busy, setBusy] = useState(false)
   const busyRef = useRef(false)
   const [guestTrials, setGuestCount] = useState(getGuestTrials)
+  // 게스트는 서버 회차 번호 대신 내 체험 순번(1, 2, 3…)으로 보여 주고, 곡선도 내 체험만 잇는다
+  const [guestNos, setGuestNos] = useState<Record<number, number>>({})
+  const [guestCurve, setGuestCurve] = useState<CurvePoint[]>([])
+  const shownTrial = (t: number) => (guest ? (guestNos[t] ?? 0) : t)
 
   // ── 오버레이 상태 ──
   const [whyOpen, setWhyOpen] = useState(sp.get('why') === 'last')
@@ -127,17 +134,21 @@ function PlayView({ experiment, missionId }: { experiment: ExperimentDetail; mis
 
   const shown = pending ?? result
   const path = shown?.path ?? []
-  const curve = mergeCurve(past, result?.curve ?? [], batchCurve)
-  const currentRate = curve.length ? curve[curve.length - 1].successRate : (experiment.progress?.successRate ?? 0)
+  const curve = guest ? guestCurve : mergeCurve(past, result?.curve ?? [], batchCurve)
+  const currentRate: number | undefined = curve.length
+    ? curve[curve.length - 1].successRate
+    : guest
+      ? undefined
+      : (experiment.progress?.successRate ?? 0)
   const rateDelta = curve.length > 1 ? curve[curve.length - 1].successRate - curve[curve.length - 2].successRate : undefined
 
   // 처음 들어왔을 때 WHY 카드는 마지막 회차 설명으로 채운다(GET만, 회차는 늘지 않는다)
   const firstWhy = useApi(
-    lastTrial > 0 ? (signal) => getWhy(id, experiment.progress?.trial ?? lastTrial, 'beginner', signal) : null,
+    startTrial > 0 ? (signal) => getWhy(id, startTrial, 'beginner', signal) : null,
     [id],
   )
   const why = result?.why ?? firstWhy.data
-  const whyTrial = result?.trial ?? experiment.progress?.trial ?? lastTrial
+  const whyTrial = result?.trial ?? startTrial
   const expired = sessionExpired || firstWhy.error?.status === 401
 
   const handleError = useCallback(
@@ -165,12 +176,14 @@ function PlayView({ experiment, missionId }: { experiment: ExperimentDetail; mis
   const commit = () => {
     const r = pending
     if (!r) return
-    const before = currentRate
+    const before = currentRate ?? 0
+    const label = shownTrial(r.trial)
     setPrevResult(result)
     setResult(r)
     setPending(null)
-    setJournal((j) => [...j, { trial: r.trial, text: r.journal, success: r.success, timeSec: r.timeSec }])
+    setJournal((j) => [...j, { trial: label, text: r.journal, success: r.success, timeSec: r.timeSec }])
     const after = r.curve.length ? r.curve[r.curve.length - 1].successRate : before
+    if (guest) setGuestCurve((c) => [...c, { trial: label, successRate: after }])
     checkClear(before, after)
   }
   const pb = usePlayback(path.length, speed, commit)
@@ -195,6 +208,7 @@ function PlayView({ experiment, missionId }: { experiment: ExperimentDetail; mis
           const n = getGuestTrials() + 1
           setGuestTrials(n)
           setGuestCount(n)
+          setGuestNos((m) => ({ ...m, [r.trial]: n }))
         }
         setLastTrial(r.trial)
         setPending(r)
@@ -238,7 +252,7 @@ function PlayView({ experiment, missionId }: { experiment: ExperimentDetail; mis
   const exitTraining = (batch: Batch | null, done: number) => {
     if (batch && done > 0) {
       const kept = batch.trials.slice(0, done)
-      const before = currentRate
+      const before = currentRate ?? 0
       setBatchCurve((c) => mergeCurve(c, kept))
       setLastTrial(kept[kept.length - 1].trial)
       checkClear(before, kept[kept.length - 1].successRate)
@@ -311,7 +325,7 @@ function PlayView({ experiment, missionId }: { experiment: ExperimentDetail; mis
           title={experiment.title}
           missionId={missionId}
           startTrial={lastTrial}
-          startRate={currentRate}
+          startRate={currentRate ?? 0}
           food={scene.food}
           monologue={result?.journal}
           isMember={isMember}
@@ -334,7 +348,7 @@ function PlayView({ experiment, missionId }: { experiment: ExperimentDetail; mis
         {missionItems.length > 1 && (
           <SegmentedControl items={missionItems} value={missionId} onChange={setMission} size="sm" label="미션" />
         )}
-        <TrialCounter value={pending?.trial ?? lastTrial} max={experiment.progress?.maxTrial} />
+        <TrialCounter value={guest ? guestTrials : (pending?.trial ?? lastTrial)} max={experiment.progress?.maxTrial} />
         {!isMember && (
           <span className={styles.guestChip}>
             게스트 체험 <strong>{Math.min(guestTrials, GUEST_LIMIT)} / {GUEST_LIMIT}회</strong>
@@ -376,7 +390,7 @@ function PlayView({ experiment, missionId }: { experiment: ExperimentDetail; mis
                 </Button>
               </div>
             )}
-            {!worm && why && !pending && <WhyCard why={why} trial={whyTrial} step={result ? step : undefined} onOpen={openWhy} />}
+            {!worm && why && !pending && <WhyCard why={why} trial={shownTrial(whyTrial)} step={result ? step : undefined} onOpen={openWhy} />}
           </GameCanvas>
           {net && <ConnectionLost attempt={net.attempt} onRetry={net.retry} />}
 
@@ -461,7 +475,7 @@ function PlayView({ experiment, missionId }: { experiment: ExperimentDetail; mis
                   <Stat
                     size="sm"
                     label="성공률"
-                    value={`${Math.round(currentRate)}%`}
+                    value={currentRate !== undefined ? `${Math.round(currentRate)}%` : '—'}
                     delta={rateDelta !== undefined ? fmtDelta(rateDelta, '%p') : undefined}
                     trend={rateDelta === undefined ? undefined : rateDelta >= 0 ? 'up' : 'down'}
                   />
@@ -532,6 +546,7 @@ function PlayView({ experiment, missionId }: { experiment: ExperimentDetail; mis
           onClose={closeWhy}
           experimentId={id}
           trial={whyTrial}
+          trialLabel={shownTrial(whyTrial)}
           step={result ? step : undefined}
           neurons={result?.neurons}
           defaultLevel={user?.skill ?? 'beginner'}
@@ -561,7 +576,7 @@ function WormSide({
 }: {
   neurons?: TrialResult['neurons']
   journal: JournalEntry[]
-  rate: number
+  rate?: number
   live: boolean
   phase: number
 }) {
@@ -605,7 +620,7 @@ function WormSide({
           </span>
           <span>
             <small>꿈틀 효율</small>
-            <strong>{Math.round(rate)}%</strong>
+            <strong>{rate !== undefined ? `${Math.round(rate)}%` : '—'}</strong>
           </span>
         </div>
       </GlassCard>
