@@ -1,0 +1,211 @@
+/* 반전 연출 무대: 헤더 위를 덮는 전체 화면. 크림 → 인디고 나이트 크로스페이드 800ms */
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--color-bg-cream), var(--color-bg-peach) 60%, var(--color-bg-lavender));
+  color: var(--color-text-primary);
+}
+.stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 40%, var(--color-admin-nav), var(--color-glass-dark) 70%);
+  opacity: 0;
+  transition: opacity 800ms ease-out;
+  pointer-events: none;
+}
+.dark::after {
+  opacity: 1;
+}
+.dark {
+  color: var(--color-text-on-tint);
+}
+
+.skip {
+  position: absolute;
+  top: var(--space-6);
+  right: var(--space-8);
+  z-index: 2;
+}
+.center {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  padding: 0 var(--space-6);
+  text-align: center;
+}
+
+.hero {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  display: grid;
+  place-items: center;
+}
+.normalLayer,
+.xrayLayer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition: opacity 300ms ease-out;
+}
+.xrayLayer {
+  opacity: 0;
+}
+/* 컷 1: 웃으며 날갯짓 */
+.normal .normalLayer img {
+  animation: flap 600ms ease-in-out infinite alternate;
+}
+/* 컷 2: 지지직 — 점점 투명해짐 */
+.scan .normalLayer {
+  opacity: 0.35;
+  transition-duration: 600ms;
+  filter: saturate(0.4);
+}
+/* 컷 3·4: 엑스레이 */
+.xray .normalLayer,
+.text .normalLayer {
+  opacity: 0;
+}
+.xray .xrayLayer,
+.text .xrayLayer {
+  opacity: 1;
+  animation: spring 520ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.hero {
+  transition: transform 400ms var(--motion-ease-out);
+}
+.text.hero {
+  transform: scale(0.72);
+}
+.net {
+  position: absolute;
+  inset: -4%;
+  width: 108%;
+  height: 108%;
+}
+.xrayChar {
+  filter: hue-rotate(200deg) brightness(0.9);
+  opacity: 0.85;
+}
+
+.scanlines {
+  position: absolute;
+  inset: -20px;
+  border-radius: var(--radius-card);
+  background: repeating-linear-gradient(180deg, var(--color-accent-indigo-soft) 0 4px, transparent 4px 9px);
+  overflow: hidden;
+}
+.scanlines::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--color-accent-cyan);
+  box-shadow: 0 0 16px var(--color-accent-cyan);
+  animation: sweep 600ms linear forwards;
+}
+
+.line {
+  min-height: 2.6em;
+  max-width: 680px;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-black);
+  line-height: 1.35;
+  word-break: keep-all;
+  text-wrap: balance;
+}
+.char {
+  opacity: 0;
+  animation: type 1ms linear forwards;
+}
+.caret {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  margin-left: 4px;
+  vertical-align: -0.12em;
+  background: var(--color-accent-cyan);
+  opacity: 0;
+  animation: blink 800ms steps(1) infinite;
+}
+.hint {
+  font-size: var(--text-sm);
+  color: var(--color-text-on-dark-secondary);
+  animation: fade 400ms ease-out both;
+}
+.go {
+  color: var(--color-accent-cyan);
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+}
+
+@keyframes flap {
+  from {
+    transform: translateY(0) rotate(-2deg);
+  }
+  to {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+@keyframes sweep {
+  from {
+    top: 0;
+  }
+  to {
+    top: 100%;
+  }
+}
+@keyframes spring {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes type {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* 동작 줄이기: 페이드만, 문장은 즉시 */
+.reduced *,
+.reduced *::after {
+  animation: none !important;
+}
+.reduced .hint {
+  opacity: 1;
+}
+@media (max-width: 640px) {
+  .hero {
+    width: 240px;
+    height: 240px;
+  }
+  .line {
+    font-size: var(--text-2xl);
+  }
+}

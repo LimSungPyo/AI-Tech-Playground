@@ -1,0 +1,93 @@
+.card {
+  composes: glass from '../../../components/glass.module.css';
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-card-lg);
+  overflow: hidden;
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+.card:hover {
+  transform: translateY(-2px);
+}
+.thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 170px;
+  background: var(--color-track);
+}
+.state {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+}
+.character {
+  width: 128px;
+  height: 128px;
+}
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) var(--space-5);
+  background: var(--color-glass-solid);
+  flex: 1;
+}
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-link);
+}
+.level {
+  height: 24px;
+  font-size: var(--text-xs);
+}
+.title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-black);
+  color: var(--color-text-primary);
+}
+.titleLink {
+  color: inherit;
+}
+.titleLink:hover {
+  color: var(--color-text-link);
+}
+.bar {
+  margin-top: calc(var(--space-1) * -1);
+}
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: auto;
+}
+.caption {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.action {
+  flex-shrink: 0;
+}
+
+/* 잠김: 흐린 회색 */
+.locked .thumb {
+  background: var(--color-skeleton);
+}
+.locked .character {
+  opacity: 0.4;
+  filter: grayscale(0.6);
+}
+.locked .title {
+  color: var(--color-text-tertiary);
+}
+.locked .body {
+  background: var(--color-glass-clear);
+}
