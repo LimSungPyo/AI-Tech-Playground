@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { getCarousel, getExperiment, getExperiments, getTechDrop } from '../../api'
+import { getCarousel, getExperiments } from '../../api'
 import type { CarouselSlide, ExperimentSummary } from '../../api/types'
 import {
   Button,
@@ -14,11 +14,12 @@ import {
   useToast,
 } from '../../components'
 import type { CharacterId } from '../../api/types'
+import type { RememberedProfile } from '../../auth/remembered'
 import { useApi } from '../../hooks/useApi'
 import { HeroCarousel } from './components/HeroCarousel'
 import type { HeroSlide } from './components/HeroCarousel'
 import { RememberedBanner } from './components/RememberedBanner'
-import { LEVEL_LABEL, daysUntil } from './format'
+import { LEVEL_LABEL } from './format'
 import styles from './GuestHome.module.css'
 
 const STEPS = ['플레이', 'AI 변화 확인', '원리 시각화', '기술 카드', '다시 플레이']
@@ -27,47 +28,28 @@ const STEPS = ['플레이', 'AI 변화 확인', '원리 시각화', '기술 카�
 const FRIEND_ORDER: CharacterId[] = ['wormy', 'drosi', 'parrot', 'hawk', 'owl', 'octo', 'ants', 'memo', 'mappy']
 
 const isOpen = (e?: ExperimentSummary) => e?.status === 'open' || e?.status === 'in_progress'
-const LEVEL_RANK = { intro: 0, basic: 1, advanced: 2, frontier: 3 } as const
 
 interface CarouselData {
   slides: CarouselSlide[]
+  /** 친구 목록 잠김 표시 · 열린 실험 바로 플레이 링크에 쓴다 */
   experiments: ExperimentSummary[]
-  /** 슬라이드 code → 말풍선 */
-  bubbles: Record<string, string>
 }
 
-/** 캐러셀 + 실험 목록을 받고, 슬라이드별 말풍선(열린 실험: 성공률 변화, 오픈 예정: D-day)을 채운다 */
 async function loadCarousel(signal: AbortSignal): Promise<CarouselData> {
   const [{ slides }, experiments] = await Promise.all([getCarousel(signal), getExperiments(undefined, signal)])
-  const byCode = new Map(experiments.map((e) => [e.code, e]))
-  const bubbles: Record<string, string> = {}
-  await Promise.all(
-    slides.map(async (s) => {
-      const exp = byCode.get(s.code)
-      if (!exp) return
-      try {
-        if (isOpen(exp)) {
-          const d = await getExperiment(exp.id, signal)
-          bubbles[s.code] = `성공률 ${Math.round(d.stats.firstTrialRate)}% → ${Math.round(d.stats.hundredthTrialRate)}%`
-        } else {
-          const drop = await getTechDrop(exp.id, signal)
-          bubbles[s.code] = `D-${daysUntil(drop.openAt)}`
-        }
-      } catch {
-        // 말풍선은 없어도 된다
-      }
-    }),
-  )
-  return { slides, experiments, bubbles }
+  return { slides, experiments }
 }
 
+/** "12% → 86%" 말풍선은 Figma처럼 "성공률"을 붙인다 */
+const bubbleText = (b?: string) => (b && /^\d+%\s*→/.test(b) ? `성공률 ${b}` : b)
+
 interface Props {
-  rememberedEmail: string | null
+  remembered: RememberedProfile | null
   onForget: () => void
 }
 
 /** 0-01 홈 (비회원 · 자동 캐러셀) · 07:M-01 홈 (기억된 회원) */
-export function GuestHome({ rememberedEmail, onForget }: Props) {
+export function GuestHome({ remembered, onForget }: Props) {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, error, loading, reload } = useApi(loadCarousel, [])
@@ -81,28 +63,27 @@ export function GuestHome({ rememberedEmail, onForget }: Props) {
   const { slides, featured } = useMemo(() => {
     if (!data) return { slides: [] as HeroSlide[], featured: 0 }
     const byCode = new Map(data.experiments.map((e) => [e.code, e]))
-    // FEATURED: 열린 실험 중 가장 높은 단계(동률이면 앞쪽)
-    let featured = -1
-    data.slides.forEach((s, i) => {
+    const slides = data.slides.map((s): HeroSlide => {
       const e = byCode.get(s.code)
-      if (!isOpen(e)) return
-      const cur = featured >= 0 ? byCode.get(data.slides[featured].code) : undefined
-      if (!cur || LEVEL_RANK[e!.level] > LEVEL_RANK[cur.level]) featured = i
-    })
-    const slides = data.slides.map((s, i): HeroSlide => {
-      const e = byCode.get(s.code)
-      const open = isOpen(e)
-      const tags = e ? [LEVEL_LABEL[e.level], `${e.durationMin}분`, e.tags.join(' · ')] : []
+      const badge = s.badge ?? (isOpen(e) ? 'NOW OPEN' : 'COMING SOON')
+      const level = s.level ?? e?.level
+      const durationMin = s.durationMin ?? e?.durationMin
+      const topics = s.tags ?? e?.tags ?? []
+      const tags = [
+        level && LEVEL_LABEL[level],
+        durationMin !== undefined && `${durationMin}분`,
+        topics.length > 0 && topics.join(' · '),
+      ].filter((t): t is string => !!t)
       return {
         code: s.code,
         title: s.title,
         body: s.body,
         character: s.character,
-        badge: i === featured ? 'FEATURED' : open ? 'NOW OPEN' : 'COMING SOON',
+        badge,
         tags,
-        bubble: data.bubbles[s.code],
+        bubble: bubbleText(s.bubble),
         cta: s.cta,
-        ctaTo: open && e ? `/experiments/${e.id}/play` : undefined,
+        ctaTo: badge !== 'COMING SOON' && e ? `/experiments/${e.id}/play` : undefined,
         onCta: () =>
           toast.show({
             title: '로그인하면 오픈 알림을 받을 수 있어요',
@@ -113,12 +94,12 @@ export function GuestHome({ rememberedEmail, onForget }: Props) {
         detailTo: s.target,
       }
     })
-    return { slides, featured: Math.max(0, featured) }
+    return { slides, featured: Math.max(0, slides.findIndex((s) => s.badge === 'FEATURED')) }
   }, [data, navigate, toast])
 
   return (
     <div className={styles.page}>
-      {rememberedEmail && <RememberedBanner email={rememberedEmail} onForget={onForget} />}
+      {remembered && <RememberedBanner profile={remembered} onForget={onForget} />}
 
       {loading && !data ? (
         <Skeleton height={560} className={styles.heroSkeleton} />

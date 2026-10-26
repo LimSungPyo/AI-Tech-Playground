@@ -150,7 +150,44 @@
   background: var(--color-accent-success);
   color: var(--color-text-on-tint);
 }
+.condList li.condDone {
+  color: var(--color-text-primary);
+}
+.learn {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.learnItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--color-glass-solid);
+  box-shadow: var(--shadow-soft);
+}
+.learnNo {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-accent-indigo);
+}
+.learnTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.learnBody {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
 .condTip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   margin: var(--space-4) 0 0;
   padding: var(--space-3);
   border-radius: var(--radius-md);
@@ -200,7 +237,8 @@
 }
 @media (max-width: 768px) {
   .hero,
-  .row {
+  .row,
+  .learn {
     grid-template-columns: 1fr;
   }
   .circle {

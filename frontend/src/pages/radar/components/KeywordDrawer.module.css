@@ -86,6 +86,10 @@
   background: var(--color-accent-warning-soft);
   color: var(--color-accent-warning);
 }
+.news {
+  background: var(--color-accent-pink-soft);
+  color: var(--color-text-secondary);
+}
 .ours {
   display: flex;
   align-items: center;

@@ -16,14 +16,12 @@ import {
 } from '../../components'
 import { useApi } from '../../hooks/useApi'
 import { VoteModal } from '../home/components/VoteModal'
-import { daysUntil, experimentStatusLabel, sourceKinds } from '../home/format'
+import { KIND_CLASS, daysUntil, experimentStatusLabel, sourceKinds } from '../home/format'
 import { characterOfExperiment, votePercents } from '../home/vote'
 import { BuzzScatter } from './components/BuzzScatter'
 import { KeywordDrawer } from './components/KeywordDrawer'
 import { updatedLabel, weekLabel } from './radarWeeks'
 import styles from './RadarPage.module.css'
-
-const KIND_CLASS = { 논문: 'paper', 코드: 'code', 커뮤니티: 'community' } as const
 
 // W2 hub 담당 · 경로 /radar — D-07 기술 레이더 페이지 · D-08 키워드 상세 드로어(?keyword= 와 동기화)
 export default function RadarPage() {
@@ -31,10 +29,15 @@ export default function RadarPage() {
   const { isMember } = useAuth()
   const [params, setParams] = useSearchParams()
   const keywordId = params.get('keyword')
-  const radar = useApi((s) => getRadar(s), [])
+  // 고른 주(YYYY-MM-DD). null이면 최신 주
+  const [pickedWeek, setPickedWeek] = useState<string | null>(null)
+  const radar = useApi((s) => getRadar(s, pickedWeek ?? undefined), [pickedWeek])
+  // 주차 탭은 최신 주 응답의 availableWeeks로 고정(지난 주를 불러와도 탭이 바뀌지 않게)
+  const [weeks, setWeeks] = useState<string[]>([])
+  const latestWeeks = radar.data && !pickedWeek ? (radar.data.availableWeeks ?? [radar.data.week]) : null
+  if (latestWeeks && latestWeeks.join() !== weeks.join()) setWeeks(latestWeeks)
   const exps = useApi((s) => getExperiments(undefined, s), [])
   const vote = useApi((s) => getCurrentVote(s), [])
-  const [weekOffset, setWeekOffset] = useState('0')
   const [voteOpen, setVoteOpen] = useState(false)
 
   const keywords = useMemo(() => radar.data?.keywords ?? [], [radar.data])
@@ -61,8 +64,13 @@ export default function RadarPage() {
   }
 
   const week = radar.data?.week
-  const weekItems = week ? [0, -1, -2].map((o) => ({ value: String(o), label: `${weekLabel(week, o)} 주` })) : []
-  const isCurrentWeek = weekOffset === '0'
+  const weekItems = weeks.map((w) => ({ value: w, label: `${weekLabel(w)} 주` }))
+  const currentWeek = pickedWeek ?? weeks[0] ?? ''
+  const isLatest = !pickedWeek || pickedWeek === weeks[0]
+  const pickWeek = (w: string) => setPickedWeek(w === weeks[0] ? null : w)
+  const missingWeek = radar.error?.status === 404
+  const sourceCount = radar.data?.sourceCount
+  const postCount = radar.data?.postCount
 
   const experimentCell = (exp: ExperimentSummary | undefined) => {
     if (!exp) return <span className={styles.none}>—</span>
@@ -86,11 +94,14 @@ export default function RadarPage() {
       <header className={styles.head}>
         <div>
           <p className={styles.eyebrow}>TECH RADAR{radar.data ? ` · ${updatedLabel(radar.data.updatedAt)} 업데이트` : ''}</p>
-          <h1 className={styles.title}>이번 주 기술 레이더</h1>
-          <p className={styles.desc}>arXiv · Hugging Face · GitHub · Hacker News 등 12개 출처의 지난 7일 글 3,412개에서 키워드를 뽑았어요.</p>
+          <h1 className={styles.title}>{isLatest ? '이번 주' : `${weekLabel(currentWeek)} 주`} 기술 레이더</h1>
+          <p className={styles.desc}>
+            arXiv · Hugging Face · GitHub · Hacker News 등{sourceCount !== undefined ? ` ${sourceCount}개` : ''} 출처의 지난 7일 글
+            {postCount !== undefined ? ` ${postCount.toLocaleString('ko-KR')}개` : ''}에서 키워드를 뽑았어요.
+          </p>
         </div>
-        {weekItems.length > 0 && (
-          <SegmentedControl items={weekItems} value={weekOffset} onChange={setWeekOffset} label="주차 선택" />
+        {weekItems.length > 1 && (
+          <SegmentedControl items={weekItems} value={currentWeek} onChange={pickWeek} label="주차 선택" />
         )}
       </header>
 
@@ -102,10 +113,10 @@ export default function RadarPage() {
           </div>
           {radar.loading && !radar.data ? (
             <Skeleton shape="text" lines={8} />
+          ) : missingWeek ? (
+            <EmptyState compact expression="sleep" title="이 주의 레이더는 없어요" description="이번 주 결과를 먼저 확인해 보세요." action={<Button variant="secondary" onClick={() => setPickedWeek(null)}>이번 주로</Button>} />
           ) : radar.error ? (
             <EmptyState compact expression="confused" title="레이더를 불러오지 못했어요" action={<Button onClick={radar.reload}>다시 불러오기</Button>} />
-          ) : !isCurrentWeek ? (
-            <EmptyState compact expression="sleep" title="지난 주 레이더는 준비 중이에요" description="이번 주 결과를 먼저 확인해 보세요." action={<Button variant="secondary" onClick={() => setWeekOffset('0')}>이번 주로</Button>} />
           ) : (
             <table className={styles.table}>
               <thead>
@@ -214,9 +225,13 @@ export default function RadarPage() {
               <Mascot expression="scientist" size={44} alt="" />
               <h2 className={styles.h2}>AI 해설</h2>
             </div>
-            <p className={styles.aiText}>
-              에이전트가 "도구를 부르는 법"과 "기억하는 법"이 동시에 뜨고 있어요. 두 기술은 팀 미션에서 옥토 · 메모로 함께 만날 수 있어요.
-            </p>
+            {radar.data?.commentary ? (
+              <p className={styles.aiText}>{radar.data.commentary}</p>
+            ) : radar.loading ? (
+              <Skeleton shape="text" lines={2} />
+            ) : (
+              <p className={styles.aiText}>이번 주 해설은 아직 준비 중이에요.</p>
+            )}
           </section>
         </aside>
       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getExperiment, getTechDrop, subscribeTechDrop } from '../../../api'
-import { Badge, Button, Character, EmptyState, Icon, Modal, Skeleton, cx, useToast } from '../../../components'
+import { Badge, Button, CHARACTERS, Character, EmptyState, Icon, Modal, Skeleton, cx, useToast } from '../../../components'
 import { useApi } from '../../../hooks/useApi'
 import { CHARACTER_TINT } from '../characterTint'
 import { LEVEL_LABEL } from '../format'
@@ -19,6 +19,12 @@ const FAQ = [
   { q: 'RAG를 전혀 몰라도 할 수 있나요?', a: '네. 실험 안에서 필요한 개념을 단계별로 보여줘요. 막히면 노란 WHY? 버튼을 눌러 보세요.' },
   { q: '투표로 오픈 순서가 바뀌나요?', a: '매주 투표에서 가장 많이 뽑힌 실험이 다음 Tech Drop으로 먼저 열려요.' },
 ]
+
+/** 조건 안내 문구에 나온 실험(#007)의 친구를 고른다 */
+function hintCharacter(hint: string) {
+  const code = /#\d{3}/.exec(hint)?.[0]
+  return code ? Object.values(CHARACTERS).find((c) => c.experiment === code)?.id : undefined
+}
 
 function useCountdown(iso: string | undefined) {
   const [now, setNow] = useState(() => Date.now())
@@ -68,12 +74,7 @@ export function TechDropModal({ open, onClose, code, onSubscribed }: Props) {
 
   const d = drop.data
   const e = exp.data
-  // "10.31 오픈 · LLM 노드 완료 (#007)" → 날짜 항목은 빼고 조건만
-  const conditions = (e?.unlockCondition ?? '')
-    .split('·')
-    .map((s) => s.trim())
-    .filter((s) => s && !/오픈$/.test(s))
-  const prereq = /#(\d{3})/.exec(e?.unlockCondition ?? '')?.[0]
+  const conditions = d?.conditions ?? []
 
   return (
     <Modal open={open} onClose={onClose} size="xl" showClose className={styles.modal}>
@@ -126,6 +127,21 @@ export function TechDropModal({ open, onClose, code, onSubscribed }: Props) {
             </div>
           </section>
 
+          {d.learn && d.learn.length > 0 && (
+            <section>
+              <h3 className={styles.h3}>이 실험에서 배워요</h3>
+              <ol className={styles.learn}>
+                {d.learn.map((l, i) => (
+                  <li key={l.title} className={styles.learnItem}>
+                    <span className={styles.learnNo}>{String(i + 1).padStart(2, '0')}</span>
+                    <strong className={styles.learnTitle}>{l.title}</strong>
+                    <span className={styles.learnBody}>{l.body}</span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+
           <div className={styles.row}>
             <section className={styles.preview}>
               <h3 className={styles.h3}>미리보기</h3>
@@ -140,19 +156,24 @@ export function TechDropModal({ open, onClose, code, onSubscribed }: Props) {
               <h3 className={styles.h3}>시작 조건</h3>
               <ul className={styles.condList}>
                 {conditions.map((c) => (
-                  <li key={c}>
-                    <span className={styles.todo} aria-label="아직" />
-                    {c}
+                  <li key={c.label} className={cx(c.done && styles.condDone)}>
+                    {c.done ? (
+                      <span className={styles.done} aria-label="완료">
+                        <Icon name="check" size={12} />
+                      </span>
+                    ) : (
+                      <span className={styles.todo} aria-label="아직" />
+                    )}
+                    {c.label}
                   </li>
                 ))}
-                <li>
-                  <span className={styles.done} aria-label="완료">
-                    <Icon name="check" size={12} />
-                  </span>
-                  로그인
-                </li>
               </ul>
-              {prereq && <p className={styles.condTip}>{prereq} 실험을 끝내면 오픈 당일 바로 시작할 수 있어요.</p>}
+              {d.conditionHint && (
+                <p className={styles.condTip}>
+                  <Character id={hintCharacter(d.conditionHint) ?? d.character} size={32} alt="" />
+                  <span>{d.conditionHint}</span>
+                </p>
+              )}
             </section>
           </div>
 
