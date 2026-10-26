@@ -15,7 +15,7 @@ import {
   useToast,
 } from '../../components'
 import { useApi } from '../../hooks/useApi'
-import { CHARACTER_TINT, formatMonthDay } from './components/format'
+import { CHARACTER_TINT, formatMinutes, formatMonthDay } from './components/format'
 import { PageTitle } from './components/PageTitle'
 import my from './components/my.module.css'
 import styles from './MyCharactersPage.module.css'
@@ -169,6 +169,7 @@ function FeaturedCard({
   onPartner: () => void
 }) {
   const master = entry.state === 'master'
+  const revealWatched = entry.revealWatched ?? master
   const checks = [
     { label: 'Lv1 만남', ok: entry.obtained },
     { label: `Lv2 성장 · ${LV2_RATE}%`, ok: entry.level >= 2 },
@@ -203,10 +204,17 @@ function FeaturedCard({
         {entry.obtained ? (
           <>
             <dl className={styles.featuredStats}>
-              <div>
-                <dt>만난 날</dt>
-                <dd>{entry.obtainedAt ? formatMonthDay(entry.obtainedAt) : '—'}</dd>
-              </div>
+              {entry.playMinutes !== undefined ? (
+                <div>
+                  <dt>함께한 시간</dt>
+                  <dd>{formatMinutes(entry.playMinutes)}</dd>
+                </div>
+              ) : (
+                <div>
+                  <dt>만난 날</dt>
+                  <dd>{entry.obtainedAt ? formatMonthDay(entry.obtainedAt) : '—'}</dd>
+                </div>
+              )}
               <div>
                 <dt>훈련 횟수</dt>
                 <dd>{entry.trials ?? 0}회</dd>
@@ -217,7 +225,7 @@ function FeaturedCard({
               </div>
               <div>
                 <dt>반전 시청</dt>
-                <dd>{master ? '완료' : '아직'}</dd>
+                <dd>{revealWatched ? '완료' : '아직'}</dd>
               </div>
             </dl>
             <ul className={styles.checks}>
@@ -283,7 +291,7 @@ function CharacterCard({ entry, selected, onSelect }: { entry: DexEntry; selecte
         <span className={styles.cardLine}>
           {kind === 'met'
             ? entry.state === 'master'
-              ? '반전 해금 · 팀 합류 가능'
+              ? `${entry.revealWatched !== false ? '반전 해금 · ' : ''}팀 합류 가능`
               : `Lv${entry.level + 1}까지 성공률 ${nextRate}%${entry.level >= 2 ? ' + 반전' : ''} (현재 ${Math.round(entry.bestRate ?? 0)}%)`
             : entry.meetCondition}
         </span>

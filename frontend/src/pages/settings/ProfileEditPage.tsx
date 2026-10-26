@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getMyCharacters, saveOnboarding, updateProfile } from '../../api'
-import type { CharacterId, User } from '../../api'
+import { getMyCharacters, getSettings, saveOnboarding, saveSettings, updateProfile } from '../../api'
+import type { CharacterId, MeSettings, User } from '../../api'
 import { useAuth } from '../../auth/useAuth'
 import { Avatar, Button, CHARACTERS, Character, Chip, Input, Skeleton, Toggle, cx, useToast } from '../../components'
 import { useApi } from '../../hooks/useApi'
 import { BackLink } from './components/BackLink'
-import { useLocalPrefs } from './localPrefs'
 import styles from './ProfileEditPage.module.css'
 
 // 관심 분야 id(온보딩과 같은 값) → 화면 이름
@@ -22,31 +21,40 @@ const BIO_MAX = 40
 
 const validNickname = (v: string) => v.trim().length >= 2 && v.trim().length <= 12
 
+const PRIVACY_DEFAULT: NonNullable<MeSettings['privacy']> = { publicProfile: true, showInRanking: true, shareRecords: true }
+
 // W2 my 담당 · 경로 /settings/profile — H-08 프로필 편집
 export default function ProfileEditPage() {
   const { user } = useAuth()
+  // 공개 범위는 설정(privacy)에 저장된다
+  const settings = useApi((s) => getSettings(s), [])
   return (
     <div className={styles.page}>
       <BackLink to="/settings">설정</BackLink>
       <h1 className={styles.title}>프로필 편집</h1>
-      {user ? <ProfileForm key={user.id} user={user} /> : <Skeleton height={640} />}
+      {user && (settings.data || settings.error) ? (
+        <ProfileForm key={user.id} user={user} settings={settings.data} />
+      ) : (
+        <Skeleton height={640} />
+      )}
     </div>
   )
 }
 
-function ProfileForm({ user }: { user: User }) {
+function ProfileForm({ user, settings }: { user: User; settings?: MeSettings }) {
   const { refresh } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
-  const [prefs, setPref] = useLocalPrefs()
   const chars = useApi((s) => getMyCharacters(s), [])
+  const privacy = { ...PRIVACY_DEFAULT, ...settings?.privacy }
 
   const [avatar, setAvatar] = useState<CharacterId>(user.avatar)
   const [nickname, setNickname] = useState(user.nickname)
-  const [bio, setBio] = useState(prefs.bio)
+  // User.bio는 v2 응답에 있지만 공용 타입에 아직 없다
+  const [bio, setBio] = useState((user as User & { bio?: string | null }).bio ?? '')
   const [interests, setInterests] = useState<string[]>(user.interests)
-  const [showNickname, setShowNickname] = useState(prefs.showNicknameInRanking)
-  const [shareRecords, setShareRecords] = useState(prefs.shareRecords)
+  const [showNickname, setShowNickname] = useState(privacy.showInRanking)
+  const [shareRecords, setShareRecords] = useState(privacy.shareRecords)
   const [saving, setSaving] = useState(false)
 
   const owned = chars.data?.filter((c) => c.obtained).map((c) => c.character)
@@ -60,12 +68,12 @@ function ProfileForm({ user }: { user: User }) {
     if (!nicknameOk) return
     setSaving(true)
     try {
-      await updateProfile({ nickname: nickname.trim(), avatar })
+      await updateProfile({ nickname: nickname.trim(), avatar, bio: bio.trim() })
       const sameInterests = interests.length === user.interests.length && interests.every((i) => user.interests.includes(i))
       if (!sameInterests) await saveOnboarding({ interests, skill: user.skill })
-      setPref('bio', bio)
-      setPref('showNicknameInRanking', showNickname)
-      setPref('shareRecords', shareRecords)
+      if (settings && (showNickname !== privacy.showInRanking || shareRecords !== privacy.shareRecords)) {
+        await saveSettings({ ...settings, privacy: { ...privacy, showInRanking: showNickname, shareRecords } })
+      }
       await refresh()
       toast.show({ title: '프로필을 저장했어요', tone: 'success' })
       navigate('/settings')

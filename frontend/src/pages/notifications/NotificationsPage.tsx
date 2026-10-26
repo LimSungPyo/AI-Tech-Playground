@@ -1,34 +1,35 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getNotifications, readAllNotifications, type Notification } from '../../api'
-import { Button, Character, Chip, EmptyState, Icon, Logo, Mascot, Skeleton, cx, useToast } from '../../components'
+import { Button, CHARACTERS, Character, Chip, EmptyState, Icon, Logo, Mascot, Skeleton, cx, useToast } from '../../components'
 import { useApi } from '../../hooks/useApi'
 import { timeAgo } from '../../layouts/time'
 import styles from './NotificationsPage.module.css'
 
 // W2 my 담당 · 경로 /notifications (H-07 알림 전체)
 
-type Tab = 'all' | 'experiment' | 'badge' | 'inquiry' | 'system'
+type Tab = 'all' | 'experiment' | 'character' | 'ranking' | 'radar' | 'support'
 
+// PNG 탭: 전체 · 실험 · 캐릭터 · 랭킹 · 기술 레이더 · 문의 · 운영
 const TABS: { value: Tab; label: string }[] = [
   { value: 'all', label: '전체' },
   { value: 'experiment', label: '실험' },
-  { value: 'badge', label: '배지' },
-  { value: 'inquiry', label: '문의' },
-  { value: 'system', label: '시스템' },
+  { value: 'character', label: '캐릭터' },
+  { value: 'ranking', label: '랭킹' },
+  { value: 'radar', label: '기술 레이더' },
+  { value: 'support', label: '문의 · 운영' },
 ]
 
-/** 알림 종류 → 탭(팀 미션 소식은 실험 탭에 묶는다) */
+/** 알림 종류 → 탭(팀 미션 · 배지 소식은 실험 탭, 시스템 소식은 문의 · 운영 탭에 묶는다) */
 const KIND_TAB: Record<Notification['kind'], Exclude<Tab, 'all'>> = {
   experiment: 'experiment',
   team: 'experiment',
-  badge: 'badge',
-  inquiry: 'inquiry',
-  system: 'system',
-  // v2 종류: 전용 탭이 생기기 전까지 가까운 탭에 묶는다
-  character: 'badge',
-  ranking: 'experiment',
-  radar: 'system',
+  badge: 'experiment',
+  character: 'character',
+  ranking: 'ranking',
+  radar: 'radar',
+  inquiry: 'support',
+  system: 'support',
 }
 
 const KIND_LABEL: Record<Notification['kind'], string> = {
@@ -36,14 +37,22 @@ const KIND_LABEL: Record<Notification['kind'], string> = {
   team: '팀 미션',
   badge: '배지',
   inquiry: '문의 · 운영',
-  system: '시스템',
+  system: '문의 · 운영',
   character: '캐릭터',
   ranking: '랭킹',
-  radar: '레이더',
+  radar: '기술 레이더',
 }
 
-function KindIcon({ kind }: { kind: Notification['kind'] }) {
-  if (kind === 'experiment') return <Character id="drosi" size={40} alt="" />
+/** 캐릭터 알림은 제목에 나온 캐릭터 얼굴로 */
+const characterIn = (text: string) => Object.values(CHARACTERS).find((c) => text.includes(c.name))?.id
+
+function KindIcon({ n }: { n: Notification }) {
+  const { kind } = n
+  if (kind === 'character') {
+    const id = characterIn(n.title)
+    return id ? <Character id={id} size={40} alt="" /> : <Mascot expression="happy" size={40} alt="" />
+  }
+  if (kind === 'experiment' || kind === 'ranking') return <Character id="drosi" size={40} alt="" />
   if (kind === 'team') return <Mascot expression="happy" size={40} alt="" />
   if (kind === 'badge') return <Mascot expression="champion" size={40} alt="" />
   return <Logo iconOnly size={28} />
@@ -101,7 +110,7 @@ export default function NotificationsPage() {
   const unread = list.filter((n) => !n.read).length
 
   const counts = useMemo(() => {
-    const c: Record<Tab, number> = { all: list.length, experiment: 0, badge: 0, inquiry: 0, system: 0 }
+    const c: Record<Tab, number> = { all: list.length, experiment: 0, character: 0, ranking: 0, radar: 0, support: 0 }
     for (const n of list) c[KIND_TAB[n.kind]] += 1
     return c
   }, [list])
@@ -198,7 +207,7 @@ export default function NotificationsPage() {
                   <li key={n.id}>
                     <button type="button" className={cx(styles.item, !n.read && styles.isUnread)} onClick={() => open(n)}>
                       <span className={styles.icon}>
-                        <KindIcon kind={n.kind} />
+                        <KindIcon n={n} />
                       </span>
                       <span className={styles.body}>
                         <span className={styles.meta}>

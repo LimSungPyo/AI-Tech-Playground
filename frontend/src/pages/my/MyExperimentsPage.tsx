@@ -5,7 +5,9 @@ import {
   getMyCharacters,
   getMyExperiments,
   getTechDrop,
+  unsubscribeTechDrop,
   type ExperimentSummary,
+  type TechDrop,
 } from '../../api'
 import {
   Badge,
@@ -48,22 +50,53 @@ export default function MyExperimentsPage() {
   const [tab, setTab] = useState<Tab>('all')
   const [sort, setSort] = useState<Sort>('recent')
   const [q, setQ] = useState('')
-  // 알림 끄기(구독 해제 API가 없어 화면에서만 뺀다)
+  // 알림 끈 실험(해제 API 성공 후 목록에서 뺀다)
   const [muted, setMuted] = useState<string[]>([])
+  const [muting, setMuting] = useState<string>()
 
-  // 실험별 마지막 플레이 시각(학습 기록 로그에서)
+  const all = exps.data ?? []
+  const comingIds = all.filter((e) => e.status === 'coming_soon').map((e) => e.id)
+  // 오픈 예정 실험의 D-day · 구독 여부
+  const drops = useApi(
+    comingIds.length > 0
+      ? (s) => Promise.all(comingIds.map((id) => getTechDrop(id, s).catch(() => undefined)))
+      : null,
+    [comingIds.join()],
+  )
+  const dropOf = new Map<string, TechDrop>()
+  comingIds.forEach((id, i) => {
+    const drop = drops.data?.[i]
+    if (drop) dropOf.set(id, drop)
+  })
+
+  // 실험별 마지막 플레이 시각(v2 lastPlayedAt, 없으면 학습 기록 로그에서)
   const lastPlayed = (() => {
     const map = new Map<string, string>()
     for (const log of history.data?.logs ?? []) {
       const prev = map.get(log.experimentId)
       if (!prev || toDate(log.date) > toDate(prev)) map.set(log.experimentId, log.date)
     }
+    for (const e of all) if (e.lastPlayedAt) map.set(e.id, e.lastPlayedAt)
     return map
   })()
 
-  const all = exps.data ?? []
   const played = all.filter((e) => e.progress)
-  const notify = all.filter((e) => e.status === 'coming_soon' && !muted.includes(e.id))
+  const notify = all.filter(
+    (e) => e.status === 'coming_soon' && dropOf.get(e.id)?.subscribed !== false && !muted.includes(e.id),
+  )
+
+  const mute = async (e: ExperimentSummary) => {
+    setMuting(e.id)
+    try {
+      await unsubscribeTechDrop(e.id)
+      setMuted((m) => [...m, e.id])
+      toast.show({ title: '오픈 알림을 껐어요', description: `${e.code} · ${e.title}` })
+    } catch (err) {
+      toast.show({ tone: 'danger', title: '알림을 끄지 못했어요', description: (err as Error).message })
+    } finally {
+      setMuting(undefined)
+    }
+  }
   const inProgress = played.filter((e) => !isDone(e))
   const done = played.filter(isDone)
 
@@ -160,14 +193,7 @@ export default function MyExperimentsPage() {
           </div>
           <ul className={styles.notifyList}>
             {notify.map((e) => (
-              <NotifyRow
-                key={e.id}
-                exp={e}
-                onMute={() => {
-                  setMuted((m) => [...m, e.id])
-                  toast.show({ title: '오픈 알림을 껐어요', description: `${e.code} · ${e.title}` })
-                }}
-              />
+              <NotifyRow key={e.id} exp={e} drop={dropOf.get(e.id)} busy={muting === e.id} onMute={() => mute(e)} />
             ))}
           </ul>
         </GlassCard>
@@ -180,10 +206,12 @@ export default function MyExperimentsPage() {
 }
 
 function ExperimentRow({ exp, lastPlayedAt, mastered }: { exp: ExperimentSummary; lastPlayedAt?: string; mastered: boolean }) {
+  // 1회차 성공률 · 추세는 v2 /me/experiments 값. 기술 카드 id는 상세에서
   const detail = useApi((s) => getExperiment(exp.id, s), [exp.id])
   const p = exp.progress!
   const done = isDone(exp)
-  const first = detail.data?.stats.firstTrialRate
+  const first = exp.firstRate ?? detail.data?.stats.firstTrialRate
+  const curve = exp.curve && exp.curve.length > 1 ? exp.curve.map((c) => c.successRate) : undefined
   const gain = first !== undefined ? Math.round(p.successRate - first) : undefined
   const cardId = detail.data?.cardId
 
@@ -228,7 +256,14 @@ function ExperimentRow({ exp, lastPlayedAt, mastered }: { exp: ExperimentSummary
       </div>
 
       <div className={styles.trend} aria-hidden>
-        {first !== undefined && <Sparkline values={trendValues(first, p.successRate, p.trial)} width={160} height={48} tone={done ? 'success' : 'indigo'} />}
+        {(curve || first !== undefined) && (
+          <Sparkline
+            values={curve ?? trendValues(first!, p.successRate, p.trial)}
+            width={160}
+            height={48}
+            tone={done ? 'success' : 'indigo'}
+          />
+        )}
       </div>
 
       <div className={styles.actions}>
@@ -268,15 +303,24 @@ function ExperimentRow({ exp, lastPlayedAt, mastered }: { exp: ExperimentSummary
   )
 }
 
-/** 1회차 → 현재 성공률 사이의 완만한 학습 곡선(추세 표시용) */
+/** curve가 없을 때 1회차 → 현재 성공률 사이의 완만한 학습 곡선(추세 표시용) */
 function trendValues(first: number, now: number, trials: number) {
   const n = Math.max(4, Math.min(12, trials))
   return Array.from({ length: n }, (_, i) => first + (now - first) * (1 - Math.pow(1 - i / (n - 1), 2)))
 }
 
-function NotifyRow({ exp, onMute }: { exp: ExperimentSummary; onMute: () => void }) {
-  const drop = useApi((s) => getTechDrop(exp.id, s), [exp.id])
-  const dDay = drop.data ? daysUntil(drop.data.openAt) : undefined
+function NotifyRow({
+  exp,
+  drop,
+  busy,
+  onMute,
+}: {
+  exp: ExperimentSummary
+  drop?: TechDrop
+  busy: boolean
+  onMute: () => void
+}) {
+  const dDay = drop ? daysUntil(drop.openAt) : undefined
   return (
     <li className={styles.notify}>
       <Character id={exp.character} size={56} />
@@ -284,7 +328,7 @@ function NotifyRow({ exp, onMute }: { exp: ExperimentSummary; onMute: () => void
         <p className={styles.notifyTitle}>
           {exp.code} · {exp.title}
         </p>
-        <p className={styles.notifyState}>{drop.data?.subscribed === false ? exp.unlockCondition : '알림 받는 중'}</p>
+        <p className={styles.notifyState}>{drop?.subscribed === false ? exp.unlockCondition : '알림 받는 중'}</p>
       </div>
       {dDay !== undefined ? (
         <Badge tone="dark" mono>
@@ -293,7 +337,7 @@ function NotifyRow({ exp, onMute }: { exp: ExperimentSummary; onMute: () => void
       ) : (
         exp.unlockCondition && <span className={my.caption}>{exp.unlockCondition}</span>
       )}
-      <button type="button" className={styles.mute} onClick={onMute}>
+      <button type="button" className={styles.mute} onClick={onMute} disabled={busy}>
         알림 끄기
       </button>
     </li>

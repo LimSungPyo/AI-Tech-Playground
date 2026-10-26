@@ -80,8 +80,17 @@ export default function SupportPage() {
     if (invalid) return
     setSending(true)
     try {
-      const extra = attachRelated && relatedText ? `\n\n[관련 실험] ${relatedText}` : ''
-      const res = await createInquiry({ category, title: title.trim(), body: body.trim() + extra, files })
+      const attach = attachRelated && related.data
+      const trialNo = trial ? Number(trial) : NaN
+      const res = await createInquiry({
+        category,
+        title: title.trim(),
+        body: body.trim(),
+        files,
+        notify,
+        experimentId: attach ? related.data!.id : undefined,
+        trial: attach && Number.isFinite(trialNo) ? trialNo : undefined,
+      })
       toast.show({
         title: '문의를 보냈어요',
         description: `${res.id} · 보통 24시간 안에 답해요`,

@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { getCards, getDashboard, getMyBadges, getMyExperiments, type Badge as BadgeData } from '../../api'
+import { getMyBadges, getMyExperiments, setFeaturedBadge } from '../../api'
 import { Button, EmptyState, GlassCard, ProgressBar, Skeleton, cx, useToast } from '../../components'
 import { useApi } from '../../hooks/useApi'
 import { BadgeIcon } from './components/BadgeIcon'
-import { BADGE_CATEGORIES, badgeMeta } from './components/badgeMeta'
+import { BADGE_CATEGORIES, badgeCategory } from './components/badgeMeta'
 import { formatFullDate, formatMonthDay } from './components/format'
 import { PageTitle } from './components/PageTitle'
 import my from './components/my.module.css'
@@ -13,12 +13,11 @@ import styles from './MyBadgesPage.module.css'
 export default function MyBadgesPage() {
   const badges = useApi((s) => getMyBadges(s), [])
   const exps = useApi((s) => getMyExperiments(s), [])
-  const cards = useApi((s) => getCards(s), [])
-  const dash = useApi((s) => getDashboard(s), [])
   const toast = useToast()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  // 대표 배지(저장 API가 없어 화면에서만 유지)
+  // 저장한 대표 배지(응답의 featured보다 우선)
   const [featuredId, setFeaturedId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
   if (badges.error) {
     return (
@@ -33,29 +32,26 @@ export default function MyBadgesPage() {
 
   const list = badges.data ?? []
   const obtained = list.filter((b) => b.obtained).length
-  const selected = list.find((b) => b.id === selectedId) ?? list.find((b) => b.obtained) ?? list[0]
+  const featured = featuredId ?? list.find((b) => b.featured)?.id
+  const selected =
+    list.find((b) => b.id === selectedId) ?? list.find((b) => b.id === featured) ?? list.find((b) => b.obtained) ?? list[0]
 
-  /** 미획득 배지의 진행률(0~100). 지금 받은 데이터로 셀 수 있는 것만 */
-  const progressOf = (b: BadgeData): number | undefined => {
-    const streak = dash.data?.streak.days ?? 0
-    switch (b.id) {
-      case 'hundred-trials': {
-        const best = Math.max(0, ...(exps.data ?? []).map((e) => e.progress?.trial ?? 0))
-        return exps.data ? Math.min(100, best) : undefined
-      }
-      case 'card-collector':
-        return cards.data ? Math.min(100, (cards.data.filter((c) => c.unlocked).length / 5) * 100) : undefined
-      case 'streak-7':
-        return dash.data ? Math.min(100, (streak / 7) * 100) : undefined
-      case 'streak-30':
-        return dash.data ? Math.min(100, (streak / 30) * 100) : undefined
-      default:
-        return 0
+  const related = selected?.experimentId
+  const relatedExp = related ? exps.data?.find((e) => e.id === related) : undefined
+
+  const feature = async () => {
+    if (!selected) return
+    setSaving(true)
+    try {
+      const res = await setFeaturedBadge(selected.id)
+      setFeaturedId(res.featuredBadgeId ?? selected.id)
+      toast.show({ title: '대표 배지로 설정했어요', description: selected.name, tone: 'success' })
+    } catch (e) {
+      toast.show({ title: '대표 배지를 바꾸지 못했어요', description: e instanceof Error ? e.message : undefined, tone: 'danger' })
+    } finally {
+      setSaving(false)
     }
   }
-
-  const related = selected ? badgeMeta(selected.id).experimentId : undefined
-  const relatedExp = related ? exps.data?.find((e) => e.id === related) : undefined
 
   const share = async () => {
     if (!selected) return
@@ -97,7 +93,7 @@ export default function MyBadgesPage() {
         <div className={styles.layout}>
           <div className={styles.sections}>
             {BADGE_CATEGORIES.map((cat) => {
-              const items = list.filter((b) => badgeMeta(b.id).category === cat.id)
+              const items = list.filter((b) => badgeCategory(b) === cat.id)
               if (items.length === 0) return null
               return (
                 <GlassCard key={cat.id} radius="lg" as="section">
@@ -111,7 +107,7 @@ export default function MyBadgesPage() {
                   </div>
                   <ul className={styles.grid}>
                     {items.map((b) => {
-                      const pct = b.obtained ? undefined : progressOf(b)
+                      const pct = b.obtained ? undefined : (b.progress ?? 0)
                       return (
                         <li key={b.id}>
                           <button
@@ -146,12 +142,24 @@ export default function MyBadgesPage() {
               <p className={styles.detailEyebrow}>선택한 배지</p>
               <BadgeIcon badge={selected} size={116} />
               <h2 className={styles.detailName}>{selected.name}</h2>
-              <p className={styles.detailDesc}>{selected.description}</p>
+              <p className={styles.detailDesc}>{selected.story ?? selected.description}</p>
               <dl className={styles.detailRows}>
                 <div>
                   <dt>획득일</dt>
                   <dd>{selected.obtainedAt ? formatFullDate(selected.obtainedAt) : '아직'}</dd>
                 </div>
+                {!selected.obtained && selected.progress !== undefined && (
+                  <div>
+                    <dt>진행률</dt>
+                    <dd>{Math.round(selected.progress)}%</dd>
+                  </div>
+                )}
+                {selected.rarity !== undefined && (
+                  <div>
+                    <dt>획득한 사용자</dt>
+                    <dd>{selected.rarity}%</dd>
+                  </div>
+                )}
                 {relatedExp && (
                   <div>
                     <dt>관련 실험</dt>
@@ -163,15 +171,8 @@ export default function MyBadgesPage() {
               </dl>
               {selected.obtained ? (
                 <>
-                  <Button
-                    block
-                    disabled={featuredId === selected.id}
-                    onClick={() => {
-                      setFeaturedId(selected.id)
-                      toast.show({ title: '대표 배지로 설정했어요', description: selected.name, tone: 'success' })
-                    }}
-                  >
-                    {featuredId === selected.id ? '대표 배지' : '대표 배지로 설정'}
+                  <Button block disabled={featured === selected.id} loading={saving} onClick={feature}>
+                    {featured === selected.id ? '대표 배지' : '대표 배지로 설정'}
                   </Button>
                   <Button block variant="secondary" onClick={share}>
                     공유하기

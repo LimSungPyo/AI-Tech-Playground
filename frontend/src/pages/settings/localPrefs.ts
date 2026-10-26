@@ -1,34 +1,16 @@
-// MeSettings에 아직 없는 설정값(훈련 속도 · 언어 · 랭킹 알림 · 접근성 · 소개 · 공개 범위)을 이 기기에만 저장한다.
+// MeSettings(v2)에도 없는 설정값(효과음 · 다른 기기 로그아웃)을 이 기기에만 저장한다.
 // 백엔드 스키마에 필드가 생기면 getSettings/saveSettings로 옮긴다.
 import { useState } from 'react'
 
 const KEY = 'atp.localPrefs'
 
 export interface LocalPrefs {
-  speed: '1' | '2' | '4'
-  language: 'ko' | 'en'
-  rankingAlert: boolean
-  reduceMotion: boolean
-  largeText: boolean
-  highContrast: boolean
   sound: boolean
-  bio: string
-  showNicknameInRanking: boolean
-  shareRecords: boolean
   logoutOtherDevices: boolean
 }
 
 const DEFAULTS: LocalPrefs = {
-  speed: '1',
-  language: 'ko',
-  rankingAlert: false,
-  reduceMotion: false,
-  largeText: false,
-  highContrast: false,
   sound: true,
-  bio: '',
-  showNicknameInRanking: true,
-  shareRecords: true,
   logoutOtherDevices: true,
 }
 
