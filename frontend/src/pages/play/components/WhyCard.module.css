@@ -1,0 +1,106 @@
+.card {
+  composes: glass from '../../../components/glass.module.css';
+  position: absolute;
+  z-index: 3;
+  right: 3.5%;
+  top: 35%;
+  width: min(370px, 44%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--glass-sheen), var(--color-glass-solid);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+.card:hover {
+  transform: translateY(-2px);
+}
+.card:focus-visible {
+  outline: 2px solid var(--color-accent-indigo);
+  outline-offset: 2px;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.head > span {
+  display: flex;
+  flex-direction: column;
+}
+.title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+.body {
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.row {
+  display: grid;
+  grid-template-columns: 64px 1fr 40px;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+.choice {
+  color: var(--color-text-secondary);
+}
+.track {
+  height: 6px;
+  background: var(--color-track);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.fill,
+.fillTop {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--color-text-tertiary);
+  opacity: 0.6;
+}
+.fillTop {
+  background: var(--color-accent-indigo);
+  opacity: 1;
+}
+.pct {
+  text-align: right;
+  font-family: var(--font-number);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-primary);
+}
+.foot {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+@media (max-width: 1024px) {
+  /* 좁은 화면에선 게임을 가리지 않게 숨긴다(노란 WHY? 버튼으로 연다) */
+  .card {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

@@ -1,0 +1,143 @@
+.modal.modal {
+  width: min(560px, 100%);
+  padding: var(--space-10) var(--space-10) var(--space-8);
+}
+.bigTitle {
+  display: block;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-black);
+  letter-spacing: -0.02em;
+}
+.guestEyebrow {
+  color: var(--color-accent-success);
+  font-weight: var(--weight-bold);
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 76px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-glass-clear-nested);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.stat small {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+.stat strong {
+  font-family: var(--font-number);
+  font-size: var(--text-xl);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.saved {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-success-soft);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.saved svg {
+  color: var(--color-accent-success);
+}
+
+.progress {
+  margin-bottom: var(--space-5);
+}
+
+/* E-05 · 게임 위 연결 끊김 배너 */
+.lost {
+  position: absolute;
+  z-index: 5;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: min(560px, calc(100% - var(--space-8)));
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--glass-sheen), var(--color-bg-peach);
+  box-shadow:
+    inset 0 0 0 1.5px var(--color-accent-warning),
+    var(--shadow-glass);
+  animation: drop var(--motion-duration) var(--motion-ease-out);
+}
+.lostText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+.lostText strong {
+  font-size: var(--text-md);
+}
+.lostText small {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.retry {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-warning);
+  color: var(--color-text-on-tint);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+.retry:focus-visible {
+  outline: 2px solid var(--color-accent-indigo);
+  outline-offset: 2px;
+}
+.offline {
+  position: fixed;
+  z-index: var(--z-toast);
+  left: 50%;
+  bottom: var(--space-6);
+  transform: translateX(-50%);
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-glass-solid);
+  box-shadow: var(--shadow-soft);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lost {
+    animation: none;
+  }
+}

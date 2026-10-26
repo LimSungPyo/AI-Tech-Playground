@@ -1,0 +1,42 @@
+.net {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.link {
+  stroke: var(--color-text-tertiary);
+  stroke-width: 0.8;
+  transition: opacity var(--motion-fast) linear;
+}
+.hot {
+  stroke: var(--color-accent-indigo);
+  stroke-width: 1.6;
+  opacity: 0.9;
+}
+.thick {
+  stroke-width: 3.5;
+  opacity: 1;
+}
+.dot {
+  fill: var(--color-accent-indigo);
+  stroke: var(--color-text-tertiary);
+  stroke-width: 1.2;
+  transition: fill-opacity var(--motion-fast) linear;
+}
+.strong .dot {
+  stroke: var(--color-glass-rim);
+  stroke-width: 2;
+}
+.halo {
+  fill: var(--color-glass-clear);
+  stroke: var(--color-line-strong);
+  stroke-width: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link,
+  .dot {
+    transition: none;
+  }
+}
