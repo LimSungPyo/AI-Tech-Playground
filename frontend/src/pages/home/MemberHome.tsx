@@ -66,20 +66,16 @@ function useNewsToast() {
     getNotifications(ctrl.signal)
       .then((list) => {
         writeStore('session', NEWS_SHOWN_KEY, '1')
-        list
-          .filter((n) => !n.read)
-          .slice(0, 3)
-          .forEach((n, i) => {
-            const target = n.target
-            window.setTimeout(() => {
-              toast.show({
-                title: n.title,
-                description: n.body,
-                action: target && target !== '/' ? { label: '보기', onClick: () => navigate(target) } : undefined,
-                duration: target ? 6000 : 3000,
-              })
-            }, i * 400)
-          })
+        // 가장 최근 안 읽은 소식 하나만 띄운다(여러 개를 쌓으면 오른쪽 카드를 가린다)
+        const n = list.find((item) => !item.read)
+        if (!n) return
+        const target = n.target
+        toast.show({
+          title: n.title,
+          description: n.body,
+          action: target && target !== '/' ? { label: '보기', onClick: () => navigate(target) } : undefined,
+          duration: target ? 6000 : 3000,
+        })
       })
       .catch(() => {
         // 새 소식은 못 받아도 홈은 그대로 보여준다
