@@ -1,0 +1,138 @@
+.pipeline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-glass-solid);
+  box-shadow:
+    inset 0 0 0 1px var(--color-line),
+    var(--shadow-soft);
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-admin-bg);
+}
+.arrow {
+  color: var(--color-text-tertiary);
+}
+.step strong {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.step small {
+  display: block;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.done {
+  background: var(--color-accent-success-soft);
+}
+.done > svg {
+  color: var(--color-accent-success);
+}
+.current {
+  background: var(--color-accent-indigo);
+}
+.current strong,
+.current small {
+  color: var(--color-text-on-tint);
+}
+.bullet {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-text-on-tint);
+}
+.ringBullet {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--color-text-tertiary);
+  border-radius: 50%;
+}
+
+.tableHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+.rowLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
+}
+.selCount {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.reject {
+  color: var(--color-accent-danger);
+}
+.publish {
+  margin-left: auto;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.keyword {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.badges {
+  display: flex;
+  gap: var(--space-2);
+}
+.sub {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.docs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.docs li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-admin-bg);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}
+.docKind {
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-xs);
+  background: var(--color-glass-solid);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}

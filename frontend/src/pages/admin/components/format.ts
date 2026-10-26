@@ -1,4 +1,7 @@
-// 관리자 화면 날짜 표기. 서버 시각(ISO)을 브라우저 시간대로 보여 준다.
+// 관리자 화면 표기 도우미. 서버 시각(ISO)은 브라우저 시간대로 보여 준다.
+import type { CharacterId } from '../../../api/types'
+import { CHARACTERS, CHARACTER_IDS } from '../../../components'
+
 const pad = (n: number) => String(n).padStart(2, '0')
 
 function parse(iso: string): Date | null {
@@ -41,3 +44,9 @@ export function lastSeen(iso: string, now = new Date()) {
 
 /** "1,284" 처럼 천 단위 쉼표 */
 export const num = (n: number) => n.toLocaleString('ko-KR')
+
+/** 실험 코드("#002" 또는 "002") → 담당 캐릭터 */
+export function characterOf(code: string): CharacterId | undefined {
+  const c = code.startsWith('#') ? code : `#${code}`
+  return CHARACTER_IDS.find((id) => CHARACTERS[id].experiment === c)
+}
