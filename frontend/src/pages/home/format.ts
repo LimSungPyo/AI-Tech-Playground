@@ -1,11 +1,19 @@
 // 홈 · 레이더 화면에서 함께 쓰는 표시용 변환 함수
-import type { ExperimentSummary, Level, RadarKeyword } from '../../api/types'
+import type { ExperimentSummary, Level, RadarKeyword, SocialProvider, Source } from '../../api/types'
 
 export const LEVEL_LABEL: Record<Level, string> = {
   intro: '입문',
   basic: '기초',
   advanced: '심화',
   frontier: '최전선',
+}
+
+/** 마지막 로그인 방법(07:M-01 "지난번엔 Google로 로그인했어요") */
+export const PROVIDER_LABEL: Record<SocialProvider | 'email', string> = {
+  google: 'Google',
+  kakao: '카카오',
+  github: 'GitHub',
+  email: '이메일',
 }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -67,19 +75,31 @@ export function risingWeeks(weeks: number[]) {
   return n
 }
 
-export type SourceKind = '논문' | '코드' | '커뮤니티'
+export type SourceKind = '논문' | '코드' | '커뮤니티' | '뉴스'
 
-/** 출처 URL로 종류를 고른다 */
-export function sourceKind(url: string): SourceKind {
+const KIND_LABEL: Record<NonNullable<Source['kind']>, SourceKind> = {
+  paper: '논문',
+  code: '코드',
+  community: '커뮤니티',
+  news: '뉴스',
+}
+
+/** 출처 종류 → CSS 클래스 이름(레이더 표 · 드로어) */
+export const KIND_CLASS = { 논문: 'paper', 코드: 'code', 커뮤니티: 'community', 뉴스: 'news' } as const
+
+/** 출처 종류. API의 kind를 쓰고, 없으면 URL로 고른다 */
+export function sourceKind(source: Source): SourceKind {
+  if (source.kind) return KIND_LABEL[source.kind]
+  const { url } = source
   if (/github\.com|huggingface\.co|gitlab/.test(url)) return '코드'
   if (/ycombinator|reddit|twitter|x\.com|discord|forum/.test(url)) return '커뮤니티'
   return '논문'
 }
 
-/** 키워드의 출처 종류 목록(중복 제거, 논문 · 코드 · 커뮤니티 순) */
+/** 키워드의 출처 종류 목록(중복 제거, 논문 · 코드 · 커뮤니티 · 뉴스 순) */
 export function sourceKinds(kw: RadarKeyword): SourceKind[] {
-  const set = new Set(kw.sources.map((s) => sourceKind(s.url)))
-  return (['논문', '코드', '커뮤니티'] as const).filter((k) => set.has(k))
+  const set = new Set(kw.sources.map(sourceKind))
+  return (['논문', '코드', '커뮤니티', '뉴스'] as const).filter((k) => set.has(k))
 }
 
 /** 실험 상태 짧은 설명(레이더 "우리 실험" 열) */

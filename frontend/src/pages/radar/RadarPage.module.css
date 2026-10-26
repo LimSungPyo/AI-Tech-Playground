@@ -17,7 +17,7 @@
 }
 .head {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   margin-top: calc(var(--space-3) * -1);
@@ -163,6 +163,10 @@
 .community {
   background: var(--color-accent-warning-soft);
   color: var(--color-accent-warning);
+}
+.news {
+  background: var(--color-accent-pink-soft);
+  color: var(--color-text-secondary);
 }
 .exp {
   display: inline-flex;

@@ -10,7 +10,7 @@ import styles from './HomePage.module.css'
 // 회원 → B-02 로그인 홈(첫 실험 전이면 E-03), 비회원 + 기억된 이메일 → 07:M-01, 그 외 → 0-01
 export default function HomePage() {
   const { status } = useAuth()
-  const [remembered, setRemembered] = useState(() => getRememberedProfile()?.email ?? null)
+  const [remembered, setRemembered] = useState(getRememberedProfile)
 
   if (status === 'loading') {
     return (
@@ -23,7 +23,7 @@ export default function HomePage() {
   if (status === 'member') return <MemberHome />
   return (
     <GuestHome
-      rememberedEmail={remembered}
+      remembered={remembered}
       onForget={() => {
         forgetAccount()
         setRemembered(null)

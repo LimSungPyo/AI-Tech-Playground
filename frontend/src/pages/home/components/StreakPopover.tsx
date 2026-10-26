@@ -14,23 +14,23 @@ interface Props {
   onContinue: () => void
 }
 
-/** 달력에서 최고 연속 기록과 이번 달 학습일 수를 센다 */
-function summarize(calendar: { date: string; minutes: number }[]) {
-  let best = 0
-  let run = 0
-  for (const c of calendar) {
-    run = c.minutes > 0 ? run + 1 : 0
-    best = Math.max(best, run)
-  }
+/** 이번 달 학습일 수는 달력에서 센다(최고 기록 · 보호권은 대시보드 값) */
+function monthDays(calendar: { date: string; minutes: number }[]) {
   const last = calendar[calendar.length - 1]?.date.slice(0, 7)
-  const month = calendar.filter((c) => c.date.startsWith(last ?? '') && c.minutes > 0).length
-  return { best, month }
+  return calendar.filter((c) => c.date.startsWith(last ?? '') && c.minutes > 0).length
 }
 
 /** D-03 연속 학습 팝오버 */
 export function StreakPopover({ open, onClose, anchorRef, streakDays, days, onContinue }: Props) {
   const dash = useApi(open ? (s) => getDashboard(s) : null, [open])
-  const stats = dash.data ? summarize(dash.data.streak.calendar) : null
+  const dd = dash.data
+  const stats = dd
+    ? {
+        best: dd.streak.best ?? dd.bestStreak ?? streakDays,
+        month: monthDays(dd.streak.calendar),
+        protectionsLeft: dd.streak.protectionsLeft,
+      }
+    : null
   const today = days.length - 1
   const todayDone = (days[today]?.minutes ?? 0) > 0
   // 오늘 기록 전이면 오늘 칸은 점선. 연속 기록 안의 0분 날은 "쉬는 날 보호권"(◆)
@@ -63,7 +63,12 @@ export function StreakPopover({ open, onClose, anchorRef, streakDays, days, onCo
           <strong>
             {todayDone ? `오늘도 학습했어요! ${streakDays}일째 이어가는 중이에요.` : `오늘 1번만 훈련하면 ${nextStreak}일 연속 배지를 받아요!`}
           </strong>
-          {shieldDay && <span>◆ {shieldDay}요일은 "쉬는 날 보호권"을 써서 기록이 이어졌어요.</span>}
+          {shieldDay && (
+            <span>
+              ◆ {shieldDay}요일은 "쉬는 날 보호권"을 써서 기록이 이어졌어요.
+              {stats?.protectionsLeft !== undefined && ` (이번 달 ${stats.protectionsLeft}개 남음)`}
+            </span>
+          )}
         </div>
         <div className={styles.stats}>
           <div className={styles.stat}>

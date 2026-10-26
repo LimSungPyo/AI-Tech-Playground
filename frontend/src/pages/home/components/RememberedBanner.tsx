@@ -1,28 +1,37 @@
-import { Button, Character } from '../../../components'
-import { maskEmail } from '../format'
+import type { RememberedProfile } from '../../../auth/remembered'
+import { Button, CHARACTERS, Character } from '../../../components'
+import { PROVIDER_LABEL } from '../format'
 import styles from './RememberedBanner.module.css'
 
 interface Props {
-  email: string
+  profile: RememberedProfile
   onForget: () => void
 }
 
 /**
- * 07:M-01 상단 "다시 오셨네요" 배너. 토큰이 없어 사용자 정보 API를 부를 수 없으므로
- * 이 기기에 기억된 이메일만 보여준다(닉네임 · 마지막 로그인 방법은 공통 변경 요청으로 남김).
+ * 07:M-01 상단 "다시 오셨네요" 배너. 로그인 때 이 기기에 저장된 기억된 회원 정보
+ * (닉네임 · 아바타 · 마지막 로그인 방법 · 멈춘 Trial)로 그린다. 계속하기는 M-02 로그인 화면으로.
  */
-export function RememberedBanner({ email, onForget }: Props) {
+export function RememberedBanner({ profile, onForget }: Props) {
+  const { nickname, avatar, provider, pausedTrial } = profile
+  const method = PROVIDER_LABEL[provider]
+  const partner = pausedTrial && Object.values(CHARACTERS).find((c) => c.experiment === pausedTrial.code)
+  const waiting = pausedTrial
+    ? `${partner?.name ?? pausedTrial.code}가 Trial ${pausedTrial.trial}에서 기다리고 있어요`
+    : '멈춘 실험이 기다리고 있어요'
   return (
     <section className={styles.banner} aria-label="기억된 계정">
       <span className={styles.avatar}>
-        <Character id="wormy" size={44} alt="" />
+        <Character id={avatar ?? 'wormy'} size={44} alt="" />
       </span>
       <div className={styles.text}>
-        <strong className={styles.title}>{maskEmail(email)}님, 다시 오셨네요!</strong>
-        <span className={styles.desc}>멈춘 실험이 기다리고 있어요 · 지난번 계정으로 바로 이어갈 수 있어요</span>
+        <strong className={styles.title}>{nickname}님, 다시 오셨네요!</strong>
+        <span className={styles.desc}>
+          {waiting} · 지난번엔 {method}로 로그인했어요
+        </span>
       </div>
       <Button to="/login" variant="primary">
-        이 계정으로 계속하기
+        {method}로 계속하기
       </Button>
       <button type="button" className={styles.forget} onClick={onForget}>
         내가 아니에요

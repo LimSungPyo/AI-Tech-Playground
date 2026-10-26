@@ -4,11 +4,9 @@ import { getTechDrop, subscribeTechDrop } from '../../../api'
 import type { ExperimentSummary, RadarKeyword } from '../../../api/types'
 import { Badge, BarMini, Button, Character, Drawer, EmptyState, Icon, Skeleton, cx, useToast } from '../../../components'
 import { useApi } from '../../../hooks/useApi'
-import { daysUntil, experimentStatusLabel, risingWeeks, sourceKind } from '../../home/format'
+import { KIND_CLASS, daysUntil, experimentStatusLabel, risingWeeks, sourceKind } from '../../home/format'
 import { weekLabels } from '../radarWeeks'
 import styles from './KeywordDrawer.module.css'
-
-const KIND_CLASS = { 논문: 'paper', 코드: 'code', 커뮤니티: 'community' } as const
 
 interface Props {
   open: boolean
@@ -105,7 +103,7 @@ export function KeywordDrawer({
               <h3 className={styles.h3}>대표 링크</h3>
               <ul className={styles.links}>
                 {kw.sources.map((s) => {
-                  const kind = sourceKind(s.url)
+                  const kind = sourceKind(s)
                   return (
                     <li key={s.url + s.title}>
                       <a href={s.url} target="_blank" rel="noopener noreferrer" className={styles.link}>
