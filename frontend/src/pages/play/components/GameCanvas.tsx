@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { Character, Mascot, cx } from '../../../components'
-import type { Point } from '../../../api'
-import type { Scene } from '../lib'
+import type { Point, Scene } from '../../../api'
 import styles from './GameCanvas.module.css'
 
 export interface GameCanvasProps {

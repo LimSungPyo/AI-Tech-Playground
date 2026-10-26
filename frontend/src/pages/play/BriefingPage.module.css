@@ -343,6 +343,36 @@
   color: var(--color-accent-success);
 }
 
+.prevNote.prevMiss {
+  color: var(--color-text-secondary);
+}
+
+/* B-03 다른 사용자들의 예측 — 보기 순서대로 세로 막대, 내가 고른 보기는 보라 */
+.stats {
+  margin-top: var(--space-5);
+}
+.statsLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.statBars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-items: end;
+  gap: var(--space-2);
+  height: 56px;
+  margin-top: var(--space-3);
+}
+.statBar {
+  border-radius: 4px 4px 2px 2px;
+  background: var(--color-line-strong);
+  transition: background var(--motion-duration) ease;
+}
+.statBar.statBarOn {
+  background: var(--color-accent-indigo-light);
+}
+
 .startCard {
   display: flex;
   flex-direction: column;

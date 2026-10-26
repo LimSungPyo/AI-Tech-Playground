@@ -1,6 +1,6 @@
-// 플레이 화면 공용 도우미. 게임 장면 배치·뉴런 이름처럼 화면 설계에 속한 고정값과 게스트 기록 저장을 모은다.
+// 플레이 화면 공용 도우미. 게임 장면 고르기·뉴런 이름처럼 화면 설계에 속한 값과 게스트 기록 저장을 모은다.
 import { isApiError } from '../../api'
-import type { CurvePoint, NeuronActivation, Point } from '../../api'
+import type { CurvePoint, ExperimentDetail, Scene } from '../../api'
 
 // ── 게스트 체험 ──
 export const GUEST_LIMIT = 3
@@ -23,32 +23,8 @@ export function setGuestTrials(n: number) {
   }
 }
 
-// ── 브리핑 예측(내가 고른 보기) — 미션 성공 화면에서 정답 여부를 보여 줄 때 쓴다 ──
-const predictionKey = (id: string, missionId: string) => `atp.prediction.${id}.${missionId}`
-
-export function savePrediction(id: string, missionId: string, option: string) {
-  try {
-    localStorage.setItem(predictionKey(id, missionId), option)
-  } catch {
-    // 무시
-  }
-}
-
-export function loadPrediction(id: string, missionId: string) {
-  try {
-    return localStorage.getItem(predictionKey(id, missionId))
-  } catch {
-    return null
-  }
-}
-
-/** "11 – 30회" → [11, 30], "61회 이상" → [61, ∞] */
-export function parseRange(option: string): [number, number] | null {
-  const nums = option.match(/\d+/g)?.map(Number) ?? []
-  if (nums.length >= 2) return [nums[0], nums[1]]
-  if (nums.length === 1) return option.includes('이상') ? [nums[0], Infinity] : [nums[0], nums[0]]
-  return null
-}
+/** "11 – 30회" → "11–30회"(큰 숫자 칸에서 띄어쓰기를 줄인다) */
+export const compactRange = (option: string) => option.replace(/\s*[–-]\s*/g, '–')
 
 // ── 보상 규칙 "+1.0 먹이에 도착" → 값 · 설명 · 색 ──
 export interface RewardRule {
@@ -69,33 +45,11 @@ export function parseTip(tip: string): RewardRule | null {
   return { value, label: m[2].replace(/\s*\(NEW\)\s*$/, ''), tone, isNew }
 }
 
-// ── 게임 장면(먹이 · 장애물 위치) — 0~100 좌표. 백엔드가 장면을 주지 않아 화면 설계값을 쓴다 ──
-export interface Obstacle {
-  x: number
-  y: number
-  w: number
-  h: number
-  label?: string
-}
+// ── 게임 장면(먹이 · 장애물 위치, 0~100 좌표) — 미션 · 실험 응답의 scene을 쓴다. 둘 다 없을 때만 빈 장면 ──
+const EMPTY_SCENE: Scene = { start: { x: 14, y: 85 }, food: { x: 82, y: 20 }, obstacles: [] }
 
-export interface Scene {
-  start: Point
-  food: Point
-  obstacles: Obstacle[]
-}
-
-const FLY_SCENE: Scene = {
-  start: { x: 14, y: 85 },
-  food: { x: 82, y: 20 },
-  obstacles: [
-    { x: 21.5, y: 19, w: 15, h: 5.5 },
-    { x: 38.6, y: 26, w: 3.9, h: 34.5, label: '장애물' },
-  ],
-}
-
-const WORM_SCENE: Scene = { start: { x: 14, y: 85 }, food: { x: 82, y: 20 }, obstacles: [] }
-
-export const sceneFor = (experimentId: string): Scene => (experimentId === '000' ? WORM_SCENE : FLY_SCENE)
+export const sceneFor = (experiment: ExperimentDetail, missionId: string): Scene =>
+  experiment.missions.find((m) => m.id === missionId)?.scene ?? experiment.scene ?? EMPTY_SCENE
 
 // ── 뉴런 이름(브리핑의 감각 → 뉴런 매핑과 같은 이름) ──
 const SENSE: Record<string, string> = {
@@ -113,23 +67,6 @@ export function neuronName(id: string) {
   if (MOTOR[id]) return `${id} ${MOTOR[id]}`
   if (id.startsWith('I')) return `${id} 중간 뉴런`
   return id
-}
-
-/**
- * ×10 훈련의 "가장 많이 바뀐 연결 TOP 5".
- * API에 연결 변화량이 없어 마지막 회차의 감각·운동 뉴런 활성도로 근사한다(공통 변경 요청에 적음).
- */
-export function connectionChanges(neurons: NeuronActivation[]) {
-  const sensory = neurons.filter((n) => n.layer === 'sensory')
-  const motor = neurons.filter((n) => n.layer === 'motor')
-  const pairs = sensory.flatMap((s) =>
-    motor.map((m) => ({
-      from: s.id,
-      to: m.id,
-      delta: Math.round((s.activation - 0.3) * m.activation * 50) / 100,
-    })),
-  )
-  return pairs.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 5)
 }
 
 // ── 곡선 합치기(회차 기준 중복 제거) ──

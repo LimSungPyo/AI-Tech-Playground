@@ -2,63 +2,6 @@ import { useEffect, useState } from 'react'
 import { Button, Icon, Mascot, Modal, ProgressBar } from '../../../components'
 import styles from './PlayDialogs.module.css'
 
-// ── 0-03 4회째 · 저장 유도 모달 (auth의 GuestSaveModal이 생기기 전까지 쓰는 같은 디자인) ──
-export interface GuestSaveGateProps {
-  open: boolean
-  onClose: () => void
-  /** 지금까지 한 체험 회차 */
-  trials: number
-  /** 현재 성공률(0~100). 모르면 숨긴다 */
-  successRate?: number
-  characterName: string
-  returnTo: string
-}
-
-export function GuestSaveGate({ open, onClose, trials, successRate, characterName, returnTo }: GuestSaveGateProps) {
-  const q = `?returnTo=${encodeURIComponent(returnTo)}`
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      size="lg"
-      centered
-      className={styles.modal}
-      media={<Mascot expression="champion" size={120} alt="" />}
-      eyebrow={<span className={styles.guestEyebrow}>GUEST · {trials} / {trials}회 완료</span>}
-      title={<span className={styles.bigTitle}>{characterName}의 성장을 저장할까요?</span>}
-      description={`게스트 체험은 ${trials}회까지예요. 로그인하면 지금까지의 Trial 1~${trials} 기록이 그대로 옮겨지고, Trial ${trials + 1}부터 이어서 훈련할 수 있어요.`}
-    >
-      <div className={styles.stats}>
-        <span className={styles.stat}>
-          <small>체험 회차</small>
-          <strong>{trials}회</strong>
-        </span>
-        {successRate !== undefined && (
-          <span className={styles.stat}>
-            <small>현재 성공률</small>
-            <strong>{Math.round(successRate)}%</strong>
-          </span>
-        )}
-        <span className={styles.stat}>
-          <small>저장될 리플레이</small>
-          <strong>{trials}개</strong>
-        </span>
-      </div>
-      <div className={styles.actions}>
-        <Button size="lg" block to={`/signup${q}`}>
-          가입하고 저장하기 (1분)
-        </Button>
-        <Button size="lg" block variant="secondary" to={`/login${q}`}>
-          이미 계정이 있어요 · 로그인
-        </Button>
-        <Button variant="ghost" size="sm" to="/">
-          저장 안 하고 홈으로
-        </Button>
-      </div>
-    </Modal>
-  )
-}
-
 // ── 07:M-08 플레이 중 세션 만료 ──
 export interface SessionExpiredModalProps {
   open: boolean

@@ -17,7 +17,7 @@ import {
 import type { IconName } from '../../components'
 import { useApi } from '../../hooks/useApi'
 import { MiniScene } from './components/MiniScene'
-import { loadPrediction, parseTip, savePrediction } from './lib'
+import { compactRange, parseTip } from './lib'
 import type { RewardRule } from './lib'
 import styles from './BriefingPage.module.css'
 
@@ -102,19 +102,21 @@ function Briefing({
   const later = index > 0
   const toast = useToast()
   const navigate = useNavigate()
-  const [choice, setChoice] = useState<string | null>(() => loadPrediction(id, mission.id))
+  const [choice, setChoice] = useState<string | null>(briefing.myPrediction ?? null)
   const [rulesOpen, setRulesOpen] = useState(false)
   const { headline, lead } = splitStory(briefing.story)
   const rules = briefing.tips.map(parseTip).filter((r): r is RewardRule => r !== null)
   // 보상 규칙 모양이 아닌 팁(이전 미션에서 이어받는 연결 안내 등)
   const notes = briefing.tips.filter((t) => !parseTip(t))
   const locked = mission.status === 'locked'
-  const prev = missions[index - 1]
+  const stats = briefing.predictionStats ?? []
+  const maxPct = Math.max(1, ...stats.map((s) => s.pct))
+  const last = briefing.lastPrediction
+  const lastIndex = last ? missions.findIndex((m) => m.id === last.missionId) : -1
 
   const choose = (option: string) => {
     const before = choice
     setChoice(option)
-    savePrediction(id, mission.id, option)
     predict(id, mission.id, option).catch((e: unknown) => {
       setChoice(before)
       toast.show({ title: '예측을 저장하지 못했어요', description: e instanceof Error ? e.message : undefined, tone: 'danger' })
@@ -289,11 +291,30 @@ function Briefing({
                 </button>
               ))}
             </div>
+            {!later && stats.length > 0 && (
+              <div className={styles.stats}>
+                <span className={styles.statsLabel}>다른 사용자들의 예측</span>
+                <div className={styles.statBars}>
+                  {stats.map((st) => (
+                    <span
+                      key={st.option}
+                      className={cx(styles.statBar, choice === st.option && styles.statBarOn)}
+                      style={{ height: `${Math.max(8, (st.pct / maxPct) * 100)}%` }}
+                      title={`${st.option} · ${st.pct}%`}
+                      aria-label={`${st.option} ${st.pct}%`}
+                      role="img"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
             {later ? (
-              prev && (
-                <p className={styles.prevNote}>
-                  미션 {index}의 예측 결과는 성장 리포트에서 확인할 수 있어요.
+              last ? (
+                <p className={cx(styles.prevNote, !last.correct && styles.prevMiss)}>
+                  지난 예측: 미션 {lastIndex >= 0 ? lastIndex + 1 : index} "{compactRange(last.option)}" {last.correct ? '적중 · 예언가 배지' : '빗나감'}
                 </p>
+              ) : (
+                index > 0 && <p className={styles.note}>미션 {index}의 예측 결과는 성장 리포트에서 확인할 수 있어요.</p>
               )
             ) : (
               <p className={styles.note}>정답은 성장 리포트에서 공개돼요. 맞히면 도감 카드에 "예언가" 배지가 붙어요.</p>
