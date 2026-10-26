@@ -1,0 +1,98 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 640px) minmax(0, 380px);
+  justify-content: center;
+  align-items: start;
+  gap: var(--space-8);
+}
+
+.card {
+  composes: glass from '../../components/glass.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-10) var(--space-12);
+  border-radius: var(--radius-popup);
+  background: var(--glass-sheen), var(--color-glass-solid);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  position: sticky;
+  top: var(--space-6);
+}
+.benefits {
+  composes: glass from '../../components/glass.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-6);
+  border-radius: var(--radius-popup);
+  background: var(--glass-sheen), var(--color-glass-solid);
+}
+.sideTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  list-style: none;
+}
+.list li {
+  display: flex;
+  gap: var(--space-3);
+}
+.list strong {
+  display: block;
+  font-size: var(--text-md);
+}
+.list small {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.check {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-accent-indigo);
+  color: var(--color-text-on-tint);
+}
+
+.carry {
+  padding: var(--space-5) var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--color-glass-dark);
+  color: var(--color-text-on-tint);
+}
+.carry strong {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-md);
+  color: var(--color-accent-cyan);
+}
+.carry p {
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--color-text-on-dark-secondary);
+}
+
+@media (max-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(0, 640px);
+  }
+  .side {
+    position: static;
+  }
+}
+@media (max-width: 768px) {
+  .card {
+    padding: var(--space-8) var(--space-5);
+  }
+}

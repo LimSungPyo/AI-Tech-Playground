@@ -1,0 +1,27 @@
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  list-style: none;
+  text-align: left;
+}
+.items li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-success-soft);
+}
+.items strong {
+  display: block;
+  font-size: var(--text-md);
+}
+.items small {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.check {
+  flex: none;
+  color: var(--color-accent-success);
+}
