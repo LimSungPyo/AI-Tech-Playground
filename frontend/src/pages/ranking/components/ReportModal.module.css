@@ -1,0 +1,98 @@
+.modal {
+  padding: var(--space-8);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.target {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-skeleton);
+}
+.rank {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+.nick {
+  flex: 1;
+  font-size: var(--text-md);
+  color: var(--color-text-primary);
+}
+.board {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.reasons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.legend {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-glass-solid);
+  box-shadow: inset 0 0 0 1px var(--color-line-strong);
+  font-size: var(--text-md);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.option:has(input:focus-visible) {
+  outline: 2px solid var(--color-accent-indigo);
+  outline-offset: 2px;
+}
+.dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--color-line-strong);
+  background: var(--color-glass-solid);
+}
+.optionOn {
+  background: var(--color-accent-indigo-soft);
+  box-shadow: inset 0 0 0 1.5px var(--color-accent-indigo);
+  font-weight: var(--weight-medium);
+}
+.optionOn .dot {
+  box-shadow: inset 0 0 0 5px var(--color-accent-indigo);
+}
+
+.note {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-warning-soft);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
