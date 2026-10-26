@@ -55,6 +55,8 @@ export interface RewardRule {
   value: string
   label: string
   tone: 'plus' | 'minus' | 'neutral'
+  /** 이번 미션에서 새로 생긴 규칙(백엔드가 "(NEW)"로 표시) */
+  isNew: boolean
 }
 
 export function parseTip(tip: string): RewardRule | null {
@@ -63,7 +65,8 @@ export function parseTip(tip: string): RewardRule | null {
   const value = m[1].replace(/\s/g, '')
   const num = Number(value.replace('−', '-'))
   const tone = Math.abs(num) < 0.05 ? 'neutral' : num > 0 ? 'plus' : 'minus'
-  return { value, label: m[2], tone }
+  const isNew = /\(NEW\)\s*$/.test(m[2])
+  return { value, label: m[2].replace(/\s*\(NEW\)\s*$/, ''), tone, isNew }
 }
 
 // ── 게임 장면(먹이 · 장애물 위치) — 0~100 좌표. 백엔드가 장면을 주지 않아 화면 설계값을 쓴다 ──

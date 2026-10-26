@@ -1,0 +1,373 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-4) var(--space-16);
+}
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-6);
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.02em;
+  color: var(--color-text-link);
+}
+.h1 {
+  margin: 0;
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-black);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.lead {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+}
+.mascotCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  width: 172px;
+  font-size: var(--text-sm);
+}
+
+/* G-04 미션 순서 */
+.stepper {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.stepItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.stepArrow {
+  color: var(--color-text-tertiary);
+}
+.step {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-track);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.step small {
+  font-weight: var(--weight-regular);
+  color: var(--color-text-tertiary);
+}
+.step:disabled {
+  cursor: default;
+  color: var(--color-text-secondary);
+}
+.stepDone {
+  background: var(--color-accent-success-soft);
+}
+.stepDone small {
+  color: var(--color-accent-success);
+}
+.stepNow {
+  background: var(--color-accent-indigo);
+  color: var(--color-text-on-tint);
+  box-shadow: var(--shadow-button);
+}
+.stepNow small {
+  color: var(--color-text-on-dark-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: var(--space-6);
+  align-items: start;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.h2 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+.h3 {
+  margin: var(--space-2) 0 var(--space-2);
+  font-size: var(--text-md);
+}
+.caption {
+  margin: calc(var(--space-2) * -1) 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* 미션 카드 */
+.missions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.missionCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-glass-clear-nested);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.missionOn {
+  box-shadow: inset 0 0 0 2px var(--color-accent-indigo);
+}
+.missionLocked {
+  cursor: default;
+  color: var(--color-text-tertiary);
+}
+.missionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-md);
+}
+.missionGoal {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* 감각 타일 */
+.senses {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.sense {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-glass-clear-nested);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.sense strong {
+  font-size: var(--text-md);
+}
+.senseNew {
+  box-shadow: inset 0 0 0 2px var(--color-accent-indigo);
+}
+.senseHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.senseIcon {
+  color: var(--color-accent-indigo);
+}
+.senseDesc {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.neuronTag {
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-indigo-soft);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-link);
+}
+.flow {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-indigo-soft);
+  font-size: var(--text-sm);
+  color: var(--color-text-link);
+}
+.flow span {
+  color: var(--color-text-secondary);
+}
+.carry {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-accent-indigo-soft);
+  font-size: var(--text-md);
+}
+.carry svg {
+  flex-shrink: 0;
+  color: var(--color-accent-indigo);
+}
+
+/* 보상 규칙 */
+.rules,
+.objectives {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-md);
+}
+.objectives {
+  padding-left: var(--space-5);
+  list-style: disc;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.rules li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.value {
+  min-width: 52px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+.plus {
+  background: var(--color-accent-success-soft);
+  color: var(--color-accent-success);
+}
+.minus {
+  background: var(--color-accent-danger-soft);
+  color: var(--color-accent-danger);
+}
+.neutral {
+  background: var(--color-track);
+  color: var(--color-text-tertiary);
+}
+
+/* 예측 */
+.predict {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-shadow:
+    inset 0 0 0 2px var(--color-accent-indigo),
+    var(--shadow-glass);
+}
+.predict .eyebrow {
+  font-size: var(--text-xs);
+}
+.question {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
+}
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-track);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--motion-ease);
+}
+.option:focus-visible {
+  outline: 2px solid var(--color-accent-indigo);
+  outline-offset: 2px;
+}
+.optionOn {
+  background: var(--color-accent-indigo);
+  color: var(--color-text-on-tint);
+}
+.radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--color-text-tertiary);
+}
+.optionOn .radio {
+  box-shadow:
+    inset 0 0 0 4px var(--color-text-on-tint),
+    inset 0 0 0 8px var(--color-accent-indigo);
+}
+.note,
+.prevNote {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+.prevNote {
+  color: var(--color-accent-success);
+}
+
+.startCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+.foot {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .senses,
+  .missions {
+    grid-template-columns: 1fr;
+  }
+  .mascotCard {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .option {
+    transition: none;
+  }
+}
