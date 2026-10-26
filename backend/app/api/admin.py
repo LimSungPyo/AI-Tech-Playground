@@ -4,15 +4,21 @@ from fastapi import APIRouter
 
 from app.core.auth import CurrentAdmin
 from app.schemas.admin import (
+    AdminCards,
     AdminDashboard,
     AdminHome,
     AdminInquiries,
+    AdminInviteRequest,
+    AdminInviteResponse,
     AdminLoginRequest,
     AdminLoginResponse,
     AdminNotificationRequest,
     AdminUsers,
     Analytics,
     AuditResponse,
+    InquiryAnswerRequest,
+    InquiryAnswerResponse,
+    ModuleStageRequest,
     ModulesResponse,
     OtpRequest,
     OtpResponse,
@@ -20,6 +26,7 @@ from app.schemas.admin import (
     RadarCandidates,
     RadarDecisionRequest,
     ScheduledResponse,
+    SentNotifications,
     UserActionRequest,
 )
 from app.schemas.base import Ok
@@ -56,7 +63,13 @@ def radar_candidates(admin: CurrentAdmin):
 @router.post("/radar/{candidate_id}/decision", response_model=Ok)
 def radar_decision(candidate_id: str, body: RadarDecisionRequest, admin: CurrentAdmin):
     """TODO: 실제로는 후보를 승인·제외·병합하고 감사 로그를 남긴다."""
-    return service.radar_decision(candidate_id, body.decision)
+    return service.radar_decision(candidate_id, body.decision, body.merge_into)
+
+
+@router.get("/cards", response_model=AdminCards)
+def list_cards(admin: CurrentAdmin):
+    """TODO: 실제로는 카드 목록과 검토 단계를 읽는다."""
+    return service.list_cards()
 
 
 @router.get("/cards/{card_id}", response_model=TechCard)
@@ -75,6 +88,12 @@ def save_card(card_id: str, body: TechCard, admin: CurrentAdmin):
 def modules(admin: CurrentAdmin):
     """TODO: 실제로는 실험 모듈 파이프라인 단계를 읽는다."""
     return service.modules()
+
+
+@router.put("/modules/{module_id}/stage", response_model=Ok)
+def change_module_stage(module_id: str, body: ModuleStageRequest, admin: CurrentAdmin):
+    """TODO: 실제로는 파이프라인 단계를 바꾸고 사용자 화면을 갱신한다."""
+    return service.change_module_stage(module_id, body.stage)
 
 
 @router.put("/modules/{module_id}/publish", response_model=Ok)
@@ -113,6 +132,12 @@ def inquiries(admin: CurrentAdmin):
     return service.inquiries()
 
 
+@router.post("/inquiries/{inquiry_id}/answer", response_model=InquiryAnswerResponse)
+def answer_inquiry(inquiry_id: str, body: InquiryAnswerRequest, admin: CurrentAdmin):
+    """TODO: 실제로는 답변을 저장하고 사용자에게 알림을 보낸다."""
+    return service.answer_inquiry(inquiry_id, body.body, body.memo)
+
+
 @router.get("/analytics", response_model=Analytics)
 def analytics(admin: CurrentAdmin):
     """TODO: 실제로는 퍼널·리텐션·실험별 지표를 집계한다."""
@@ -123,6 +148,18 @@ def analytics(admin: CurrentAdmin):
 def send_notification(body: AdminNotificationRequest, admin: CurrentAdmin):
     """TODO: 실제로는 가드레일을 적용해 대상을 고르고 발송을 예약한다."""
     return service.send_notification(body.audience, body.title, body.body, body.send_at)
+
+
+@router.get("/notifications", response_model=SentNotifications)
+def sent_notifications(admin: CurrentAdmin):
+    """TODO: 실제로는 최근 발송 · 예약된 알림을 읽는다."""
+    return service.sent_notifications()
+
+
+@router.post("/admins", response_model=AdminInviteResponse)
+def invite_admin(body: AdminInviteRequest, admin: CurrentAdmin):
+    """TODO: 실제로는 관리자 초대 메일을 보내고 감사 로그를 남긴다."""
+    return service.invite_admin(body.email, body.role)
 
 
 @router.get("/audit", response_model=AuditResponse)

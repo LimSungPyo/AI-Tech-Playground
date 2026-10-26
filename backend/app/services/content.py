@@ -14,6 +14,7 @@ def list_cards() -> list[dict]:
 
 def get_card(card_id: str) -> dict:
     # TODO: 카드를 읽고 사용자 열람 기록을 남긴다(기술 카드 수집가 배지 진행).
+    #       잠긴 실험의 카드도 404 대신 unlocked:false로 준다(9장).
     if card_id not in fx.CARDS_BY_ID:
         raise AppError(404, "CARD_NOT_FOUND", f"기술 카드 {card_id}을(를) 찾을 수 없어요.")
     return deepcopy(fx.CARDS_BY_ID[card_id])
@@ -29,9 +30,29 @@ def dex() -> list[dict]:
     return deepcopy(user_fx.DEX)
 
 
-def radar() -> dict:
-    # TODO: 관리자가 승인한 이번 주 키워드를 상승률 순으로 읽는다.
-    return deepcopy({"week": fx.RADAR_WEEK, "updated_at": fx.RADAR_UPDATED_AT, "keywords": fx.RADAR_KEYWORDS})
+def radar(week: str | None = None) -> dict:
+    # TODO: 관리자가 승인한 그 주(기본 이번 주) 키워드를 상승률 순으로 읽고 수집 규모 · AI 해설을 붙인다.
+    if week in (None, fx.RADAR_WEEK):
+        return deepcopy({
+            "week": fx.RADAR_WEEK,
+            "updated_at": fx.RADAR_UPDATED_AT,
+            "keywords": fx.RADAR_KEYWORDS,
+            "source_count": fx.RADAR_SOURCE_COUNT,
+            "post_count": fx.RADAR_POST_COUNT,
+            "commentary": fx.RADAR_COMMENTARY,
+            "available_weeks": fx.RADAR_WEEKS,
+        })
+    if week not in fx.RADAR_PAST:
+        raise AppError(404, "RADAR_WEEK_NOT_FOUND", f"{week} 주의 레이더가 없어요.")
+    offset = fx.RADAR_WEEKS.index(week)
+    keywords = []
+    for keyword in fx.RADAR_KEYWORDS:
+        weeks = [keyword["weeks"][0]] * offset + keyword["weeks"][: len(keyword["weeks"]) - offset]
+        prev, last = weeks[-2], weeks[-1]
+        keywords.append({**keyword, "weeks": weeks, "change_pct": round((last - prev) / prev * 100) if prev else 0})
+    keywords.sort(key=lambda k: k["change_pct"], reverse=True)
+    past = fx.RADAR_PAST[week]
+    return deepcopy({"week": week, "keywords": keywords, "available_weeks": fx.RADAR_WEEKS, **past})
 
 
 def radar_keyword(keyword_id: str) -> dict:
@@ -79,6 +100,12 @@ def subscribe_tech_drop(code: str) -> dict:
     # TODO: 오픈 알림 신청을 저장한다.
     tech_drop(code)
     return {"subscribed": True}
+
+
+def unsubscribe_tech_drop(code: str) -> dict:
+    # TODO: 오픈 알림 신청을 지운다.
+    tech_drop(code)
+    return {"subscribed": False}
 
 
 def team_mission(mission_id: str) -> dict:

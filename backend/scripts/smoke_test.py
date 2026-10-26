@@ -3,7 +3,7 @@
     uvicorn app.main:app --port 8201        # 다른 터미널에서
     python scripts/smoke_test.py http://127.0.0.1:8201
 
-contract.md의 모든 엔드포인트를 한 번씩 부르고, 의도한 오류 케이스가
+contract.md · contract-v2.md의 모든 엔드포인트를 한 번씩 부르고, 의도한 오류 케이스가
 의도한 상태 코드와 `{"error": {"code", "message"}}` 형식으로 오는지 확인한다.
 """
 
@@ -213,6 +213,148 @@ def main() -> None:
     check("GET", "/api/admin/analytics", token=ADMIN, keys=("funnel", "retention", "experiments"))
     check("POST", "/api/admin/notifications", body={"audience": "#002 알림 신청자", "title": "부엉이 사서가 문을 열었어요!", "body": "#002 RAG 탐정이 오픈했어요.", "sendAt": "2026-10-31T10:00:00+09:00"}, token=ADMIN, keys=("scheduled",))
     check("GET", "/api/admin/audit", token=ADMIN, keys=("admins", "logs"))
+
+    # ── v2 (contract-v2.md) ──
+    def expect(cond: bool, label: str) -> None:
+        if not cond:
+            failures.append(label)
+            print(f"[FAIL] {label}")
+
+    # 인증
+    locked = call("POST", "/api/auth/login", {"email": "hyewon@playground.ai", "password": "locked", "remember": False})[1]
+    expect("2026-10-17T14:30" not in json.dumps(locked), "login 423: unlockAt이 지금+10분이 아님")
+    login = check("POST", "/api/auth/login", body={"email": "hyewon@playground.ai", "password": "pw1234!", "remember": True}, keys=("user",))
+    expect(isinstance(login, dict) and login["user"].get("title") == "탐험가" and login["user"].get("lastPlayed", {}).get("trial") == 34, "login: user.title · lastPlayed 없음")
+    check("POST", "/api/auth/verify-email/resend", body={"verificationId": "v-1"}, keys=("expiresInSec", "cooldownSec"))
+    check("POST", "/api/auth/social/google/link", body={"email": "hyewon@playground.ai", "password": "pw"}, keys=("token", "user"))
+    check("POST", "/api/auth/social/google/link", 401, {"email": "hyewon@playground.ai", "password": "wrong"}, error_code="INVALID_PASSWORD")
+    check("GET", "/api/auth/restore/preview?email=hyewon%40playground.ai", keys=("deletionScheduledAt", "daysLeft", "counts"))
+    check("POST", "/api/auth/guest/merge", body={"trials": 3}, token=USER, keys=("successRate", "character", "predictions"))
+
+    # 사용자
+    home = check("GET", "/api/me/home", token=USER)
+    expect(isinstance(home, dict) and "dormant" not in home, "me/home: 일반 토큰인데 dormant가 있음")
+    check("GET", "/api/me/home", token="sample-dormant", keys=("dormant",))
+    rec = check("GET", "/api/me/partner-recommendation", token=USER)
+    expect(isinstance(rec, dict) and "score" in rec["alternatives"][0] and "greeting" in rec["primary"], "partner-recommendation: score · greeting 없음")
+    dash = check("GET", "/api/me/dashboard", token=USER, keys=("xp", "totalMinutes", "bestStreak"))
+    expect(isinstance(dash, dict) and dash["streak"].get("protectionsLeft") == 1, "dashboard: streak.protectionsLeft 없음")
+    mine = check("GET", "/api/me/experiments", token=USER, keys=("lastPlayedAt", "firstRate", "curve"))
+    expect(isinstance(mine, list) and "vote" in next(e for e in mine if e["id"] == "003"), "me/experiments: #003 vote 없음")
+    chars = check("GET", "/api/me/characters", token=USER, keys=("playMinutes", "revealWatched", "whyCount", "badges"))
+    badges = check("GET", "/api/me/badges", token=USER, keys=("category", "progress", "rarity"))
+    expect(isinstance(badges, list) and any(b.get("featured") for b in badges), "me/badges: 대표 배지 없음")
+    for period in ("week", "month", "all"):
+        hist = check("GET", f"/api/me/history?period={period}", token=USER, keys=("stats", "weeklySummary", "records", "period"))
+        expect(isinstance(hist, dict) and all("kind" in log for log in hist.get("logs", [])), f"me/history?period={period}: logs[].kind 없음")
+    check("GET", "/api/me/history?period=year", 422, token=USER, error_code="VALIDATION_ERROR")
+    settings = check("GET", "/api/me/settings", token=USER, keys=("rankingAlert", "trainingSpeed", "language", "a11y", "privacy", "connections", "passwordChangedAt"))
+    saved = check("PUT", "/api/me/settings", body={"notifications": {"email": False, "push": True, "marketing": False}, "theme": "dark", "whyLevel": "advanced"}, token=USER, keys=("a11y", "privacy"))
+    expect(isinstance(saved, dict) and saved.get("theme") == "dark", "PUT me/settings: 보낸 값이 반영되지 않음")
+    check("PUT", "/api/me/profile", body={"nickname": "혜원", "avatar": "wormy", "bio": "안녕"}, token=USER, keys=("bio",))
+    check("PUT", "/api/me/password", 401, {"current": "wrong", "next": "b"}, token=USER, error_code="INVALID_PASSWORD")
+    check("POST", "/api/me/withdraw", 401, {"password": "wrong", "reason": ""}, token=USER, error_code="INVALID_PASSWORD")
+    check("PUT", "/api/me/badges/featured", body={"badgeId": "prophet"}, token=USER, keys=("featuredBadgeId",))
+    check("PUT", "/api/me/badges/featured", 400, {"badgeId": "creator"}, token=USER, error_code="BADGE_NOT_OBTAINED")
+    check("POST", "/api/me/social/kakao", body={"code": "abc"}, token=USER, keys=("connected",))
+    check("DELETE", "/api/me/social/google", token=USER, keys=("connected",))
+    check("PUT", "/api/me/email", body={"email": "new@playground.ai", "password": "pw"}, token=USER, keys=("verificationRequired",))
+    check("POST", "/api/me/export", token=USER, keys=("readyInMin",))
+    check("POST", "/api/me/reset", body={"password": "pw", "scope": "experiments"}, token=USER, keys=("ok",))
+
+    # 실험
+    exps = call("GET", "/api/experiments")[1]
+    exp003 = next((e for e in exps if e["id"] == "003"), {}) if isinstance(exps, list) else {}
+    expect(exp003.get("vote", {}).get("pct") == 42, "experiments: #003 vote.pct 42 아님")
+    detail = check("GET", "/api/experiments/001", keys=("participants", "avgImprovement", "scene"))
+    expect(isinstance(detail, dict) and detail.get("participants") == 3120 and detail.get("avgImprovement") == 46, "experiments/001: 3,120명 · +46%p 아님")
+    expect(isinstance(detail, dict) and all("scene" in m for m in detail.get("missions", [])), "experiments/001: missions[].scene 없음")
+    check("GET", "/api/experiments/001/missions/m1/briefing", keys=("predictionStats",))
+    brief = check("GET", "/api/experiments/001/missions/m1/briefing", token=USER, keys=("myPrediction",))
+    check("GET", "/api/experiments/001/missions/m2/briefing", token=USER, keys=("lastPrediction",))
+    a = call("POST", "/api/experiments/000/trials", {"missionId": "m1", "speed": 1})[1]
+    b = call("POST", "/api/experiments/001/trials", {"missionId": "m1", "speed": 1})[1]
+    expect(isinstance(a, dict) and isinstance(b, dict) and a["trial"] < 34 < b["trial"], f"trials: 실험별 카운터가 분리되지 않음 ({a.get('trial')}, {b.get('trial')})")
+    why = check("GET", "/api/experiments/001/trials/12/why?level=intermediate", keys=("similarCases", "reward", "step"))
+    batch = check("POST", "/api/experiments/001/train-batch", body={"missionId": "m2", "count": 10}, keys=("connections", "journal"))
+    expect(isinstance(batch, dict) and all({"success", "timeSec", "path"} <= set(t) for t in batch.get("trials", [])), "train-batch: trials[].success · timeSec · path 없음")
+    expect(isinstance(batch, dict) and len(batch.get("connections", [])) == 5 and "from" in batch["connections"][0], "train-batch: connections TOP 5 아님")
+    check("GET", "/api/experiments/001/missions/m1/clear", keys=("firstSuccessTrial", "myPrediction", "predictionCorrect"))
+    report = check("GET", "/api/experiments/001/report", keys=("metrics", "replay", "prediction", "missionTitle", "participants"))
+    expect(isinstance(report, dict) and len(report.get("metrics", [])) == 100 and {"timeSec", "collisions"} <= set(report["metrics"][0]), "report: metrics 100회차 아님")
+    r001 = check("GET", "/api/experiments/001/ranking?mission=m1&period=month", keys=("firstSuccessTrial",))
+    r000 = check("GET", "/api/experiments/000/ranking", keys=("firstSuccessTrial",))
+    expect(isinstance(r000, list) and all(r["character"] == "wormy" for r in r000), "ranking/000: #001 랭킹이 그대로 옴")
+    r003 = check("GET", "/api/experiments/003/ranking")
+    expect(r003 == [], "ranking/003: 오픈 전 실험인데 순위가 있음")
+    check("GET", "/api/experiments/001/ranking?mission=m9", 404, error_code="MISSION_NOT_FOUND")
+    check("GET", "/api/share/s-hyewon-001", keys=("missionTitle", "prediction"))
+
+    # 콘텐츠
+    cards = check("GET", "/api/cards", keys=("status",))
+    expect(isinstance(cards, list) and [c["id"] for c in cards] == [f"card-{i:03d}" for i in range(9)], "cards: 9장 아님")
+    for i in range(9):
+        card = check("GET", f"/api/cards/card-{i:03d}", keys=("unlocked",))
+    tree = check("GET", "/api/tree")
+    expect(isinstance(tree, dict) and all("experimentIds" in n and "mastery" in n for n in tree.get("nodes", [])), "tree: experimentIds · mastery 없음")
+    check("GET", "/api/dex", keys=("playMinutes", "whyCount"))
+    check("GET", "/api/radar", keys=("sourceCount", "postCount", "commentary", "availableWeeks"))
+    past = check("GET", "/api/radar?week=2026-10-06", keys=("keywords", "commentary"))
+    expect(isinstance(past, dict) and past.get("week") == "2026-10-06", "radar?week=: 지난 주가 아님")
+    check("GET", "/api/radar?week=2020-01-01", 404, error_code="RADAR_WEEK_NOT_FOUND")
+    kw = check("GET", "/api/radar/tool-calling")
+    expect(isinstance(kw, dict) and all("kind" in src for src in kw.get("sources", [])), "radar/tool-calling: sources[].kind 없음")
+    check("GET", "/api/home/carousel")
+    slides = call("GET", "/api/home/carousel")[1].get("slides", [])
+    expect(all({"badge", "level", "durationMin", "tags", "bubble"} <= set(sl) for sl in slides), "carousel: badge · level · durationMin · tags · bubble 없음")
+    check("GET", "/api/tech-drops/002", keys=("learn", "conditions"))
+    check("DELETE", "/api/tech-drops/002/subscribe", token=USER, keys=("subscribed",))
+    check("DELETE", "/api/tech-drops/002/subscribe", 401, error_code="UNAUTHORIZED")
+    team = check("GET", "/api/team-missions/t1")
+    expect(isinstance(team, dict) and any("event" in m for m in team.get("messages", [])), "team-missions/t1: messages[].event 없음")
+    check("GET", "/api/team-missions/t1/result", keys=("metrics",))
+
+    # 알림 · 문의
+    notes = check("GET", "/api/notifications", token=USER)
+    expect(isinstance(notes, list) and {"character", "ranking", "radar"} <= {n["kind"] for n in notes}, "notifications: character · ranking · radar 종류 없음")
+    inq = check("GET", "/api/inquiries", token=USER)
+    expect(isinstance(inq, list) and any("answeredAt" in i for i in inq), "inquiries: answeredAt 없음")
+    check("POST", "/api/inquiries", body={"category": "WHY?", "title": "t", "body": "b", "notify": True, "experimentId": "001", "trial": 12}, token=USER, keys=("experimentId", "trial", "notify"))
+    form2 = (
+        f"--{boundary}\r\nContent-Disposition: form-data; name=\"category\"\r\n\r\n버그\r\n"
+        f"--{boundary}\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n첨부\r\n"
+        f"--{boundary}\r\nContent-Disposition: form-data; name=\"body\"\r\n\r\n본문\r\n"
+        f"--{boundary}\r\nContent-Disposition: form-data; name=\"trial\"\r\n\r\n12\r\n"
+        f"--{boundary}\r\nContent-Disposition: form-data; name=\"files\"; filename=\"a.png\"\r\nContent-Type: image/png\r\n\r\nPNG\r\n"
+        f"--{boundary}--\r\n"
+    ).encode()
+    check("POST", "/api/inquiries", token=USER, raw=form2, content_type=f"multipart/form-data; boundary={boundary}", keys=("trial",))
+
+    # 관리자
+    blocked = call("POST", "/api/admin/otp", {"otpId": "otp-1", "code": "999999"})[1]
+    expect(isinstance(blocked, dict) and {"ip", "at"} <= set(blocked.get("error", {})), "admin/otp 403: error.ip · at 없음")
+    check("GET", "/api/admin/dashboard", token=ADMIN, keys=("dau", "conversion", "system"))
+    cands = check("GET", "/api/admin/radar", token=ADMIN)
+    expect(isinstance(cands, dict) and all("growth" in c for c in cands.get("candidates", [])), "admin/radar: growth 없음")
+    check("POST", "/api/admin/radar/rc-function-calling/decision", body={"decision": "merged", "mergeInto": "rc-tool-calling"}, token=ADMIN, keys=("ok",))
+    check("POST", "/api/admin/radar/rc-function-calling/decision", 404, {"decision": "merged", "mergeInto": "nope"}, token=ADMIN, error_code="CANDIDATE_NOT_FOUND")
+    admin_cards = check("GET", "/api/admin/cards", token=ADMIN, keys=("cards",))
+    expect(isinstance(admin_cards, dict) and len(admin_cards.get("cards", [])) == 9, "admin/cards: 9장 아님")
+    check("GET", "/api/admin/cards/card-003", token=ADMIN, keys=("status",))
+    mods = check("GET", "/api/admin/modules", token=ADMIN)
+    expect(isinstance(mods, dict) and "voting" in {m["stage"] for m in mods.get("modules", [])}, "admin/modules: voting 단계 없음")
+    check("PUT", "/api/admin/modules/003/stage", body={"stage": "scheduled"}, token=ADMIN, keys=("ok",))
+    check("PUT", "/api/admin/modules/999/stage", 404, {"stage": "live"}, token=ADMIN, error_code="MODULE_NOT_FOUND")
+    users = check("GET", "/api/admin/users", token=ADMIN)
+    expect(isinstance(users, dict) and all("level" in u and "partner" in u for u in users.get("users", [])), "admin/users: level · partner 없음")
+    for action in ("reset_password", "wipe", "unlock"):
+        check("POST", "/api/admin/users/u_8812/action", body={"action": action, "reason": "본인 요청"}, token=ADMIN, keys=("ok",))
+    items = check("GET", "/api/admin/inquiries", token=ADMIN)
+    expect(isinstance(items, dict) and all("body" in i and "category" in i for i in items.get("items", [])), "admin/inquiries: body · category 없음")
+    check("POST", "/api/admin/inquiries/T-2058/answer", body={"body": "답변", "memo": "메모"}, token=ADMIN, keys=("answeredAt",))
+    check("POST", "/api/admin/inquiries/T-9999/answer", 404, {"body": "답변"}, token=ADMIN, error_code="INQUIRY_NOT_FOUND")
+    check("GET", "/api/admin/notifications", token=ADMIN, keys=("items",))
+    check("POST", "/api/admin/admins", body={"email": "new.admin@playground.ai", "role": "콘텐츠 에디터"}, token=ADMIN, keys=("invited",))
 
     print(f"\n{count}개 호출, 실패 {len(failures)}개")
     for f in failures:
