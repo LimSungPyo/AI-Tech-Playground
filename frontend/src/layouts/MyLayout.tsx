@@ -33,7 +33,10 @@ export function MyLayout() {
             <Avatar character={user.avatar} name={user.nickname} size={48} />
             <div>
               <p className={styles.name}>{user.nickname}</p>
-              <p className={styles.level}>Lv.{user.level}</p>
+              <p className={styles.level}>
+                Lv.{user.level}
+                {user.title ? ` ${user.title}` : ''}
+              </p>
             </div>
           </div>
         )}

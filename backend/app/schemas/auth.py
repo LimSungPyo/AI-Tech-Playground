@@ -3,7 +3,7 @@
 from pydantic import EmailStr
 
 from app.schemas.base import CamelModel
-from app.schemas.common import User
+from app.schemas.common import CharacterId, User
 
 
 class LoginRequest(CamelModel):
@@ -66,5 +66,46 @@ class GuestMergeRequest(CamelModel):
     trials: int
 
 
+class MergedCharacter(CamelModel):
+    id: CharacterId
+    level: int
+    state: str
+
+
 class GuestMergeResponse(CamelModel):
     merged: int
+    # v2 · E-02 가입 완료 화면
+    experiment_id: str | None = None
+    success_rate: float | None = None
+    replays: int | None = None
+    character: MergedCharacter | None = None
+    predictions: list[str] | None = None  # 이어받은 예측 선택지 ("11 – 30회")
+
+
+class ResendRequest(CamelModel):
+    verification_id: str
+
+
+class ResendResponse(CamelModel):
+    ok: bool = True
+    expires_in_sec: int
+    cooldown_sec: int
+
+
+class SocialLinkRequest(CamelModel):
+    email: EmailStr
+    password: str
+
+
+class RestoreCounts(CamelModel):
+    experiments: int
+    characters: int
+    cards: int
+    badges: int
+
+
+class RestorePreview(CamelModel):
+    email: str
+    deletion_scheduled_at: str
+    days_left: int
+    counts: RestoreCounts

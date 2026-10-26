@@ -18,6 +18,9 @@ HYEWON = {
     "skill": "beginner",
     "partner": "wormy",
     "has_played": True,
+    "title": "탐험가",
+    "bio": "초파리랑 친해지는 중 🪰",
+    "last_played": {"experiment_id": "001", "code": "#001", "title": "나만의 초파리 키우기", "trial": 34},
 }
 
 # G-09: 관리자 권한이 있는 같은 혜원 계정
@@ -32,13 +35,47 @@ NEW_USER = {
     "interests": [],
     "partner": None,
     "has_played": True,  # 게스트 체험 기록을 이어받았다
+    "title": "새싹",
+    "bio": None,
+    "last_played": {"experiment_id": "001", "code": "#001", "title": "나만의 초파리 키우기", "trial": 3},
 }
 
 SETTINGS = {
     "notifications": {"email": True, "push": True, "marketing": False},
     "theme": "light",
     "why_level": "beginner",
+    # v2 · C-07 설정
+    "ranking_alert": True,
+    "training_speed": 1,
+    "language": "ko",
+    "a11y": {"reduce_motion": False, "high_contrast": False, "large_text": False, "captions": True},
+    "privacy": {"public_profile": True, "show_in_ranking": True, "share_records": True},
+    "connections": [
+        {"provider": "google", "connected": True, "email": "hyewon@gmail.com"},
+        {"provider": "kakao", "connected": False},
+        {"provider": "github", "connected": False},
+    ],
+    "password_changed_at": "2026-09-02T10:00:00+09:00",
+    "email": "hyewon@playground.ai",
 }
+
+# v2 · 07:M-07 휴면 복귀(토큰에 "dormant"가 들어가면 이 값이 /me/home에 붙는다)
+DORMANT = {
+    "days_away": 8,
+    "highlights": [
+        "Tech Drop #002 RAG 탐정이 열렸어요",
+        "기술 레이더가 2번 업데이트됐어요",
+        "연속 기록은 끊겼지만 최고 기록 9일은 그대로예요",
+    ],
+    "continue_to": "/experiments/001/play",
+}
+
+# v2 · C-02 대시보드 XP · 총 실험 시간
+DASHBOARD_XP = {"current": 640, "next": 1000, "next_level": 8}
+DASHBOARD_TOTAL_MINUTES = 222  # 3h 42m
+DASHBOARD_WEEK_DELTA = 48
+BEST_STREAK = 9
+STREAK_PROTECTIONS_LEFT = 1
 
 # B-02 이번 주 2h 06m (C-06 요일별: 토 12 · 일 18 · 월 34 · 화 8 · 수 26 · 목 0 · 금 28)
 WEEK = {
@@ -79,10 +116,11 @@ PARTNER_RECOMMENDATION = {
         "character": "wormy",
         "reason": "「뇌를 닮은 AI」를 골랐죠? 웜이는 전체 신경 연결이 처음 밝혀진 가장 작은 뇌예요. 「처음이에요」 → 5분이면 끝나는 입문 실험부터.",
         "score": 1.0,
+        "greeting": "안녕, 난 웜이야. 뉴런 302개로 꿈틀꿈틀 움직여. 같이 천천히 해 보자!",
     },
     "alternatives": [
-        {"character": "parrot", "reason": "관심사 「대화하는 AI」 일치. 다음 단어를 예측하는 원리를 배워요."},
-        {"character": "drosi", "reason": "관심사 「스스로 배우는 AI」 일치. 서비스의 대표 경험이라 항상 함께 추천해요."},
+        {"character": "parrot", "reason": "관심사 「대화하는 AI」 일치. 다음 단어를 예측하는 원리를 배워요.", "score": 0.9, "greeting": "안녕! 네가 무슨 말을 할지 맞혀 볼까?"},
+        {"character": "drosi", "reason": "관심사 「스스로 배우는 AI」 일치. 서비스의 대표 경험이라 항상 함께 추천해요.", "score": 0.7, "greeting": "나는 드로시! 아직 아무것도 모르지만 금방 배울게."},
     ],
 }
 
@@ -110,12 +148,12 @@ STREAK_CALENDAR = _streak_calendar()
 
 # C-06 학습 기록
 HISTORY_LOGS = [
-    {"date": "2026-10-17T14:20:00+09:00", "experiment_id": "001", "text": "#001 Trial 30–34 훈련 · 성공률 52% → 58%"},
-    {"date": "2026-10-17T14:05:00+09:00", "experiment_id": "001", "text": 'STEP 37 "오른쪽 위" 선택 근거 확인 (유사도 83%)'},
-    {"date": "2026-10-16T21:40:00+09:00", "experiment_id": "000", "text": '웜이 마스터(Lv.3) 달성 · 반전 연출 시청 · 배지 "커넥톰 입문"'},
-    {"date": "2026-10-15T20:10:00+09:00", "experiment_id": "007", "text": "#007 시작 · Trial 1–3"},
-    {"date": "2026-10-14T19:30:00+09:00", "experiment_id": "001", "text": 'WHY? 9회 열람 · 배지 "WHY? 탐구자" 획득'},
-    {"date": "2026-10-12T16:00:00+09:00", "experiment_id": "001", "text": '미션 1 첫 성공 (Trial 10) · 예측 적중 · 배지 "예언가"'},
+    {"date": "2026-10-17T14:20:00+09:00", "experiment_id": "001", "text": "#001 Trial 30–34 훈련 · 성공률 52% → 58%", "kind": "training"},
+    {"date": "2026-10-17T14:05:00+09:00", "experiment_id": "001", "text": 'STEP 37 "오른쪽 위" 선택 근거 확인 (유사도 83%)', "kind": "why"},
+    {"date": "2026-10-16T21:40:00+09:00", "experiment_id": "000", "text": '웜이 마스터(Lv.3) 달성 · 반전 연출 시청 · 배지 "커넥톰 입문"', "kind": "achievement"},
+    {"date": "2026-10-15T20:10:00+09:00", "experiment_id": "007", "text": "#007 시작 · Trial 1–3", "kind": "training"},
+    {"date": "2026-10-14T19:30:00+09:00", "experiment_id": "001", "text": 'WHY? 9회 열람 · 배지 "WHY? 탐구자" 획득', "kind": "why"},
+    {"date": "2026-10-12T16:00:00+09:00", "experiment_id": "001", "text": '미션 1 첫 성공 (Trial 10) · 예측 적중 · 배지 "예언가"', "kind": "achievement"},
 ]
 
 # C-05 배지 (5 / 12 획득)
@@ -133,6 +171,24 @@ BADGES = [
     {"id": "rag-detective", "name": "RAG 탐정", "description": "#002 실험 완료", "obtained": False, "icon": "❖"},
     {"id": "creator", "name": "창조자", "description": "Create Your AI로 첫 AI 만들기", "obtained": False, "icon": "✚"},
 ]
+
+# v2 · C-05 배지 카테고리 · 진행률 · 획득 비율 · 관련 실험 · 이야기
+BADGE_EXTRA = {
+    "first-clear": {"category": "실험", "progress": 100, "rarity": 41, "experiment_id": "001", "story": "드로시가 Trial 10에서 처음으로 먹이까지 직진했어요."},
+    "prophet": {"category": "실험", "progress": 100, "rarity": 12, "experiment_id": "001", "story": "미션 브리핑에서 \"드로시가 11~30회 안에 첫 성공할 것\"이라는 예측이 맞았어요.", "featured": True},
+    "hundred-trials": {"category": "실험", "progress": 34, "rarity": 18, "experiment_id": "001"},
+    "why-explorer": {"category": "이해", "progress": 100, "rarity": 27, "experiment_id": "001", "story": "WHY?를 20번 열어 드로시의 선택 근거를 들여다봤어요."},
+    "reveal-witness": {"category": "이해", "progress": 100, "rarity": 33, "experiment_id": "000", "story": "웜이의 반전 연출을 끝까지 봤어요."},
+    "card-collector": {"category": "이해", "progress": 60, "rarity": 15},
+    "connectome-intro": {"category": "꾸준함", "progress": 100, "rarity": 22, "experiment_id": "000", "story": "웜이를 마스터(Lv.3)까지 키웠어요."},
+    "streak-7": {"category": "꾸준함", "progress": 86, "rarity": 35},
+    "streak-30": {"category": "꾸준함", "progress": 20, "rarity": 4},
+    "team-leader": {"category": "협업 · 확장", "progress": 0, "rarity": 6},
+    "rag-detective": {"category": "협업 · 확장", "progress": 0, "rarity": 0, "experiment_id": "002"},
+    "creator": {"category": "협업 · 확장", "progress": 0, "rarity": 0},
+}
+for _badge in BADGES:
+    _badge.update(BADGE_EXTRA[_badge["id"]])
 
 # 캐릭터 로스터(NOTES A) + C-04 내 캐릭터 상태. 만남 3 · 발견 1 · 잠김 5
 DEX = [
@@ -191,3 +247,52 @@ DEX = [
         "personality": "계획적인 탐험가", "meet_condition": "비전 + 강화학습 완료", "state": "egg",
     },
 ]
+
+
+# v2 · C-04 함께한 시간 · 반전 시청 · H-02 WHY? 사용 · 획득한 배지
+DEX_EXTRA = {
+    "wormy": {"play_minutes": 72, "reveal_watched": True, "why_count": 9, "badges": ["reveal-witness", "connectome-intro"]},
+    "drosi": {"play_minutes": 128, "reveal_watched": True, "why_count": 23, "badges": ["first-clear", "prophet", "why-explorer"]},
+    "parrot": {"play_minutes": 14, "reveal_watched": False, "why_count": 1, "badges": []},
+}
+for _entry in DEX:
+    _entry.update(DEX_EXTRA.get(_entry["character"], {}))
+
+# v2 · C-06 학습 기록 통계(이번 주 · 이번 달 · 전체)
+HISTORY_STATS = {
+    "week": {
+        "minutes": 126, "minutes_delta": 48, "trials": 64, "batch_runs": 5, "why_views": 23, "why_peak_date": "2026-10-14",
+        "rate_change": 14, "rate_change_label": "#001 44% → 58%",
+    },
+    "month": {
+        "minutes": 412, "minutes_delta": 96, "trials": 187, "batch_runs": 11, "why_views": 41, "why_peak_date": "2026-10-14",
+        "rate_change": 46, "rate_change_label": "#001 12% → 58%",
+    },
+    "all": {
+        "minutes": 222, "minutes_delta": 0, "trials": 187, "batch_runs": 11, "why_views": 41, "why_peak_date": "2026-10-14",
+        "rate_change": 46, "rate_change_label": "#001 12% → 58%",
+    },
+}
+HISTORY_RANGE_LABEL = {"week": "2026.10.11 – 10.17 · 이번 주", "month": "2026.10.01 – 10.17 · 이번 달", "all": "2026.10.01 – 10.17 · 전체"}
+# 요일별 성공률(C-06 ● 성공률). 학습하지 않은 날은 None
+WEEK_SUCCESS_RATES = [44, 46, 49, None, 52, None, 58]
+WEEKLY_SUMMARY = {
+    "text": "이번 주에는 WHY?를 23번 열어봤어요. 특히 화요일 이후 드로시의 \"오른쪽 위\" 선택 근거를 자주 확인했고, 그 뒤로 성공률이 꾸준히 올랐어요.",
+    "suggestion": "#001 미션 2 \"장애물 피하기\"에 도전해 보세요. 성공률 60%를 넘겨 열렸어요.",
+}
+# B-11 내 실험 기록 표
+HISTORY_RECORDS = [
+    {"experiment_id": "001", "mission_id": "m2", "trial": 34, "best_rate": 58, "status": "in_progress", "last_played_at": "2026-10-17T14:20:00+09:00"},
+    {"experiment_id": "001", "mission_id": "m1", "trial": 30, "best_rate": 86, "status": "cleared", "last_played_at": "2026-10-12T16:00:00+09:00"},
+    {"experiment_id": "000", "mission_id": "m1", "trial": 30, "best_rate": 91, "status": "cleared", "last_played_at": "2026-10-16T21:40:00+09:00"},
+    {"experiment_id": "007", "mission_id": "m1", "trial": 3, "best_rate": 21, "status": "in_progress", "last_played_at": "2026-10-15T20:10:00+09:00"},
+    {"experiment_id": "006", "mission_id": "m1", "trial": 20, "best_rate": 74, "status": "cleared", "last_played_at": "2026-10-09T19:00:00+09:00"},
+]
+
+# v2 · C-03 내 실험: 마지막 플레이 · 1회차 성공률 · 추세 곡선(듬성듬성)
+MY_EXPERIMENT_EXTRA = {
+    "001": {"last_played_at": "2026-10-17T14:20:00+09:00", "first_rate": 12, "curve_trials": [1, 6, 10, 12, 22, 33, 34]},
+    "007": {"last_played_at": "2026-10-15T20:10:00+09:00", "first_rate": 8, "curve_rates": [(1, 8), (2, 14), (3, 21)]},
+    "000": {"last_played_at": "2026-10-16T21:40:00+09:00", "first_rate": 12, "curve_rates": [(1, 12), (10, 48), (20, 77), (30, 91)]},
+    "006": {"last_played_at": "2026-10-09T19:00:00+09:00", "first_rate": 20, "curve_rates": [(1, 20), (10, 55), (20, 74)]},
+}

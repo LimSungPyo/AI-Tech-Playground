@@ -2,10 +2,18 @@
 
 import uuid
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 
 from app.core.errors import AppError
 from app.fixtures import admin as fx
 from app.fixtures import content as content_fx
+
+
+KST = timezone(timedelta(hours=9))
+
+
+def _now() -> str:
+    return datetime.now(KST).isoformat(timespec="seconds")
 
 
 def login(email: str, password: str) -> dict:
@@ -16,7 +24,10 @@ def login(email: str, password: str) -> dict:
 def verify_otp(otp_id: str, code: str) -> dict:
     # TODO: Authenticator 6자리를 검증하고 접속 IP가 허용 목록(사내 VPN)인지 확인한 뒤 관리자 토큰을 발급한다.
     if code == "999999":
-        raise AppError(403, "IP_BLOCKED", "허용되지 않은 IP에서 접속했어요. 사내 VPN에서 다시 시도해 주세요.")
+        raise AppError(
+            403, "IP_BLOCKED", "허용되지 않은 IP에서 접속했어요. 사내 VPN에서 다시 시도해 주세요.",
+            ip="203.0.113.42", at=_now(),
+        )
     return {"admin_token": f"admin-{uuid.uuid4()}", "ip_verified": True}
 
 
@@ -30,11 +41,26 @@ def radar_candidates() -> dict:
     return deepcopy({"candidates": fx.RADAR_CANDIDATES})
 
 
-def radar_decision(candidate_id: str, decision: str) -> dict:
-    # TODO: 후보를 승인·제외·병합하고 감사 로그를 남긴다.
-    if not any(c["id"] == candidate_id for c in fx.RADAR_CANDIDATES):
+def radar_decision(candidate_id: str, decision: str, merge_into: str | None = None) -> dict:
+    # TODO: 후보를 승인·제외·병합(merge_into로 합침)하고 감사 로그를 남긴다.
+    ids = {c["id"] for c in fx.RADAR_CANDIDATES}
+    if candidate_id not in ids:
         raise AppError(404, "CANDIDATE_NOT_FOUND", f"키워드 후보 {candidate_id}을(를) 찾을 수 없어요.")
+    if decision == "merged" and merge_into is not None and merge_into not in ids:
+        raise AppError(404, "CANDIDATE_NOT_FOUND", f"병합할 키워드 후보 {merge_into}을(를) 찾을 수 없어요.")
     return {"ok": True}
+
+
+def list_cards() -> dict:
+    # TODO: 카드 초안 · 검토 · 승인 · 게시 단계와 작성자를 읽는다.
+    items = [
+        {
+            "id": c["id"], "title": c["title"], "experiment_id": c["experiment_id"], "status": c["status"],
+            "unlocked": c["unlocked"], **content_fx.ADMIN_CARD_META[c["id"]],
+        }
+        for c in content_fx.CARDS
+    ]
+    return deepcopy({"cards": items})
 
 
 def get_card(card_id: str) -> dict:
@@ -53,6 +79,17 @@ def save_card(card_id: str, card: dict) -> dict:
 def modules() -> dict:
     # TODO: 실험 모듈의 파이프라인 단계와 담당자를 읽는다.
     return deepcopy({"modules": fx.MODULES})
+
+
+def _require_module(module_id: str) -> None:
+    if not any(m["id"] == module_id for m in fx.MODULES):
+        raise AppError(404, "MODULE_NOT_FOUND", f"모듈 {module_id}을(를) 찾을 수 없어요.")
+
+
+def change_module_stage(module_id: str, stage: str) -> dict:
+    # TODO: 파이프라인 단계를 바꾸고 사용자 화면(캐러셀 · D-10 · 오픈 알림)을 단계에 맞춰 갱신한 뒤 감사 로그를 남긴다.
+    _require_module(module_id)
+    return {"ok": True}
 
 
 def publish_module(module_id: str, visibility: str, open_at: str | None, audience: str) -> dict:
@@ -90,7 +127,15 @@ def user_action(user_id: str, action: str, reason: str) -> dict:
 
 def inquiries() -> dict:
     # TODO: 미답변 문의와 신고를 우선순위 순으로 읽는다.
-    return deepcopy({"items": fx.INQUIRY_ITEMS})
+    items = [{**i, "memo": fx.INQUIRY_MEMO.get(i["id"])} for i in fx.INQUIRY_ITEMS]
+    return deepcopy({"items": items})
+
+
+def answer_inquiry(inquiry_id: str, body: str, memo: str | None) -> dict:
+    # TODO: 답변을 저장하고 사용자에게 알림(문의 답변)을 보낸 뒤 내부 메모와 감사 로그를 남긴다.
+    if not any(i["id"] == inquiry_id for i in fx.INQUIRY_ITEMS):
+        raise AppError(404, "INQUIRY_NOT_FOUND", f"문의 {inquiry_id}을(를) 찾을 수 없어요.")
+    return {"ok": True, "answered_at": _now()}
 
 
 def analytics() -> dict:
@@ -101,6 +146,16 @@ def analytics() -> dict:
 def send_notification(audience: str, title: str, body: str, send_at: str | None) -> dict:
     # TODO: 가드레일(주 3회·24시간 중복·야간 금지)을 적용해 대상을 고르고 발송을 예약한다.
     return {"ok": True, "scheduled": True}
+
+
+def sent_notifications() -> dict:
+    # TODO: 최근 발송 · 예약된 알림과 열람률을 읽는다.
+    return deepcopy({"items": fx.SENT_NOTIFICATIONS})
+
+
+def invite_admin(email: str, role: str) -> dict:
+    # TODO: 초대 메일을 보내고(OTP 등록 링크 포함) 초대 대기 상태의 관리자 계정을 만든 뒤 감사 로그를 남긴다.
+    return {"ok": True, "invited": {"id": f"a_{uuid.uuid4().hex[:8]}", "name": email.split("@")[0], "role": role}}
 
 
 def audit() -> dict:

@@ -5,7 +5,8 @@ import { SESSION_EXPIRED_EVENT } from '../api/client'
 import type { User } from '../api/types'
 import { AuthContext } from './context'
 import type { AuthContextValue, AuthStatus } from './context'
-import { getAdminToken, getToken, setRememberedEmail, setStoredAdminToken, setStoredToken } from './storage'
+import { rememberAccount } from './remembered'
+import { getAdminToken, getToken, setStoredAdminToken, setStoredToken } from './storage'
 
 /**
  * 로그인 상태. 토큰이 있으면 `/api/auth/me`로 사용자를 불러오고,
@@ -83,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (email: string, password: string, remember: boolean) => {
       const res = await authApi.login({ email, password, remember })
-      setRememberedEmail(remember ? email : null)
+      rememberAccount(res.user, 'email', remember)
       setToken(res.token, res.user)
       return res.user
     },

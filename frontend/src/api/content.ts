@@ -19,7 +19,8 @@ export const getCards = (signal?: AbortSignal) => api.get<TechCard[]>('/cards', 
 export const getCard = (id: string, signal?: AbortSignal) => api.get<TechCard>(`/cards/${enc(id)}`, undefined, signal)
 export const getTree = (signal?: AbortSignal) => api.get<{ nodes: TreeNode[] }>('/tree', undefined, signal)
 export const getDex = (signal?: AbortSignal) => api.get<DexEntry[]>('/dex', undefined, signal)
-export const getRadar = (signal?: AbortSignal) => api.get<RadarWeek>('/radar', undefined, signal)
+/** week(YYYY-MM-DD, v2)를 주면 그 주 레이더. 없는 주면 404 RADAR_WEEK_NOT_FOUND */
+export const getRadar = (signal?: AbortSignal, week?: string) => api.get<RadarWeek>('/radar', { week }, signal)
 export const getRadarKeyword = (keywordId: string, signal?: AbortSignal) =>
   api.get<RadarKeyword>(`/radar/${enc(keywordId)}`, undefined, signal)
 /** 000~004 */
@@ -31,6 +32,9 @@ export const getTechDrop = (code: string, signal?: AbortSignal) =>
   api.get<TechDrop>(`/tech-drops/${enc(code)}`, undefined, signal)
 export const subscribeTechDrop = (code: string) =>
   api.post<{ subscribed: true }>(`/tech-drops/${enc(code)}/subscribe`)
+/** v2 · 오픈 알림 해제 */
+export const unsubscribeTechDrop = (code: string) =>
+  api.del<{ subscribed: false }>(`/tech-drops/${enc(code)}/subscribe`)
 export const getTeamMission = (id: string, signal?: AbortSignal) =>
   api.get<TeamMission>(`/team-missions/${enc(id)}`, undefined, signal)
 export const getTeamMissionResult = (id: string, signal?: AbortSignal) =>

@@ -44,9 +44,9 @@ def dex():
 
 
 @router.get("/radar", response_model=RadarResponse)
-def radar():
-    """TODO: 실제로는 관리자가 승인한 이번 주 키워드를 읽는다."""
-    return service.radar()
+def radar(week: str | None = None):
+    """TODO: 실제로는 관리자가 승인한 그 주(기본 이번 주) 키워드와 수집 규모 · AI 해설을 읽는다."""
+    return service.radar(week)
 
 
 @router.get("/radar/{keyword_id}", response_model=RadarKeyword)
@@ -95,3 +95,9 @@ def team_mission(mission_id: str):
 def team_mission_result(mission_id: str):
     """TODO: 실제로는 팀 미션 실행 결과와 캐릭터별 기여를 읽는다."""
     return service.team_mission_result(mission_id)
+
+
+@router.delete("/tech-drops/{code}/subscribe", response_model=SubscribeResponse)
+def unsubscribe_tech_drop(code: str, user: CurrentUser):
+    """TODO: 실제로는 오픈 알림 신청을 지운다."""
+    return service.unsubscribe_tech_drop(code)

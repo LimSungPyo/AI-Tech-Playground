@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getRememberedEmail, setRememberedEmail } from '../../auth/storage'
+import { forgetAccount, getRememberedProfile } from '../../auth/remembered'
 import { useAuth } from '../../auth/useAuth'
 import { Skeleton } from '../../components'
 import { GuestHome } from './GuestHome'
@@ -10,7 +10,7 @@ import styles from './HomePage.module.css'
 // 회원 → B-02 로그인 홈(첫 실험 전이면 E-03), 비회원 + 기억된 이메일 → 07:M-01, 그 외 → 0-01
 export default function HomePage() {
   const { status } = useAuth()
-  const [remembered, setRemembered] = useState(getRememberedEmail)
+  const [remembered, setRemembered] = useState(() => getRememberedProfile()?.email ?? null)
 
   if (status === 'loading') {
     return (
@@ -25,7 +25,7 @@ export default function HomePage() {
     <GuestHome
       rememberedEmail={remembered}
       onForget={() => {
-        setRememberedEmail(null)
+        forgetAccount()
         setRemembered(null)
       }}
     />

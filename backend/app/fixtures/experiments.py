@@ -27,6 +27,7 @@ EXPERIMENTS = [
         "level": "advanced", "character": "octo", "tags": ["Tool Calling"], "duration_min": 8,
         "status": "coming_soon", "unlock_condition": "투표 중 · 42%",
         "thumbnail_color": "#F28C6C",
+        "vote": {"vote_id": "vote-2026-w42", "pct": 42, "ends_at": "2026-10-18T23:59:00+09:00"},
     },
     {
         "id": "004", "code": "#004", "title": "Multi-Agent 회의실", "subtitle": "Multi-Agent",
@@ -62,19 +63,38 @@ EXPERIMENTS = [
 
 EXPERIMENTS_BY_ID = {e["id"]: e for e in EXPERIMENTS}
 
+# v2 · 플레이 장면(좌표 0~100). 드로시 미션 장면은 B-04 게임 화면, 웜이는 페트리 접시(장애물 없음)
+FLY_SCENE = {
+    "start": {"x": 14, "y": 85},
+    "food": {"x": 82, "y": 20},
+    "obstacles": [
+        {"x": 21.5, "y": 19, "w": 15, "h": 5.5},
+        {"x": 38.6, "y": 26, "w": 3.9, "h": 34.5, "label": "장애물"},
+    ],
+}
+FLY_SCENE_M2 = {
+    **FLY_SCENE,
+    "obstacles": [*FLY_SCENE["obstacles"], {"x": 58, "y": 44, "w": 12, "h": 5, "label": "새 장애물"}],
+}
+WORM_SCENE = {"start": {"x": 14, "y": 85}, "food": {"x": 82, "y": 20}, "obstacles": []}
+
+# v2 · G-02 참여 인원 · 평균 향상(%p). 관리자 분석 F-11의 플레이 수와 맞춘다
+PARTICIPANTS = {"000": 2110, "001": 3120, "006": 1210, "007": 1480}
+AVG_IMPROVEMENT = {"000": 79, "001": 46, "006": 54, "007": 13}
+
 # 상세 화면용 추가 정보. #001은 G-02 화면 그대로, 나머지는 로스터 설명으로 채운다.
 MISSIONS_001 = [
-    {"id": "m1", "title": "먹이 찾기", "goal": "60초 안에 먹이에 도착", "status": "cleared", "success_threshold": 60, "best_rate": 86},
-    {"id": "m2", "title": "장애물 피하기", "goal": "시야로 장애물을 보고 돌아가 먹이에 도착", "status": "open", "success_threshold": 60},
-    {"id": "m3", "title": "짝 찾기", "goal": "두 가지 신호를 동시에 판단", "status": "locked", "success_threshold": 60},
+    {"id": "m1", "title": "먹이 찾기", "goal": "60초 안에 먹이에 도착", "status": "cleared", "success_threshold": 60, "best_rate": 86, "scene": FLY_SCENE},
+    {"id": "m2", "title": "장애물 피하기", "goal": "시야로 장애물을 보고 돌아가 먹이에 도착", "status": "open", "success_threshold": 60, "scene": FLY_SCENE_M2},
+    {"id": "m3", "title": "짝 찾기", "goal": "두 가지 신호를 동시에 판단", "status": "locked", "success_threshold": 60, "scene": FLY_SCENE_M2},
 ]
 
 DETAILS = {
     "000": {
         "description": "전체 신경 연결이 처음 밝혀진 가장 작은 뇌. 5분이면 \"신경망이 뭔지\" 감이 와요.",
         "missions": [
-            {"id": "m1", "title": "냄새 따라가기", "goal": "냄새 진한 쪽으로 이동해 먹이에 도착", "status": "cleared", "success_threshold": 85, "best_rate": 91},
-            {"id": "m2", "title": "온도 맞추기", "goal": "좋아하는 온도 구역에 머물기", "status": "open", "success_threshold": 60},
+            {"id": "m1", "title": "냄새 따라가기", "goal": "냄새 진한 쪽으로 이동해 먹이에 도착", "status": "cleared", "success_threshold": 85, "best_rate": 91, "scene": WORM_SCENE},
+            {"id": "m2", "title": "온도 맞추기", "goal": "좋아하는 온도 구역에 머물기", "status": "open", "success_threshold": 60, "scene": WORM_SCENE},
         ],
         "stats": {"first_trial_rate": 12, "hundredth_trial_rate": 91},
         "principle": "실제 예쁜꼬마선충의 화학 주성 회로(감각 ASE · AWC → 중간 AIY · AIZ → 운동 SMD)를 단순화했어요.",
@@ -100,7 +120,36 @@ def detail_for(exp_id: str) -> dict:
         "stats": {"first_trial_rate": 0, "hundredth_trial_rate": 0},
         "principle": summary["subtitle"],
     }
-    return {**summary, **extra, "card_id": f"card-{exp_id}"}
+    detail = {**summary, **extra, "card_id": f"card-{exp_id}"}
+    detail["participants"] = PARTICIPANTS.get(exp_id, 0)
+    detail["avg_improvement"] = AVG_IMPROVEMENT.get(exp_id, 0)
+    # 장면은 지금 열린(없으면 첫) 미션의 것
+    current = next((m for m in detail["missions"] if m["status"] == "open"), detail["missions"][0])
+    if current.get("scene"):
+        detail["scene"] = current["scene"]
+    return detail
+
+
+# v2 · B-03 다른 사용자들의 예측(%) · 내 예측 · G-04 지난 예측
+PREDICTION_STATS = {
+    "m1": [
+        {"option": "1 – 10회", "pct": 18},
+        {"option": "11 – 30회", "pct": 46},
+        {"option": "31 – 60회", "pct": 27},
+        {"option": "61회 이상", "pct": 9},
+    ],
+    "m2": [
+        {"option": "1 – 10회", "pct": 12},
+        {"option": "11 – 30회", "pct": 39},
+        {"option": "31 – 60회", "pct": 34},
+        {"option": "61회 이상", "pct": 15},
+    ],
+}
+MY_PREDICTION = {"m1": "11 – 30회"}
+LAST_PREDICTION = {"m2": {"mission_id": "m1", "option": "11 – 30회", "correct": True}}
+
+# v2 · B-07 첫 성공 회차
+FIRST_SUCCESS_TRIAL = {"m1": 10, "m2": 47}
 
 
 # B-03 · G-04 미션 브리핑
@@ -209,8 +258,17 @@ WHY_BY_LEVEL = {
 }
 
 
+# v2 · B-05 ③ 비슷했던 과거 경험 · 보상 · STEP
+WHY_CASES = [
+    {"trial": 4, "similarity": 71, "reward": 1.0},
+    {"trial": 7, "similarity": 79, "reward": 1.0},
+    {"trial": 9, "similarity": 83, "reward": 1.0},
+    {"trial": 11, "similarity": 64, "reward": -0.5},
+]
+
+
 def why_for(level: str = "beginner") -> dict:
-    return {**WHY_BASE, **WHY_BY_LEVEL[level], "level": level}
+    return {**WHY_BASE, **WHY_BY_LEVEL[level], "level": level, "similar_cases": WHY_CASES, "reward": 0.6, "step": 37}
 
 
 # 화면 값에 맞춘 성공률 기준점: T1 12% · T12 42% · T22 51% · T33 52% · T34 58% · T100 86%
@@ -241,6 +299,18 @@ JOURNAL_DEFAULT = "오른쪽에서 냄새가 나면… 오른쪽! 이제 좀 알
 
 # B-06 ×10 훈련: 성공 여부 순서 (T13~T22)
 BATCH_SUCCESS = [True, False, True, True, False, True, True, True, False, True]
+# 성공한 회차의 도달 시간(초). B-06: T13 9.2 · T15 7.8 · T16 7.1 · T18 6.4 · T19 6.9
+BATCH_TIMES = [9.2, 24.0, 7.8, 7.1, 24.0, 6.4, 6.9, 6.6, 24.0, 6.2]
+
+# v2 · B-06 가장 많이 바뀐 연결 TOP 5
+BATCH_CONNECTIONS = [
+    {"from": "S2", "to": "M2", "label": "S2 냄새·오른쪽 → M2 오른쪽", "delta": 0.34},
+    {"from": "S1", "to": "M1", "label": "S1 냄새·왼쪽 → M1 왼쪽", "delta": 0.27},
+    {"from": "S4", "to": "M4", "label": "S4 시야·가까움 → M4 멈춤", "delta": 0.19},
+    {"from": "S3", "to": "M3", "label": "S3 냄새·정면 → M3 직진", "delta": 0.15},
+    {"from": "S5", "to": "M3", "label": "S5 시야·멀리 → M3 직진", "delta": -0.08},
+]
+BATCH_JOURNAL = "오른쪽에서 냄새가 나면… 오른쪽! 이제 좀 알 것 같아!"
 
 # B-07 미션 성공
 CLEAR_UNLOCKED = {
@@ -251,6 +321,20 @@ CLEAR_UNLOCKED = {
     ],
     "m2": [{"kind": "mission", "id": "m3", "title": "미션 3 · 짝 찾기"}],
 }
+
+
+def report_metrics() -> list[dict]:
+    """v2 · B-08 회차별 성공률 · 도달 시간 · 충돌 수(1~100회차). 도달 시간 24.1s → 6.3s, 충돌 9.4 → 0.8."""
+    rows = []
+    for t in range(1, 101):
+        k = (t - 1) / 99
+        rows.append({
+            "trial": t,
+            "success_rate": success_rate_at(t),
+            "time_sec": round(24.1 - (24.1 - 6.3) * (1 - (1 - k) ** 2.2), 1),
+            "collisions": round(9.4 - (9.4 - 0.8) * (1 - (1 - k) ** 2.6), 1),
+        })
+    return rows
 
 # B-08 성장 리포트
 REPORT_001 = {
@@ -267,15 +351,23 @@ REPORT_001 = {
 
 # H-05 랭킹 전체 (#001 미션 1, 이번 주)
 RANKING_001 = [
-    {"rank": 1, "nickname": "flylab_kim", "character": "drosi", "success_rate": 94, "trials": 61, "is_me": False},
-    {"rank": 2, "nickname": "neuron_j", "character": "drosi", "success_rate": 91, "trials": 48, "is_me": False},
-    {"rank": 3, "nickname": "beebrain", "character": "drosi", "success_rate": 89, "trials": 52, "is_me": False},
-    {"rank": 4, "nickname": "synapse_lee", "character": "drosi", "success_rate": 88, "trials": 42, "is_me": False},
-    {"rank": 5, "nickname": "도로롱", "character": "drosi", "success_rate": 87, "trials": 38, "is_me": False},
-    {"rank": 6, "nickname": "fly_master", "character": "drosi", "success_rate": 87, "trials": 55, "is_me": False},
-    {"rank": 7, "nickname": "?? 부적절한닉 ??", "character": "drosi", "success_rate": 86, "trials": 40, "is_me": False},
-    {"rank": 42, "nickname": "드로시 #03", "character": "drosi", "success_rate": 86, "trials": 34, "is_me": True},
+    {"rank": 1, "nickname": "flylab_kim", "character": "drosi", "success_rate": 94, "trials": 61, "is_me": False, "first_success_trial": 8},
+    {"rank": 2, "nickname": "neuron_j", "character": "drosi", "success_rate": 91, "trials": 48, "is_me": False, "first_success_trial": 9},
+    {"rank": 3, "nickname": "beebrain", "character": "drosi", "success_rate": 89, "trials": 52, "is_me": False, "first_success_trial": 11},
+    {"rank": 4, "nickname": "synapse_lee", "character": "drosi", "success_rate": 88, "trials": 42, "is_me": False, "first_success_trial": 7},
+    {"rank": 5, "nickname": "도로롱", "character": "drosi", "success_rate": 87, "trials": 38, "is_me": False, "first_success_trial": 12},
+    {"rank": 6, "nickname": "fly_master", "character": "drosi", "success_rate": 87, "trials": 55, "is_me": False, "first_success_trial": 10},
+    {"rank": 7, "nickname": "?? 부적절한닉 ??", "character": "drosi", "success_rate": 86, "trials": 40, "is_me": False, "first_success_trial": 14},
+    {"rank": 42, "nickname": "드로시 #03", "character": "drosi", "success_rate": 86, "trials": 34, "is_me": True, "first_success_trial": 10},
 ]
 
 SHARE_ID = "s-hyewon-001"
-SHARED_RESULT = {"nickname": "hyewon", "rate": 86, "trials": 10, "character": "drosi"}
+SHARED_RESULT = {
+    "nickname": "hyewon", "rate": 86, "trials": 10, "character": "drosi",
+    "mission_title": "미션 1 · 먹이 찾기",
+    "prediction": {"option": "11 – 30회", "correct": True},
+}
+
+
+# v2 · 실험별 랭킹(#001 외). 열린 실험만 있고, 그 실험의 캐릭터로 채운다
+RANKING_NICKNAMES = ["flylab_kim", "neuron_j", "beebrain", "synapse_lee", "tiny_brain"]

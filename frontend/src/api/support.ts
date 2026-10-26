@@ -14,6 +14,9 @@ export function createInquiry({ files, ...fields }: InquiryRequest) {
     form.set('category', fields.category)
     form.set('title', fields.title)
     form.set('body', fields.body)
+    if (fields.notify !== undefined) form.set('notify', String(fields.notify))
+    if (fields.experimentId) form.set('experimentId', fields.experimentId)
+    if (fields.trial !== undefined) form.set('trial', String(fields.trial))
     for (const f of files) form.append('files', f)
     return api.post<Inquiry>('/inquiries', form)
   }

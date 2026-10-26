@@ -3,6 +3,7 @@
 from copy import deepcopy
 
 from app.fixtures import support as fx
+from app.schemas.support import InquiryCreate
 
 
 def notifications(user: dict) -> list[dict]:
@@ -20,15 +21,18 @@ def inquiries(user: dict) -> list[dict]:
     return deepcopy(fx.INQUIRIES)
 
 
-def create_inquiry(user: dict, category: str, title: str, body: str, attachments: int) -> dict:
+def create_inquiry(user: dict, inquiry: InquiryCreate, attachments: int) -> dict:
     # TODO: 문의를 저장하고 첨부(최대 3장)를 파일 저장소에 올린 뒤 관리자 문의 큐에 넣는다.
     return {
         "id": fx.NEW_INQUIRY_ID,
-        "category": category,
-        "title": title,
-        "body": body,
+        "category": inquiry.category,
+        "title": inquiry.title,
+        "body": inquiry.body,
         "status": "received",
         "created_at": "2026-10-17T15:00:00+09:00",
+        "experiment_id": inquiry.experiment_id,
+        "trial": inquiry.trial,
+        "notify": inquiry.notify if inquiry.notify is not None else True,
     }
 
 

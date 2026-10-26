@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter
 
+from app.core.auth import OptionalUser
 from app.schemas.base import Ok
 from app.schemas.common import (
     BatchTraining,
@@ -17,6 +18,7 @@ from app.schemas.experiments import (
     BriefingResponse,
     MissionClearResponse,
     PredictRequest,
+    RankingPeriod,
     RankingReportRequest,
     SharedResult,
     ShareResponse,
@@ -42,9 +44,9 @@ def get_experiment(exp_id: str):
 
 
 @router.get("/experiments/{exp_id}/missions/{mission_id}/briefing", response_model=BriefingResponse)
-def briefing(exp_id: str, mission_id: str):
-    """TODO: 실제로는 미션의 스토리·목표·예측 문항·보상 규칙을 읽는다."""
-    return service.briefing(exp_id, mission_id)
+def briefing(exp_id: str, mission_id: str, user: OptionalUser):
+    """TODO: 실제로는 미션의 스토리·목표·예측 문항·보상 규칙과 예측 분포·내 예측을 읽는다."""
+    return service.briefing(exp_id, mission_id, user)
 
 
 @router.post("/experiments/{exp_id}/missions/{mission_id}/predict", response_model=Ok)
@@ -84,9 +86,9 @@ def report(exp_id: str):
 
 
 @router.get("/experiments/{exp_id}/ranking", response_model=list[RankingRow])
-def ranking(exp_id: str):
-    """TODO: 실제로는 이번 주 기록으로 순위를 매기고 내 순위를 붙인다."""
-    return service.ranking(exp_id)
+def ranking(exp_id: str, mission: str | None = None, period: RankingPeriod = "week"):
+    """TODO: 실제로는 기간·미션별 기록으로 순위를 매기고 내 순위를 붙인다."""
+    return service.ranking(exp_id, mission, period)
 
 
 @router.post("/ranking/report", response_model=Ok)

@@ -28,6 +28,10 @@ export interface User {
   skill: SkillLevel
   partner: CharacterId | null
   hasPlayed: boolean
+  /** v2 · 레벨 칭호("탐험가"). 사이드바 "Lv.7 탐험가" */
+  title?: string
+  /** v2 · 마지막으로 멈춘 실험 회차(기억된 회원 홈 07:M-01) */
+  lastPlayed?: { experimentId: string; code: string; title: string; trial: number }
 }
 
 export interface ExperimentSummary {
@@ -43,6 +47,35 @@ export interface ExperimentSummary {
   unlockCondition?: string
   progress?: { trial: number; maxTrial: number; successRate: number }
   thumbnailColor: string
+  /** v2 · 오픈 투표 중(#003). status는 coming_soon 그대로 */
+  vote?: ExperimentVote
+  /** v2 · /me/experiments에서만 */
+  lastPlayedAt?: string
+  /** v2 · /me/experiments에서만 · 1회차 성공률 */
+  firstRate?: number
+  /** v2 · /me/experiments에서만 · 추세용 듬성듬성한 곡선 */
+  curve?: CurvePoint[]
+}
+
+/** v2 */
+export interface ExperimentVote {
+  voteId: string
+  pct: number
+  endsAt: string
+}
+
+/** v2 · 플레이 장면(좌표 0~100) */
+export interface Obstacle {
+  x: number
+  y: number
+  w: number
+  h: number
+  label?: string
+}
+export interface Scene {
+  start: Point
+  food: Point
+  obstacles: Obstacle[]
 }
 
 export interface Mission {
@@ -52,6 +85,8 @@ export interface Mission {
   status: 'cleared' | 'open' | 'locked'
   successThreshold: number
   bestRate?: number
+  /** v2 */
+  scene?: Scene
 }
 
 export interface ExperimentDetail extends ExperimentSummary {
@@ -60,6 +95,12 @@ export interface ExperimentDetail extends ExperimentSummary {
   stats: { firstTrialRate: number; hundredthTrialRate: number }
   principle: string
   cardId: string
+  /** v2 · 참여 인원(3,120명) */
+  participants?: number
+  /** v2 · 평균 향상(%p) */
+  avgImprovement?: number
+  /** v2 · 지금 열린 미션의 장면 */
+  scene?: Scene
 }
 
 export interface Point {
@@ -99,6 +140,12 @@ export interface WhyExplanation {
   level: SkillLevel
   detail: string
   neuronPath: string[]
+  /** v2 · ③ 비슷했던 과거 경험 */
+  similarCases?: { trial: number; similarity: number; reward: number }[]
+  /** v2 · 이 선택의 보상(+0.6) */
+  reward?: number
+  /** v2 · STEP 37 */
+  step?: number
 }
 
 export interface BatchTraining {
@@ -107,7 +154,23 @@ export interface BatchTraining {
   toTrial: number
   status: 'running' | 'done'
   progress: number
-  trials: CurvePoint[]
+  trials: BatchTrial[]
+  /** v2 · 가장 많이 바뀐 연결 TOP 5 */
+  connections?: ConnectionChange[]
+  /** v2 · 혼잣말 */
+  journal?: string
+}
+export interface BatchTrial extends CurvePoint {
+  /** v2 */
+  success?: boolean
+  timeSec?: number
+  path?: Point[]
+}
+export interface ConnectionChange {
+  from: string
+  to: string
+  label: string
+  delta: number
 }
 
 export interface ReportSnapshot {
@@ -126,6 +189,26 @@ export interface Report {
   events: { trial: number; label: string }[]
   commentary: string
   nextRecommendations: Recommendation[]
+  /** v2 · "미션 1 · 먹이 찾기" */
+  missionTitle?: string
+  /** v2 · 회차별 성공률 · 도달 시간 · 충돌 수(1~100) */
+  metrics?: TrialMetric[]
+  /** v2 · 나란히 재생용 1회차 · 마지막 회차 경로 */
+  replay?: { first: Point[]; last: Point[] }
+  /** v2 */
+  prediction?: PredictionResult
+  participants?: number
+  avgImprovement?: number
+}
+export interface TrialMetric {
+  trial: number
+  successRate: number
+  timeSec: number
+  collisions: number
+}
+export interface PredictionResult {
+  option: string
+  correct: boolean
 }
 
 export interface TechCard {
@@ -137,11 +220,16 @@ export interface TechCard {
   sources: Source[]
   unlocked: boolean
   reveal: { headline: string; body: string }
+  /** v2 · 관리자 검토 단계 */
+  status?: TechCardStatus
 }
+export type TechCardStatus = 'draft' | 'review' | 'approved' | 'published'
 
 export interface Source {
   title: string
   url: string
+  /** v2 · 레이더 출처 종류 */
+  kind?: 'paper' | 'code' | 'community' | 'news'
 }
 
 export interface TreeNode {
@@ -155,6 +243,10 @@ export interface TreeNode {
   position: Point
   description: string
   unlockCondition?: string
+  /** v2 · 연결된 실험 여러 개("에이전트 = #003 #004") */
+  experimentIds?: string[]
+  /** v2 · 숙련도 */
+  mastery?: { level: number; max: number; hint: string }
 }
 
 export interface DexEntry {
@@ -173,6 +265,13 @@ export interface DexEntry {
   personality: string
   meetCondition: string
   state: 'egg' | 'baby' | 'growing' | 'master'
+  /** v2 · 함께한 시간(분) */
+  playMinutes?: number
+  revealWatched?: boolean
+  /** v2 · WHY? 사용 횟수 */
+  whyCount?: number
+  /** v2 · 이 캐릭터로 얻은 배지 id */
+  badges?: string[]
 }
 
 export interface RankingRow {
@@ -182,6 +281,8 @@ export interface RankingRow {
   successRate: number
   trials: number
   isMe: boolean
+  /** v2 */
+  firstSuccessTrial?: number
 }
 
 export interface Recommendation {
@@ -208,7 +309,7 @@ export interface RadarKeyword {
 
 export interface Notification {
   id: string
-  kind: 'badge' | 'experiment' | 'inquiry' | 'team' | 'system'
+  kind: 'badge' | 'experiment' | 'inquiry' | 'team' | 'system' | 'character' | 'ranking' | 'radar'
   title: string
   body: string
   createdAt: string
@@ -223,6 +324,16 @@ export interface Badge {
   obtained: boolean
   obtainedAt?: string
   icon: string
+  /** v2 · "실험" · "이해" · "꾸준함" · "협업 · 확장" */
+  category?: string
+  /** v2 · 0~100 */
+  progress?: number
+  /** v2 · 획득한 사용자 비율(0~100) */
+  rarity?: number
+  experimentId?: string
+  story?: string
+  /** v2 · 대표 배지 */
+  featured?: boolean
 }
 
 export interface Inquiry {
@@ -233,6 +344,11 @@ export interface Inquiry {
   status: 'received' | 'answered'
   createdAt: string
   answer?: string
+  /** v2 */
+  answeredAt?: string
+  experimentId?: string
+  trial?: number
+  notify?: boolean
 }
 
 export interface TeamMission {
@@ -240,8 +356,13 @@ export interface TeamMission {
   title: string
   members: { character: CharacterId; role: string; level: number }[]
   goal: string
-  messages: { from: CharacterId; text: string; at: number }[]
+  messages: { from: CharacterId; text: string; at: number; event?: TeamEvent }[]
   status: 'ready' | 'running' | 'done'
+}
+/** v2 · 팀 미션 시스템 이벤트 줄 */
+export interface TeamEvent {
+  kind: 'assign' | 'retrieve' | 'tool_call' | 'memory'
+  text: string
 }
 
 // ── 공통 응답 ──
@@ -279,6 +400,27 @@ export interface SignupResult {
 export interface VerifyEmailResult extends AuthResult {
   importedGuestTrials: number
 }
+/** POST /auth/guest/merge. v2 필드는 E-02 가입 완료 화면용 */
+export interface GuestMergeResult {
+  merged: number
+  experimentId?: string
+  successRate?: number
+  replays?: number
+  character?: { id: CharacterId; level: number; state: string }
+  predictions?: string[]
+}
+/** v2 · POST /auth/verify-email/resend */
+export interface ResendResult extends Ok {
+  expiresInSec: number
+  cooldownSec: number
+}
+/** v2 · GET /auth/restore/preview */
+export interface RestorePreview {
+  email: string
+  deletionScheduledAt: string
+  daysLeft: number
+  counts: { experiments: number; characters: number; cards: number; badges: number }
+}
 /** 401 INVALID_PASSWORD의 error data */
 export interface InvalidPasswordData {
   remainingAttempts: number
@@ -304,34 +446,113 @@ export interface MeHome {
   radar: RadarKeyword[]
   techDrop: { code: string; title: string; dDay: number; subscribed: boolean }
   team: { ready: boolean; text: string; missionId: string }
+  /** v2 · 휴면 복귀(07:M-07). 휴면 계정이 아니면 키가 빠진다 */
+  dormant?: DormantInfo
+}
+/** v2 · 07:M-07 휴면 복귀 웰컴 */
+export interface DormantInfo {
+  daysAway: number
+  highlights: string[]
+  /** "드로시 깨우고 이어하기" 이동 경로 */
+  continueTo?: string
 }
 export interface OnboardingRequest {
   interests: string[]
   skill: SkillLevel
 }
 export interface PartnerRecommendation {
-  primary: { character: CharacterId; reason: string; score: number }
-  alternatives: { character: CharacterId; reason: string }[]
+  /** greeting은 v2 */
+  primary: { character: CharacterId; reason: string; score: number; greeting?: string }
+  /** score · greeting은 v2 */
+  alternatives: { character: CharacterId; reason: string; score?: number; greeting?: string }[]
 }
 export interface MeDashboard {
   user: User
   stats: { experiments: number; trials: number; cards: number; badges: number }
   recent: ExperimentSummary[]
-  streak: { days: number; calendar: DayMinutes[] }
+  /** best · protectionsLeft는 v2 */
+  streak: { days: number; calendar: DayMinutes[]; best?: number; protectionsLeft?: number }
   partner: DexEntry
+  /** v2 · 640 / 1,000 XP · Lv.8까지 */
+  xp?: { current: number; next: number; nextLevel: number }
+  /** v2 · 총 실험 시간(분) */
+  totalMinutes?: number
+  /** v2 · 이번 주 +48m */
+  weekMinutesDelta?: number
+  /** v2 · 최고 연속 기록(일) */
+  bestStreak?: number
 }
+export type HistoryPeriod = 'week' | 'month' | 'all'
+export type HistoryLogKind = 'training' | 'why' | 'achievement'
 export interface MeHistory {
-  days: DayMinutes[]
-  logs: { date: string; experimentId: string; text: string }[]
+  /** successRate는 v2(학습한 날만) */
+  days: (DayMinutes & { successRate?: number })[]
+  /** kind는 v2 */
+  logs: { date: string; experimentId: string; text: string; kind?: HistoryLogKind }[]
+  /** v2 */
+  period?: HistoryPeriod
+  rangeLabel?: string
+  stats?: HistoryStats
+  weeklySummary?: { text: string; suggestion: string }
+  /** v2 · 내 실험 기록 표(B-11) */
+  records?: HistoryRecord[]
+}
+export interface HistoryStats {
+  minutes: number
+  minutesDelta: number
+  trials: number
+  batchRuns: number
+  whyViews: number
+  whyPeakDate?: string
+  rateChange: number
+  rateChangeLabel: string
+}
+export interface HistoryRecord {
+  experimentId: string
+  missionId: string
+  trial: number
+  bestRate: number
+  status: 'in_progress' | 'cleared' | 'locked'
+  lastPlayedAt: string
 }
 export interface MeSettings {
   notifications: { email: boolean; push: boolean; marketing: boolean }
   theme: string
   whyLevel: SkillLevel
+  // v2 (PUT에서 빼면 저장된 값 유지)
+  rankingAlert?: boolean
+  trainingSpeed?: 1 | 2 | 4
+  language?: 'ko' | 'en'
+  a11y?: { reduceMotion: boolean; highContrast: boolean; largeText: boolean; captions: boolean }
+  privacy?: { publicProfile: boolean; showInRanking: boolean; shareRecords: boolean }
+  /** 읽기 전용 */
+  connections?: SocialConnection[]
+  /** 읽기 전용 */
+  passwordChangedAt?: string
+  /** 읽기 전용 */
+  email?: string
+}
+export interface SocialConnection {
+  provider: SocialProvider
+  connected: boolean
+  email?: string
 }
 export interface ProfileRequest {
   nickname: string
   avatar: CharacterId
+  /** v2 */
+  bio?: string
+}
+/** v2 */
+export interface SocialConnectResult extends Ok {
+  provider: SocialProvider
+  connected: boolean
+}
+/** v2 */
+export interface ExportResult extends Ok {
+  requestedAt: string
+  readyInMin: number
+  email: string
 }
 export interface WithdrawResult extends Ok {
   graceDays: number
@@ -348,6 +569,12 @@ export interface MissionBriefing {
   objectives: string[]
   prediction: { question: string; options: string[] }
   tips: string[]
+  /** v2 · 다른 사용자들의 예측 */
+  predictionStats?: { option: string; pct: number }[]
+  /** v2 · 회원이 이미 고른 예측 */
+  myPrediction?: string
+  /** v2 · G-04 지난 미션 예측 */
+  lastPrediction?: { missionId: string; option: string; correct: boolean }
 }
 export interface TrialRequest {
   missionId: string
@@ -359,6 +586,10 @@ export interface MissionClear {
   trials: number
   unlocked: { kind: string; id: string; title: string }[]
   badge?: Badge
+  /** v2 */
+  firstSuccessTrial?: number
+  myPrediction?: string
+  predictionCorrect?: boolean
 }
 export interface ShareResult {
   shareId: string
@@ -370,6 +601,14 @@ export interface SharedRecord {
   rate: number
   trials: number
   character: CharacterId
+  /** v2 */
+  missionTitle?: string
+  prediction?: PredictionResult
+}
+/** v2 · GET /experiments/{id}/ranking 쿼리 */
+export interface RankingQuery {
+  mission?: string
+  period?: 'week' | 'month' | 'all' | 'friends'
 }
 
 // ── 콘텐츠 ──
@@ -377,6 +616,14 @@ export interface RadarWeek {
   week: string
   updatedAt: string
   keywords: RadarKeyword[]
+  /** v2 · 12개 출처 */
+  sourceCount?: number
+  /** v2 · 글 3,412개 */
+  postCount?: number
+  /** v2 · AI 해설 */
+  commentary?: string
+  /** v2 · ?week= 로 고를 수 있는 주(최신순) */
+  availableWeeks?: string[]
 }
 export interface CarouselSlide {
   code: string
@@ -385,6 +632,13 @@ export interface CarouselSlide {
   character: CharacterId
   cta: string
   target: string
+  /** v2 */
+  badge?: 'FEATURED' | 'NOW OPEN' | 'COMING SOON'
+  level?: Level
+  durationMin?: number
+  tags?: string[]
+  /** v2 · 말풍선 "뉴런 302개" · "D-14" */
+  bubble?: string
 }
 export interface Vote {
   id: string
@@ -400,11 +654,18 @@ export interface TechDrop {
   openAt: string
   character: CharacterId
   subscribed: boolean
+  /** v2 · 이 실험에서 배워요 */
+  learn?: { title: string; body: string }[]
+  /** v2 · 시작 조건 */
+  conditions?: { label: string; done: boolean }[]
+  conditionHint?: string
 }
 export interface TeamMissionResult {
   mission: TeamMission
   summary: string
   contributions: { character: CharacterId; text: string }[]
+  /** v2 */
+  metrics?: { messages: number; toolCalls: number; searches: number }
 }
 
 // ── 알림 · 문의 ──
@@ -413,6 +674,10 @@ export interface InquiryRequest {
   title: string
   body: string
   files?: File[]
+  /** v2 */
+  notify?: boolean
+  experimentId?: string
+  trial?: number
 }
 export interface SystemStatus {
   maintenance: boolean
@@ -429,18 +694,68 @@ export interface AdminOtpResult {
   adminToken: string
   ipVerified: true
 }
+/** 403 IP_BLOCKED의 error data(v2) */
+export interface IpBlockedData {
+  ip: string
+  at: string
+}
 export interface AdminDashboard {
   kpis: { label: string; value: string | number; delta: string | number }[]
   alerts: { level: string; text: string }[]
   signups: { date: string; count: number }[]
+  /** v2 · 최근 7일 DAU */
+  dau?: { date: string; count: number }[]
+  /** v2 · 게스트 → 회원 전환율(%) */
+  conversion?: { date: string; rate: number }[]
+  /** v2 · 시스템 상태 */
+  system?: { name: string; status: 'ok' | 'warning' | 'down'; detail: string }[]
 }
-export type RadarCandidateStatus = 'pending' | 'approved' | 'rejected'
+export type RadarCandidateStatus = 'pending' | 'approved' | 'rejected' | 'merged'
+export type RadarDecision = 'approved' | 'rejected' | 'merged'
 export interface AdminRadar {
-  candidates: { id: string; keyword: string; source: string; score: number; status: RadarCandidateStatus }[]
+  candidates: {
+    id: string
+    keyword: string
+    source: string
+    score: number
+    status: RadarCandidateStatus
+    /** v2 · 상승률(%) */
+    growth?: number
+    /** v2 · "#003" */
+    linkedModule?: string
+    /** v2 · 병합 제안 대상 후보 id */
+    mergeInto?: string
+    /** v2 · "과장 · 출처 단일" */
+    warning?: string
+  }[]
 }
-export type ModuleStage = 'idea' | 'design' | 'build' | 'qa' | 'live'
+export type ModuleStage = 'idea' | 'voting' | 'design' | 'build' | 'qa' | 'scheduled' | 'live'
 export interface AdminModules {
-  modules: { id: string; code: string; title: string; stage: ModuleStage; owner: string; updatedAt: string }[]
+  modules: {
+    id: string
+    code: string
+    title: string
+    stage: ModuleStage
+    owner: string
+    updatedAt: string
+    /** v2 */
+    progress?: number
+    votePct?: number
+    dDay?: number
+    note?: string
+  }[]
+}
+/** v2 · GET /admin/cards */
+export interface AdminCards {
+  cards: {
+    id: string
+    title: string
+    experimentId: string
+    status: TechCardStatus
+    unlocked: boolean
+    author: string
+    updatedAt: string
+  }[]
 }
 export interface ModulePublishRequest {
   visibility: string
@@ -453,11 +768,51 @@ export interface AdminHome {
 }
 export type AdminUserStatus = 'active' | 'dormant' | 'suspended' | 'withdrawing'
 export interface AdminUsers {
-  users: { id: string; nickname: string; email: string; status: AdminUserStatus; joinedAt: string; lastSeenAt: string }[]
+  users: {
+    id: string
+    nickname: string
+    email: string
+    status: AdminUserStatus
+    joinedAt: string
+    lastSeenAt: string
+    /** v2 */
+    level?: number
+    partner?: CharacterId
+  }[]
 }
-export type AdminUserAction = 'suspend' | 'warn' | 'restore'
+/** reset_password · wipe · unlock은 v2 */
+export type AdminUserAction = 'suspend' | 'warn' | 'restore' | 'reset_password' | 'wipe' | 'unlock'
 export interface AdminInquiries {
-  items: { id: string; kind: 'inquiry' | 'report'; title: string; user: string; status: string; createdAt: string }[]
+  items: {
+    id: string
+    kind: 'inquiry' | 'report'
+    title: string
+    user: string
+    status: string
+    createdAt: string
+    /** v2 */
+    body?: string
+    category?: string
+    answer?: string
+    memo?: string
+  }[]
+}
+/** v2 · POST /admin/inquiries/{id}/answer */
+export interface AdminInquiryAnswer {
+  body: string
+  memo?: string
+}
+/** v2 · GET /admin/notifications */
+export interface AdminSentNotifications {
+  items: {
+    id: string
+    title: string
+    audience: string
+    recipients: number
+    sentAt: string
+    openRate?: number
+    status: 'scheduled' | 'sent'
+  }[]
 }
 export interface AdminAnalytics {
   funnel: { step: string; count: number }[]

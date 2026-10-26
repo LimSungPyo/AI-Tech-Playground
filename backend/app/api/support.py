@@ -26,6 +26,9 @@ INQUIRY_BODY_DOC = {
                         "category": {"type": "string"},
                         "title": {"type": "string"},
                         "body": {"type": "string"},
+                        "notify": {"type": "boolean"},
+                        "experimentId": {"type": "string"},
+                        "trial": {"type": "integer"},
                         "attachments": {"type": "array", "items": {"type": "string", "format": "binary"}},
                     },
                 }
@@ -59,8 +62,10 @@ async def create_inquiry(request: Request, user: CurrentUser):
     attachments = 0
     if request.headers.get("content-type", "").startswith("multipart/form-data"):
         form = await request.form()
-        attachments = len([f for f in form.getlist("attachments") if hasattr(f, "filename")])
-        raw = {k: form.get(k) for k in ("category", "title", "body")}
+        # 첨부 필드 이름은 attachments(계약) · files(프론트 createInquiry) 둘 다 받는다
+        files = [*form.getlist("attachments"), *form.getlist("files")]
+        attachments = len([f for f in files if hasattr(f, "filename")])
+        raw = {k: form.get(k) for k in ("category", "title", "body", "notify", "experimentId", "trial") if form.get(k) is not None}
     else:
         try:
             raw = await request.json()
@@ -71,7 +76,7 @@ async def create_inquiry(request: Request, user: CurrentUser):
     except ValidationError as exc:
         details = [{"loc": ["body", *e["loc"]], "msg": e["msg"]} for e in exc.errors()]
         raise AppError(422, "VALIDATION_ERROR", "요청 값이 올바르지 않아요.", details=details)
-    return service.create_inquiry(user, body.category, body.title, body.body, attachments)
+    return service.create_inquiry(user, body, attachments)
 
 
 @router.get("/system/status", response_model=SystemStatus)

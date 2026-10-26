@@ -25,6 +25,9 @@ const iconOf: Record<Notification['kind'], { mascot?: MascotExpression; characte
   team: { character: 'wormy' },
   inquiry: { mascot: 'happy' },
   system: { character: 'owl' },
+  character: { character: 'drosi' },
+  ranking: { mascot: 'champion' },
+  radar: { mascot: 'scientist' },
 }
 
 interface Props {

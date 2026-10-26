@@ -2,6 +2,7 @@
 
 import uuid
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 
 from app.core.errors import AppError
 from app.fixtures import users as fx
@@ -11,13 +12,21 @@ def _sample_token(admin: bool = False) -> str:
     return f"{'admin' if admin else 'sample'}-{uuid.uuid4()}"
 
 
+KST = timezone(timedelta(hours=9))
+
+
+def _unlock_at() -> str:
+    """잠금 해제 시각 = 지금 + 10분(M-03 카운트다운이 실제로 흐르게)."""
+    return (datetime.now(KST) + timedelta(minutes=10)).isoformat(timespec="seconds")
+
+
 def login(email: str, password: str, remember: bool) -> dict:
     # TODO: 이메일로 사용자를 찾고 비밀번호 해시를 검증한다. 실패 횟수를 세어 5회면 10분 잠그고,
     #       remember면 만료가 긴 세션을 만든 뒤 JWT를 발급한다.
     if password == "wrong":
         raise AppError(401, "INVALID_PASSWORD", "비밀번호가 맞지 않아요.", remainingAttempts=4)
     if password == "locked":
-        raise AppError(423, "ACCOUNT_LOCKED", "비밀번호를 5번 잘못 입력해서 계정이 잠겼어요.", unlockAt="2026-10-17T14:30:00+09:00")
+        raise AppError(423, "ACCOUNT_LOCKED", "비밀번호를 5번 잘못 입력해서 계정이 잠겼어요.", unlockAt=_unlock_at())
     is_admin = email.lower().startswith("admin")
     user = fx.ADMIN_USER if is_admin else fx.HYEWON
     return {"token": _sample_token(is_admin), "user": deepcopy(user)}
@@ -64,5 +73,35 @@ def restore(email: str) -> dict:
 
 
 def merge_guest(trials: int) -> dict:
-    # TODO: 브라우저에 저장된 게스트 체험 기록을 현재 사용자 계정의 트라이얼 기록으로 옮긴다.
-    return {"merged": trials}
+    # TODO: 브라우저에 저장된 게스트 체험 기록을 현재 사용자 계정의 트라이얼 기록으로 옮기고,
+    #       옮긴 회차의 성공률 · 캐릭터 상태 · 예측을 돌려준다.
+    return {
+        "merged": trials,
+        "experiment_id": "001",
+        "success_rate": 21,
+        "replays": trials,
+        "character": {"id": "drosi", "level": 1, "state": "훈련 중"},
+        "predictions": ["11 – 30회"],
+    }
+
+
+def resend_verification(verification_id: str) -> dict:
+    # TODO: 재전송 간격(60초)을 확인하고 새 6자리 코드를 메일로 보낸다(이전 코드는 무효).
+    return {"ok": True, "expires_in_sec": 600, "cooldown_sec": 60}
+
+
+def link_social(provider: str, email: str, password: str) -> dict:
+    # TODO: 기존 이메일 계정의 비밀번호를 확인한 뒤 소셜 계정을 연결하고 로그인시킨다.
+    if password == "wrong":
+        raise AppError(401, "INVALID_PASSWORD", "비밀번호가 맞지 않아요.", remainingAttempts=4)
+    return {"token": _sample_token(), "user": deepcopy(fx.HYEWON)}
+
+
+def restore_preview(email: str) -> dict:
+    # TODO: 탈퇴 유예 계정의 삭제 예정일과 되살릴 기록 수를 읽는다(유예 계정이 아니면 404).
+    return {
+        "email": email,
+        "deletion_scheduled_at": "2026-10-29T00:00:00+09:00",
+        "days_left": 12,
+        "counts": {"experiments": 4, "characters": 3, "cards": 4, "badges": 5},
+    }

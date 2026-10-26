@@ -8,6 +8,7 @@ import type {
   MissionBriefing,
   MissionClear,
   Ok,
+  RankingQuery,
   RankingRow,
   Report,
   ShareResult,
@@ -39,8 +40,9 @@ export const getMissionClear = (id: string, missionId: string, signal?: AbortSig
   api.get<MissionClear>(`/experiments/${enc(id)}/missions/${enc(missionId)}/clear`, undefined, signal)
 export const getReport = (id: string, signal?: AbortSignal) =>
   api.get<Report>(`/experiments/${enc(id)}/report`, undefined, signal)
-export const getRanking = (id: string, signal?: AbortSignal) =>
-  api.get<RankingRow[]>(`/experiments/${enc(id)}/ranking`, undefined, signal)
+/** 실험별 랭킹. 오픈 전 실험은 []. query(mission · period)는 v2 */
+export const getRanking = (id: string, signal?: AbortSignal, query: RankingQuery = {}) =>
+  api.get<RankingRow[]>(`/experiments/${enc(id)}/ranking`, { ...query }, signal)
 export const reportNickname = (nickname: string, reason: string) =>
   api.post<Ok>('/ranking/report', { nickname, reason })
 export const shareExperiment = (id: string) => api.post<ShareResult>(`/experiments/${enc(id)}/share`)

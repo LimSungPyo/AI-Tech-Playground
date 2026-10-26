@@ -14,6 +14,15 @@ MascotExpression = Literal[
 Skill = Literal["beginner", "intermediate", "advanced"]
 
 
+class LastPlayed(CamelModel):
+    """v2 · 마지막으로 멈춘 실험 회차(기억된 회원 홈 07:M-01)."""
+
+    experiment_id: str
+    code: str
+    title: str
+    trial: int
+
+
 class User(CamelModel):
     id: str
     nickname: str
@@ -27,11 +36,28 @@ class User(CamelModel):
     skill: Skill
     partner: CharacterId | None
     has_played: bool
+    # v2
+    title: str | None = None  # 레벨 칭호 "탐험가"
+    bio: str | None = None
+    last_played: LastPlayed | None = None
 
 
 class TrialProgress(CamelModel):
     trial: int
     max_trial: int
+    success_rate: float
+
+
+class ExperimentVote(CamelModel):
+    """v2 · 오픈 투표 중인 실험(#003). status는 coming_soon 그대로 두고 이 필드로 투표 중을 표현한다."""
+
+    vote_id: str
+    pct: float
+    ends_at: str
+
+
+class CurvePoint(CamelModel):
+    trial: int
     success_rate: float
 
 
@@ -48,6 +74,32 @@ class ExperimentSummary(CamelModel):
     unlock_condition: str | None = None
     progress: TrialProgress | None = None
     thumbnail_color: str
+    # v2
+    vote: ExperimentVote | None = None
+    last_played_at: str | None = None  # /me/experiments에서만
+    first_rate: float | None = None  # /me/experiments에서만 · 1회차 성공률
+    curve: list[CurvePoint] | None = None  # /me/experiments에서만 · 추세용 듬성듬성한 곡선
+
+
+class Point(CamelModel):
+    x: float
+    y: float
+
+
+class Obstacle(CamelModel):
+    x: float
+    y: float
+    w: float
+    h: float
+    label: str | None = None
+
+
+class Scene(CamelModel):
+    """v2 · 플레이 장면 배치. 좌표는 0~100 비율."""
+
+    start: Point
+    food: Point
+    obstacles: list[Obstacle]
 
 
 class Mission(CamelModel):
@@ -57,6 +109,7 @@ class Mission(CamelModel):
     status: Literal["cleared", "open", "locked"]
     success_threshold: float
     best_rate: float | None = None
+    scene: Scene | None = None  # v2
 
 
 class ExperimentStats(CamelModel):
@@ -70,11 +123,10 @@ class ExperimentDetail(ExperimentSummary):
     stats: ExperimentStats
     principle: str
     card_id: str
-
-
-class Point(CamelModel):
-    x: float
-    y: float
+    # v2
+    participants: int | None = None  # 참여 3,120명
+    avg_improvement: float | None = None  # 평균 향상 +46%p
+    scene: Scene | None = None  # 지금 열린 미션의 장면
 
 
 class NeuronActivation(CamelModel):
@@ -88,6 +140,12 @@ class Choice(CamelModel):
     probability: float
 
 
+class SimilarCase(CamelModel):
+    trial: int
+    similarity: float
+    reward: float
+
+
 class WhyExplanation(CamelModel):
     summary: str
     similar_experiences: int
@@ -96,11 +154,10 @@ class WhyExplanation(CamelModel):
     level: Skill
     detail: str
     neuron_path: list[str]
-
-
-class CurvePoint(CamelModel):
-    trial: int
-    success_rate: float
+    # v2
+    similar_cases: list[SimilarCase] | None = None
+    reward: float | None = None
+    step: int | None = None
 
 
 class TrialResult(CamelModel):
@@ -122,7 +179,24 @@ class BatchTraining(CamelModel):
     to_trial: int
     status: Literal["running", "done"]
     progress: float
-    trials: list[CurvePoint]
+    trials: list["BatchTrial"]
+    # v2
+    connections: list["ConnectionChange"] | None = None  # 가장 많이 바뀐 연결 TOP 5
+    journal: str | None = None
+
+
+class BatchTrial(CurvePoint):
+    # v2
+    success: bool | None = None
+    time_sec: float | None = None
+    path: list[Point] | None = None
+
+
+class ConnectionChange(CamelModel):
+    from_: str = Field(alias="from")
+    to: str
+    label: str
+    delta: float
 
 
 class Recommendation(CamelModel):
@@ -149,6 +223,23 @@ class ReportEvent(CamelModel):
     label: str
 
 
+class TrialMetric(CamelModel):
+    trial: int
+    success_rate: float
+    time_sec: float
+    collisions: float
+
+
+class Replay(CamelModel):
+    first: list[Point]
+    last: list[Point]
+
+
+class PredictionResult(CamelModel):
+    option: str
+    correct: bool
+
+
 class Report(CamelModel):
     experiment_id: str
     summary: str
@@ -158,6 +249,13 @@ class Report(CamelModel):
     events: list[ReportEvent]
     commentary: str
     next_recommendations: list[Recommendation]
+    # v2
+    mission_title: str | None = None
+    metrics: list[TrialMetric] | None = None  # 회차별 성공률 · 도달 시간 · 충돌 수
+    replay: Replay | None = None  # 1회차 · 마지막 회차 경로
+    prediction: PredictionResult | None = None
+    participants: int | None = None
+    avg_improvement: float | None = None
 
 
 class CardStep(CamelModel):
@@ -174,6 +272,7 @@ class BiologicalVsDesigned(CamelModel):
 class Source(CamelModel):
     title: str
     url: str
+    kind: Literal["paper", "code", "community", "news"] | None = None  # v2 · 레이더 출처 종류
 
 
 class Reveal(CamelModel):
@@ -190,6 +289,13 @@ class TechCard(CamelModel):
     sources: list[Source]
     unlocked: bool
     reveal: Reveal
+    status: Literal["draft", "review", "approved", "published"] | None = None  # v2 · 관리자 검토 단계
+
+
+class Mastery(CamelModel):
+    level: int
+    max: int
+    hint: str
 
 
 class TreeNode(CamelModel):
@@ -203,6 +309,9 @@ class TreeNode(CamelModel):
     position: Point
     description: str
     unlock_condition: str | None = None
+    # v2
+    experiment_ids: list[str] | None = None
+    mastery: Mastery | None = None
 
 
 class DexEntry(CamelModel):
@@ -221,6 +330,11 @@ class DexEntry(CamelModel):
     personality: str
     meet_condition: str
     state: Literal["egg", "baby", "growing", "master"]
+    # v2
+    play_minutes: int | None = None  # 함께한 시간
+    reveal_watched: bool | None = None
+    why_count: int | None = None
+    badges: list[str] | None = None  # 이 캐릭터로 얻은 배지 id
 
 
 class RankingRow(CamelModel):
@@ -230,6 +344,7 @@ class RankingRow(CamelModel):
     success_rate: float
     trials: int
     is_me: bool
+    first_success_trial: int | None = None  # v2
 
 
 class RadarKeyword(CamelModel):
@@ -244,7 +359,7 @@ class RadarKeyword(CamelModel):
 
 class Notification(CamelModel):
     id: str
-    kind: Literal["badge", "experiment", "inquiry", "team", "system"]
+    kind: Literal["badge", "experiment", "inquiry", "team", "system", "character", "ranking", "radar"]
     title: str
     body: str
     created_at: str
@@ -259,6 +374,13 @@ class Badge(CamelModel):
     obtained: bool
     obtained_at: str | None = None
     icon: str
+    # v2
+    category: str | None = None
+    progress: float | None = None  # 0~100
+    rarity: float | None = None  # 획득한 사용자 비율(0~100)
+    experiment_id: str | None = None
+    story: str | None = None
+    featured: bool | None = None  # 대표 배지
 
 
 class Inquiry(CamelModel):
@@ -269,6 +391,11 @@ class Inquiry(CamelModel):
     status: Literal["received", "answered"]
     created_at: str
     answer: str | None = None
+    # v2
+    answered_at: str | None = None
+    experiment_id: str | None = None
+    trial: int | None = None
+    notify: bool | None = None
 
 
 class TeamMember(CamelModel):
@@ -277,11 +404,17 @@ class TeamMember(CamelModel):
     level: int
 
 
+class TeamEvent(CamelModel):
+    kind: Literal["assign", "retrieve", "tool_call", "memory"]
+    text: str
+
+
 class TeamMessage(CamelModel):
     # `from`은 파이썬 예약어라 필드 이름은 from_, JSON 키는 "from"
     from_: CharacterId = Field(alias="from")
     text: str
     at: float
+    event: TeamEvent | None = None  # v2 · 시스템 이벤트 줄
 
 
 class TeamMission(CamelModel):
@@ -291,3 +424,6 @@ class TeamMission(CamelModel):
     goal: str
     messages: list[TeamMessage]
     status: Literal["ready", "running", "done"]
+
+
+BatchTraining.model_rebuild()

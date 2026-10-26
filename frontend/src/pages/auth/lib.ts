@@ -3,8 +3,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { socialLogin } from '../../api/auth'
 import { isApiError } from '../../api/client'
-import type { CharacterId, SocialProvider, User } from '../../api/types'
-import { getGuestTrials, getRememberedEmail, setRememberedEmail } from '../../auth/storage'
+import type { SocialProvider, User } from '../../api/types'
+import { rememberAccount } from '../../auth/remembered'
+import { getGuestTrials } from '../../auth/storage'
 import { useAuth } from '../../auth/useAuth'
 
 /** 게스트 체험 무료 횟수(#001 3회) */
@@ -43,57 +44,9 @@ export function guestTrialsLeft() {
 }
 
 // ── 기억된 회원(07:M-01 · M-02) ──
-// 이메일은 공용 키 `atp.rememberedEmail`, 화면에 보일 닉네임 · 아바타 · 마지막 로그인 방법은 이 폴더의 키에 둔다.
-const PROFILE_KEY = 'atp.rememberedProfile'
-
-export interface RememberedProfile {
-  email: string
-  nickname: string
-  avatar: CharacterId | null
-  provider: SocialProvider | 'email'
-}
-
-export function getRememberedProfile(): RememberedProfile | null {
-  const email = getRememberedEmail()
-  if (!email) return null
-  try {
-    const raw = window.localStorage.getItem(PROFILE_KEY)
-    const saved = raw ? (JSON.parse(raw) as Partial<RememberedProfile>) : {}
-    if (saved.email && saved.email !== email) return { email, nickname: email.split('@')[0], avatar: null, provider: 'email' }
-    return {
-      email,
-      nickname: saved.nickname ?? email.split('@')[0],
-      avatar: saved.avatar ?? null,
-      provider: saved.provider ?? 'email',
-    }
-  } catch {
-    return { email, nickname: email.split('@')[0], avatar: null, provider: 'email' }
-  }
-}
-
-/** 로그인 성공 후 호출. remember가 false면 기억된 계정을 지운다 */
-export function rememberAccount(user: User, provider: SocialProvider | 'email', remember: boolean) {
-  setRememberedEmail(remember ? user.email : null)
-  try {
-    if (!remember) window.localStorage.removeItem(PROFILE_KEY)
-    else
-      window.localStorage.setItem(
-        PROFILE_KEY,
-        JSON.stringify({ email: user.email, nickname: user.nickname, avatar: user.avatar, provider } satisfies RememberedProfile),
-      )
-  } catch {
-    // 저장소를 못 쓰면 기억하지 않는다
-  }
-}
-
-export function forgetAccount() {
-  setRememberedEmail(null)
-  try {
-    window.localStorage.removeItem(PROFILE_KEY)
-  } catch {
-    // 무시
-  }
-}
+// 공용 헬퍼(src/auth/remembered.ts)로 옮겼다. 홈(W2 hub)도 같은 키를 읽는다.
+export { forgetAccount, getRememberedProfile, rememberAccount } from '../../auth/remembered'
+export type { RememberedProfile } from '../../auth/remembered'
 
 // ── 소셜 로그인 ──
 /** 개발 확인용: `?socialCode=conflict`면 백엔드 샘플이 409를 돌려준다 */

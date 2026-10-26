@@ -1,6 +1,7 @@
 """인증 API (`/api/auth`)."""
 
 from fastapi import APIRouter
+from pydantic import EmailStr
 
 from app.core.auth import CurrentUser
 from app.schemas.auth import (
@@ -11,9 +12,13 @@ from app.schemas.auth import (
     GuestMergeResponse,
     LoginRequest,
     ResetPasswordRequest,
+    ResendRequest,
+    ResendResponse,
+    RestorePreview,
     RestoreResponse,
     SignupRequest,
     SignupResponse,
+    SocialLinkRequest,
     SocialLoginRequest,
     VerifyEmailRequest,
     VerifyEmailResponse,
@@ -83,3 +88,21 @@ def restore(body: EmailRequest):
 def merge_guest(body: GuestMergeRequest, user: CurrentUser):
     """TODO: 실제로는 게스트 체험 기록을 로그인한 계정으로 옮긴다."""
     return service.merge_guest(body.trials)
+
+
+@router.post("/verify-email/resend", response_model=ResendResponse)
+def resend_verification(body: ResendRequest):
+    """TODO: 실제로는 재전송 간격을 확인하고 새 인증 코드를 메일로 보낸다."""
+    return service.resend_verification(body.verification_id)
+
+
+@router.post("/social/{provider}/link", response_model=AuthResponse)
+def link_social(provider: str, body: SocialLinkRequest):
+    """TODO: 실제로는 이메일 계정 비밀번호를 확인하고 소셜 계정을 연결한다."""
+    return service.link_social(provider, body.email, body.password)
+
+
+@router.get("/restore/preview", response_model=RestorePreview)
+def restore_preview(email: EmailStr):
+    """TODO: 실제로는 탈퇴 유예 계정의 삭제 예정일과 기록 수를 읽는다."""
+    return service.restore_preview(email)
