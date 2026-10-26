@@ -1,0 +1,151 @@
+/*
+ * 디자인 토큰 — Figma `23:1651 🎨 Color System — Warm Glass` + `104:725 K · Glass Kit` GLASS RULES
+ * 색은 반드시 이 파일의 변수로만 쓴다(캐릭터 SVG 고유색 제외).
+ */
+:root {
+  /* ── Background · 크림 · 살구 · 라벤더 물결 ── */
+  --color-bg-cream: #fff8ec; /* 기본 배경 */
+  --color-bg-peach: #fdefe3; /* 중간 배경 */
+  --color-bg-lavender: #f1eeff; /* 배경 끝 · 은은한 보라 */
+  --color-bg-butter: #ffe1c2; /* 물결 띠 */
+  --color-bg-lilac: #e6e0ff; /* 물결 띠 */
+
+  /* ── Glass · 밝은 배경 위 투명 유리 ── */
+  --color-glass-clear: rgba(255, 255, 255, 0.55); /* 카드 · 패널 */
+  --color-glass-clear-nested: rgba(255, 255, 255, 0.45); /* 유리 안 타일 */
+  --color-glass-tint: rgba(91, 91, 214, 0.9); /* 주요 버튼 · 선택 칩 */
+  --color-glass-dark: rgba(30, 26, 77, 0.92); /* 반전 장면 · 다크 카드 */
+  --color-glass-rim: rgba(255, 255, 255, 0.95); /* 가장자리 빛 반사 */
+  --color-glass-popup: rgba(255, 255, 255, 0.32); /* 팝업 면(GLASS RULES: 흰색 32%) */
+  --color-glass-highlight: rgba(255, 255, 255, 0.7); /* 위→아래 하이라이트 시작 */
+  --color-glass-rim-soft: rgba(255, 255, 255, 0.35); /* 림 그라데이션 끝(우하단) */
+  --color-glass-solid: rgba(255, 255, 255, 0.86); /* 드롭다운 · 메뉴처럼 글자가 많은 면 */
+  --color-glass-dark-nested: rgba(255, 255, 255, 0.1); /* 다크 카드 안 타일 */
+  --color-glass-dark-line: rgba(255, 255, 255, 0.16); /* 다크 카드 안 구분선 */
+
+  /* ── Text · 따뜻한 브라운 그레이 ── */
+  --color-text-primary: #2a2018; /* 제목 */
+  --color-text-secondary: #6b5f55; /* 본문 */
+  --color-text-tertiary: #9a8e84; /* 캡션 · 라벨 */
+  --color-text-link: #5b5bd6; /* 링크 · 강조 라벨 */
+  --color-text-on-tint: #ffffff; /* 인디고 버튼 위 */
+  --color-text-on-dark-secondary: rgba(255, 255, 255, 0.72);
+
+  /* ── Accent · 포인트 ── */
+  --color-accent-indigo: #5b5bd6; /* 브랜드 메인 */
+  --color-accent-indigo-light: #7b6cff; /* 호버 · 그래프 보조 */
+  --color-accent-indigo-soft: rgba(91, 91, 214, 0.12); /* 선택 배경 · 영역 채움 */
+  --color-accent-indigo-faint: rgba(91, 91, 214, 0.28); /* 잔디 약 · 막대 보조 */
+  --color-accent-yellow: #f6c453; /* 마스코트 · 하이라이트 */
+  --color-accent-why: #ffd84d; /* WHY? 버튼 */
+  --color-accent-why-soft: rgba(255, 216, 77, 0.22); /* WHY? 설명 박스 */
+  --color-accent-why-ink: #8a5a00; /* WHY? 라벨 글자 */
+  --color-accent-success: #2fb67c; /* 성공 · 향상 */
+  --color-accent-success-soft: rgba(47, 182, 124, 0.14);
+  --color-accent-danger: #e5484d; /* 실패 · 충돌 */
+  --color-accent-danger-soft: rgba(229, 72, 77, 0.12);
+  --color-accent-warning: #f59e3c; /* 경고 · 마감 임박(관리자) */
+  --color-accent-warning-soft: rgba(245, 158, 60, 0.14);
+  --color-accent-cyan: #22d3ee; /* ADMIN 배지 · 다크 위 eyebrow */
+  --color-accent-pink: #ff8fa3; /* 파트너 칩 */
+  --color-accent-pink-soft: rgba(255, 143, 163, 0.18);
+
+  /* ── Mascot · 캐릭터 전용 ── */
+  --color-fly-yellow: #f6c453; /* 몸통 */
+  --color-fly-red: #e5484d; /* 겹눈 */
+  --color-fly-wing: #cfe6ff; /* 날개 */
+  --color-fly-brown: #4a2f17; /* 외곽선 */
+
+  /* ── 중립 · 선 · 딤 ── */
+  --color-ink-dim: rgba(42, 32, 24, 0.12); /* 팝업 뒤 잉크 12% 딤 */
+  --color-line: rgba(42, 32, 24, 0.08); /* 구분선 */
+  --color-line-strong: rgba(42, 32, 24, 0.16); /* 입력 테두리 */
+  --color-track: rgba(42, 32, 24, 0.08); /* 진행바 트랙 · 빈 잔디 */
+  --color-skeleton: rgba(42, 32, 24, 0.06);
+  --color-skeleton-shine: rgba(255, 255, 255, 0.6);
+
+  /* ── 관리자 콘솔 (F-02) ── */
+  --color-admin-bg: #f5f1ec;
+  --color-admin-nav: #1e1a4d;
+  --color-admin-nav-active: rgba(255, 255, 255, 0.12);
+  --color-admin-nav-text: rgba(255, 255, 255, 0.78);
+  --color-admin-nav-caption: rgba(255, 255, 255, 0.45);
+
+  /* ── 반경 ── */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px; /* 타일 · 입력 안 요소 */
+  --radius-lg: 20px; /* 작은 카드 */
+  --radius-card: 24px; /* 카드 · 배너 */
+  --radius-card-lg: 28px; /* 큰 카드 */
+  --radius-popup: 30px; /* 팝업 */
+  --radius-banner: 24px;
+  --radius-pill: 999px; /* 버튼 · 입력 · 칩 */
+
+  /* ── 그림자 · 블러 ── */
+  --shadow-glass: 0 20px 50px rgba(42, 32, 24, 0.14); /* y20 · blur50 · 14% */
+  --shadow-soft: 0 8px 24px rgba(42, 32, 24, 0.08);
+  --shadow-button: 0 6px 16px rgba(91, 91, 214, 0.32);
+  --shadow-inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.45); /* 인디고 상단 광택 */
+  --blur-glass: 20px; /* 카드 굴절 */
+  --blur-backdrop: 28px; /* 팝업 뒤 화면 블러 */
+  --blur-header: 16px;
+  --rim-width: 1.5px;
+  --glass-sheen: linear-gradient(180deg, var(--color-glass-highlight) 0%, rgba(255, 255, 255, 0) 60%);
+  --glass-rim-gradient: linear-gradient(135deg, var(--color-glass-rim) 0%, var(--color-glass-rim-soft) 100%);
+
+  /* ── 폰트 ── */
+  --font-sans: 'Noto Sans KR', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-number: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+  --text-4xl: 40px;
+  --text-display: 64px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --weight-black: 900;
+
+  /* ── 간격 ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── 레이아웃 ── */
+  --content-max: 1312px;
+  --page-gutter: 64px;
+  --header-height: 80px;
+
+  /* ── 모션 ── */
+  --motion-duration: 220ms;
+  --motion-fast: 140ms;
+  --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ── 레이어 ── */
+  --z-header: 50;
+  --z-popover: 80;
+  --z-overlay: 100;
+  --z-toast: 120;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --page-gutter: 24px;
+  }
+}
