@@ -1,0 +1,110 @@
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: stretch;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* 왼쪽 다크 패널 — 기다리는 캐릭터 이야기 */
+.story {
+  composes: glass from '../../components/glass.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-12) var(--space-10) var(--space-10);
+  border-radius: var(--radius-popup);
+  background: var(--color-glass-dark);
+  color: var(--color-text-on-tint);
+}
+.story::before {
+  opacity: 0.25;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  color: var(--color-accent-cyan);
+}
+.storyTitle {
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-black);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.storyLead {
+  font-size: var(--text-md);
+  line-height: 1.75;
+  color: var(--color-text-on-dark-secondary);
+}
+.cast {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: 300px;
+}
+.castSide {
+  margin-top: var(--space-16);
+}
+.quote {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-glass-dark-nested);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+}
+.quoteMark {
+  font-family: var(--font-number);
+  font-weight: var(--weight-black);
+  color: var(--color-accent-cyan);
+}
+
+/* 오른쪽 로그인 카드 */
+.panel {
+  composes: glass from '../../components/glass.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-10) var(--space-10);
+  border-radius: var(--radius-popup);
+  background: var(--glass-sheen), var(--color-glass-solid);
+}
+.rule {
+  border: 0;
+  border-top: 1px solid var(--color-line);
+  margin: var(--space-2) 0;
+}
+
+/* M-02 */
+.rememberedAvatar {
+  background: var(--color-accent-pink-soft);
+}
+.masked {
+  font-family: var(--font-number);
+  font-size: var(--text-md);
+  color: var(--color-text-tertiary);
+}
+
+@media (max-width: 1024px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+  .story {
+    display: none;
+  }
+  .panel {
+    max-width: 560px;
+    width: 100%;
+    margin: 0 auto;
+  }
+}
+@media (max-width: 768px) {
+  .panel {
+    padding: var(--space-8) var(--space-5);
+  }
+}

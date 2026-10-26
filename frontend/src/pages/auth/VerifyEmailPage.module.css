@@ -1,0 +1,29 @@
+.step {
+  align-self: flex-end;
+  width: auto !important;
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+.icon {
+  display: flex;
+  justify-content: center;
+  color: var(--color-accent-indigo);
+}
+.email {
+  font-family: var(--font-number);
+  font-size: var(--text-md);
+  color: var(--color-text-link);
+}
+.otp {
+  display: flex;
+  justify-content: center;
+}
+.timer {
+  font-family: var(--font-number);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-tertiary);
+}
+.title {
+  font-size: var(--text-2xl);
+}
