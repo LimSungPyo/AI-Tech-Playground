@@ -1,6 +1,6 @@
 // H-03 공유 이미지 (1080 × 1080) — canvas로 그린다. 색은 토큰(CSS 변수)에서 읽는다.
 import type { CharacterId, MascotExpression } from '../../../api/types'
-import { characterSrc, logoSrc, mascotSrc } from '../../../components/characters'
+import { characterSrc, logoSrc, mascotSrc } from '../../../components'
 
 export interface ShareImageData {
   code: string

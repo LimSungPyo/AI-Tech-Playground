@@ -29,3 +29,7 @@
 .foodHalo {
   fill: var(--color-accent-success-soft);
 }
+.obstacle {
+  fill: var(--color-line-strong);
+  opacity: 0.5;
+}

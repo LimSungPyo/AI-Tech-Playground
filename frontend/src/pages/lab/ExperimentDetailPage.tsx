@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router'
-import { getCard, getExperiment, getRanking } from '../../api'
+import { getCard, getExperiment, getMissionClear, getRanking } from '../../api'
 import type { ExperimentDetail, Mission } from '../../api/types'
 import { useAuth } from '../../auth/useAuth'
 import {
@@ -118,7 +118,20 @@ function Detail({ exp, isMember }: { exp: ExperimentDetail; isMember: boolean })
               <dt>미션당</dt>
               <dd>약 {exp.durationMin}분</dd>
             </div>
-            {exp.stats.hundredthTrialRate > 0 && (
+            {exp.participants !== undefined && (
+              <div>
+                <dt>참여</dt>
+                <dd>{exp.participants.toLocaleString('ko-KR')}명</dd>
+              </div>
+            )}
+            {exp.avgImprovement !== undefined && (
+              <div>
+                <dt>평균 향상</dt>
+                <dd>+{Math.round(exp.avgImprovement)}%p</dd>
+              </div>
+            )}
+            {/* v2 참여 · 평균 향상이 없는 실험은 stats로 계산해 보여 준다 */}
+            {exp.participants === undefined && exp.avgImprovement === undefined && exp.stats.hundredthTrialRate > 0 && (
               <>
                 <div>
                   <dt>1회차 → 100회차</dt>
@@ -193,43 +206,16 @@ function Detail({ exp, isMember }: { exp: ExperimentDetail; isMember: boolean })
           미션
         </h2>
         <div className={styles.missions}>
-          {missions.map((m, i) => {
-            const st = MISSION_STATE[m.status]
-            const prev = missions[i - 1]
-            const caption =
-              m.status === 'cleared'
-                ? `최종 ${m.bestRate !== undefined ? pct(m.bestRate) : '-'}`
-                : m.status === 'open'
-                  ? prev
-                    ? `NEW · 미션 ${i} 학습 이어받기`
-                    : `성공 기준 ${pct(m.successThreshold)}`
-                  : prev
-                    ? `미션 ${i} 성공률 ${pct(m.successThreshold)} 이상`
-                    : '잠김'
-            const body = (
-              <>
-                <div className={styles.missionHead}>
-                  <span className={styles.missionNo}>MISSION {i + 1}</span>
-                  <Badge tone={st.tone} size="md">
-                    {st.label}
-                  </Badge>
-                </div>
-                <h3 className={styles.missionTitle}>{m.title}</h3>
-                <p className={styles.missionGoal}>{m.goal}</p>
-                <p className={cx(styles.missionCaption, m.status === 'open' && styles.missionNew)}>{caption}</p>
-              </>
-            )
-            const cls = cx(styles.mission, styles[`m-${m.status}`])
-            return m.status !== 'locked' && playable ? (
-              <Link key={m.id} to={briefing(m)} className={cls}>
-                {body}
-              </Link>
-            ) : (
-              <div key={m.id} className={cls}>
-                {body}
-              </div>
-            )
-          })}
+          {missions.map((m, i) => (
+            <MissionCard
+              key={m.id}
+              expId={exp.id}
+              mission={m}
+              index={i}
+              to={m.status !== 'locked' && playable ? briefing(m) : undefined}
+              withClear={isMember && playable}
+            />
+          ))}
         </div>
       </section>
 
@@ -282,5 +268,58 @@ function Detail({ exp, isMember }: { exp: ExperimentDetail; isMember: boolean })
         )}
       </section>
     </div>
+  )
+}
+
+/** 미션 카드. 완료 미션은 회원이면 미션 성공 기록(v2 firstSuccessTrial)으로 "T10 첫 성공"을 붙인다 */
+function MissionCard({
+  expId,
+  mission: m,
+  index: i,
+  to,
+  withClear,
+}: {
+  expId: string
+  mission: Mission
+  index: number
+  to?: string
+  withClear: boolean
+}) {
+  const clear = useApi(
+    withClear && m.status === 'cleared' ? (signal) => getMissionClear(expId, m.id, signal) : null,
+    [withClear, m.status, expId, m.id],
+  )
+  const st = MISSION_STATE[m.status]
+  const firstSuccess = clear.data?.firstSuccessTrial
+  const caption =
+    m.status === 'cleared'
+      ? `최종 ${m.bestRate !== undefined ? pct(m.bestRate) : '-'}${firstSuccess !== undefined ? ` · T${firstSuccess} 첫 성공` : ''}`
+      : m.status === 'open'
+        ? i > 0
+          ? `NEW · 미션 ${i} 학습 이어받기`
+          : `성공 기준 ${pct(m.successThreshold)}`
+        : i > 0
+          ? `미션 ${i} 성공률 ${pct(m.successThreshold)} 이상`
+          : '잠김'
+  const body = (
+    <>
+      <div className={styles.missionHead}>
+        <span className={styles.missionNo}>MISSION {i + 1}</span>
+        <Badge tone={st.tone} size="md">
+          {st.label}
+        </Badge>
+      </div>
+      <h3 className={styles.missionTitle}>{m.title}</h3>
+      <p className={styles.missionGoal}>{m.goal}</p>
+      <p className={cx(styles.missionCaption, m.status === 'open' && styles.missionNew)}>{caption}</p>
+    </>
+  )
+  const cls = cx(styles.mission, styles[`m-${m.status}`])
+  return to ? (
+    <Link to={to} className={cls}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls}>{body}</div>
   )
 }

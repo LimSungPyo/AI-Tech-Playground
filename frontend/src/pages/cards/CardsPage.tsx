@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { getCards, getExperiments } from '../../api'
+import { getCards, getExperiments, getMyBadges } from '../../api'
 import type { ExperimentSummary, TechCard } from '../../api/types'
 import { Button, Character, Chip, EmptyState, ProgressBar, Skeleton, cx } from '../../components'
+import { useAuth } from '../../auth/useAuth'
 import { useApi } from '../../hooks/useApi'
 import styles from './CardsPage.module.css'
 
@@ -12,6 +13,10 @@ type Owned = 'all' | 'owned' | 'missing'
 export default function CardsPage() {
   const cards = useApi((signal) => getCards(signal), [])
   const exps = useApi((signal) => getExperiments({}, signal), [])
+  const { isMember } = useAuth()
+  // 다음 배지 "기술 카드 수집가" 진행(v2 badge.progress)
+  const badges = useApi(isMember ? (signal) => getMyBadges(signal) : null, [isMember])
+  const collector = badges.data?.find((b) => b.id === 'card-collector' && !b.obtained)
   const [topic, setTopic] = useState<string | null>(null)
   const [owned, setOwned] = useState<Owned>('all')
 
@@ -28,6 +33,9 @@ export default function CardsPage() {
       (owned === 'all' || (owned === 'owned' ? c.unlocked : !c.unlocked)),
   )
   const got = list.filter((c) => c.unlocked).length
+  // "기술 카드 5장 열람" × 남은 진행률 → 남은 장수
+  const goal = Number(collector?.description.match(/(\d+)장/)?.[1])
+  const left = collector && goal ? Math.ceil((goal * (100 - (collector.progress ?? 0))) / 100) : undefined
 
   return (
     <div className={styles.page}>
@@ -47,7 +55,9 @@ export default function CardsPage() {
             </div>
             <ProgressBar value={got} max={list.length || 1} size="sm" />
             <p className={styles.collectCaption}>
-              {got < list.length
+              {collector && left
+                ? `다음 배지 "${collector.name}" · ${left}장 남음`
+                : got < list.length
                 ? `아직 못 만난 카드 ${list.length - got}장 · 실험을 끝내고 반전을 보면 열려요`
                 : '모든 카드를 모았어요!'}
             </p>

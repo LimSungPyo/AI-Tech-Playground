@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import type { MascotExpression, Point } from '../../../api/types'
-import { mascotSrc } from '../../../components/characters'
+import type { MascotExpression, Obstacle, Point } from '../../../api/types'
+import { mascotSrc } from '../../../components'
 import styles from './ReplayArena.module.css'
 
 interface Props {
@@ -11,6 +11,8 @@ interface Props {
   label: string
   /** 먹이 위치(없으면 경로 끝) */
   goal?: Point
+  /** 미션 장면의 장애물(v2 scene, 좌표 0~100) */
+  obstacles?: Obstacle[]
 }
 
 const SIZE = 100
@@ -43,13 +45,24 @@ function pointAt(path: Point[], t: number): Point {
 }
 
 /** 탑뷰 리플레이 한 칸: 지나온 길(점선 → 실선) + 먹이 + 드로시 */
-export function ReplayArena({ path, t, expression, label, goal: goalProp }: Props) {
+export function ReplayArena({ path, t, expression, label, goal: goalProp, obstacles = [] }: Props) {
   const d = useMemo(() => path.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y * H}`).join(''), [path])
   const pos = pointAt(path, t)
   const start = path[0]
   const goal = goalProp ?? path[path.length - 1]
   return (
     <svg viewBox={`0 0 ${SIZE} ${SIZE * H}`} className={styles.arena} role="img" aria-label={label}>
+      {obstacles.map((o) => (
+        <rect
+          key={`${o.x}-${o.y}`}
+          x={o.x}
+          y={o.y * H}
+          width={o.w}
+          height={o.h * H}
+          rx={0.8}
+          className={styles.obstacle}
+        />
+      ))}
       <path d={d} className={styles.ghost} />
       <path d={d} className={styles.trail} pathLength={1} strokeDasharray="1 1" strokeDashoffset={1 - Math.min(1, t)} />
       {start && <circle cx={start.x} cy={start.y * H} r={1.2} className={styles.start} />}
