@@ -1,0 +1,28 @@
+.icon {
+  display: flex;
+  justify-content: center;
+  color: var(--color-accent-indigo);
+}
+.clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+.digit {
+  min-width: 88px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-track);
+  font-family: var(--font-number);
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-black);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+.colon {
+  font-family: var(--font-number);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-black);
+  color: var(--color-text-tertiary);
+}
