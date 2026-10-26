@@ -70,6 +70,14 @@
   width: min(600px, 100%);
   padding: var(--space-10) var(--space-10) var(--space-8);
 }
+/* Figma M-07: 제목 32px black · 설명 15px (공통 모달 기본값보다 크다) */
+.dormant header h2 {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-black);
+}
+.dormant header p {
+  font-size: var(--text-md);
+}
 .highlights {
   display: flex;
   flex-direction: column;

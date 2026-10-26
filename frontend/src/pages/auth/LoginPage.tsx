@@ -47,7 +47,8 @@ export default function LoginPage() {
     )
   }
 
-  const trials = getGuestTrials()
+  // 멈춘 회차: 이 기기에 기억된 회원의 마지막 플레이(User.lastPlayed) → 없으면 게스트 체험 횟수
+  const trials = getRememberedProfile()?.pausedTrial?.trial ?? getGuestTrials()
   const left = guestTrialsLeft()
 
   return (

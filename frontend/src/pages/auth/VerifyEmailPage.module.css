@@ -1,9 +1,3 @@
-.step {
-  align-self: flex-end;
-  width: auto !important;
-  font-size: var(--text-sm);
-  color: var(--color-text-tertiary);
-}
 .icon {
   display: flex;
   justify-content: center;

@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import { linkSocial } from '../../api/auth'
 import { isApiError } from '../../api/client'
-import type { AccountLockedData, InvalidPasswordData } from '../../api/types'
+import type { InvalidPasswordData } from '../../api/types'
 import { useAuth } from '../../auth/useAuth'
-import { Button, Icon, PasswordInput, useToast } from '../../components'
+import { Button, PasswordInput, cx, useToast } from '../../components'
 import { AuthCard } from './components/AuthCard'
-import type { LockedState } from './components/LoginForm'
 import { PROVIDER_LABEL, rememberAccount, safeReturnTo, useSocialLogin } from './lib'
 import type { SocialConflictState } from './lib'
 import a from './auth.module.css'
@@ -14,11 +14,12 @@ import styles from './SocialConflictPage.module.css'
 
 // W2 auth 담당 · 경로 /account/social-conflict
 // 07:M-05 소셜 계정 연결 충돌. 소셜 로그인 409 응답에서 state { email, provider, returnTo }로 들어온다
+// 기존 계정 비밀번호로 POST /api/auth/social/{provider}/link → 토큰을 받아 로그인한다
 export default function SocialConflictPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const toast = useToast()
-  const { login } = useAuth()
+  const { setToken } = useAuth()
   const state = (location.state as SocialConflictState | null) ?? { provider: 'google' as const }
   const provider = state.provider
   const label = PROVIDER_LABEL[provider]
@@ -44,17 +45,15 @@ export default function SocialConflictPage() {
     setSubmitting(true)
     setError(undefined)
     try {
-      // TODO(공통 변경 요청): 계정 연결 전용 API가 없어 기존 계정 비밀번호 확인(로그인)으로 대신한다
-      const user = await login(email, password, true)
-      rememberAccount(user, provider, true)
+      const res = await linkSocial(provider, email, password)
+      rememberAccount(res.user, provider, true)
+      setToken(res.token, res.user)
       toast.show({ title: `${label} 로그인을 연결했어요`, description: '이제 어느 쪽으로 로그인해도 같은 계정이에요.', tone: 'success' })
       navigate(returnTo, { replace: true })
     } catch (err) {
       if (isApiError(err) && err.status === 401) {
         const left = (err.data as InvalidPasswordData | undefined)?.remainingAttempts
         setError(`비밀번호가 맞지 않아요${left !== undefined ? ` · 남은 기회 ${left}번` : ''}`)
-      } else if (isApiError(err) && err.status === 423) {
-        navigate('/account/locked', { state: { email, unlockAt: (err.data as AccountLockedData | undefined)?.unlockAt } satisfies LockedState })
       } else {
         setError(isApiError(err) ? err.message : '연결하지 못했어요. 잠시 후 다시 시도해 주세요.')
       }
@@ -66,8 +65,8 @@ export default function SocialConflictPage() {
   return (
     <AuthCard centered width={560}>
       <div className={styles.link} aria-hidden>
-        <span className={styles.provider}>{provider === 'kakao' ? 'K' : 'G'}</span>
-        <Icon name="arrow-right" size={20} className={styles.arrow} />
+        <span className={cx(styles.provider, styles[`provider-${provider}`])}>{provider === 'kakao' ? 'K' : 'G'}</span>
+        <span className={styles.arrow}>↔</span>
         <span className={styles.at}>@</span>
       </div>
       <h1 className={a.title}>이미 가입된 이메일이에요</h1>
