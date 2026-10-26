@@ -8,8 +8,9 @@ export function cardCopy(
   exp: ExperimentSummary,
   state: CardState,
   extra: {
-    votePct?: number
     voteDDay?: number
+    /** 도감에서 이 실험 캐릭터가 MASTER */
+    master?: boolean
     treeNodeId?: string
     onVote?: () => void
   },
@@ -27,7 +28,7 @@ export function cardCopy(
       }
     case 'done':
       return {
-        caption: p ? `최종 ${pct(p.successRate)}` : '완료',
+        caption: `${p ? `최종 ${pct(p.successRate)}` : '완료'}${extra.master ? ' · 마스터' : ''}`,
         action: { label: '다시 하기', to: `/experiments/${exp.id}/play` },
       }
     case 'open':
@@ -46,10 +47,9 @@ export function cardCopy(
       }
     case 'voting':
       return {
-        caption:
-          extra.votePct !== undefined
-            ? `투표 ${extra.votePct}%${extra.voteDDay !== undefined ? ` · ${extra.voteDDay > 0 ? `D-${extra.voteDDay}` : '마감'}` : ''}`
-            : (exp.unlockCondition ?? '투표 중'),
+        caption: exp.vote
+          ? `투표 ${Math.round(exp.vote.pct)}%${extra.voteDDay !== undefined ? ` · ${extra.voteDDay > 0 ? `D-${extra.voteDDay}` : '마감'}` : ''}`
+          : (exp.unlockCondition ?? '투표 중'),
         action: { label: '투표하기', onClick: extra.onVote },
       }
     case 'locked':

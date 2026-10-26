@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { getCurrentVote, getExperiment, getExperiments, getTree } from '../../api'
+import { getCurrentVote, getDex, getExperiment, getExperiments, getTree } from '../../api'
 import type { ExperimentSummary, Level } from '../../api/types'
 import { useAuth } from '../../auth/useAuth'
 import {
@@ -47,6 +47,8 @@ export default function LabPage() {
   const list = useApi((signal) => getExperiments({}, signal), [])
   const tree = useApi((signal) => getTree(signal), [])
   const voteApi = useApi((signal) => getCurrentVote(signal), [])
+  // 완료 카드의 "· 마스터" 표시용(도감 state)
+  const dex = useApi(isMember ? (signal) => getDex(signal) : null, [isMember])
 
   const [stateFilter, setStateFilter] = useState<CardState | 'all'>('all')
   const [level, setLevel] = useState<Level | null>(null)
@@ -69,8 +71,11 @@ export default function LabPage() {
   const openMission = continueDetail.data?.missions.find((m) => m.status === 'open')
 
   const vote = voteApi.data
-  const voteTotal = vote?.options.reduce((s, o) => s + o.votes, 0) ?? 0
-  const voteDDay = vote ? Math.max(0, Math.ceil((new Date(vote.endsAt).getTime() - now) / DAY)) : undefined
+  const dDay = (endsAt: string) => Math.max(0, Math.ceil((new Date(endsAt).getTime() - now) / DAY))
+  const masters = useMemo(
+    () => new Set(dex.data?.filter((d) => d.state === 'master').map((d) => d.experimentId)),
+    [dex.data],
+  )
 
   const shown = useMemo(() => {
     const term = q.trim().toLowerCase()
@@ -268,10 +273,9 @@ export default function LabPage() {
         <div className={styles.grid}>
           {shown.map((e) => {
             const st = states.get(e.id) ?? 'open'
-            const voteOpt = vote?.options.find((o) => o.id === e.id)
             const copy = cardCopy(e, st, {
-              votePct: voteOpt && voteTotal ? Math.round((voteOpt.votes / voteTotal) * 100) : undefined,
-              voteDDay,
+              voteDDay: e.vote ? dDay(e.vote.endsAt) : undefined,
+              master: masters.has(e.id),
               treeNodeId: nodeFor(e.id),
               onVote: () => setVoteOpen(true),
             })

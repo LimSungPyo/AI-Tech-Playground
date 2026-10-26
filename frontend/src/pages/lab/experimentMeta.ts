@@ -34,11 +34,11 @@ export const STATE_TONE: Record<CardState, BadgeTone> = {
 
 /**
  * 비회원은 진행 기록이 없으므로 진행 중 · 완료를 "열림"으로 본다.
- * coming_soon 가운데 해금 조건이 투표인 실험(#003)은 "투표 중"으로 나눈다.
+ * coming_soon 가운데 오픈 투표가 걸린 실험(v2 `vote`, #003)은 "투표 중"으로 나눈다.
  */
 export function cardState(exp: ExperimentSummary, isMember: boolean): CardState {
   if (exp.status === 'locked') return 'locked'
-  if (exp.status === 'coming_soon') return exp.unlockCondition?.includes('투표') ? 'voting' : 'coming_soon'
+  if (exp.status === 'coming_soon') return exp.vote ? 'voting' : 'coming_soon'
   if (!isMember) return 'open'
   if (exp.status === 'in_progress') return 'in_progress'
   if (exp.progress && exp.progress.trial >= exp.progress.maxTrial) return 'done'

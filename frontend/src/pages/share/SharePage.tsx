@@ -57,6 +57,8 @@ function ShareView({ rec }: { rec: SharedRecord }) {
   const playTo = `/experiments/${exp.id}/play`
   // #001은 Figma 문구 그대로(먹이 찾기), 다른 실험은 공통 문구
   const achieved = exp.id === '001' ? '처음으로 먹이를 찾았어요' : '처음으로 성공했어요'
+  // v2 missionTitle "미션 1 · 먹이 찾기" → "미션 1"
+  const missionLabel = rec.missionTitle?.split(' · ')[0]
 
   return (
     <div className={styles.page}>
@@ -74,7 +76,9 @@ function ShareView({ rec }: { rec: SharedRecord }) {
           )}
         </div>
         <div className={styles.info}>
-          <span className={styles.eyebrow}>EXPERIMENT {exp.code} · 결과</span>
+          <span className={styles.eyebrow}>
+            EXPERIMENT {exp.code} · {missionLabel ? `${missionLabel} 결과` : '결과'}
+          </span>
           <h1 className={styles.title}>
             {name}가 {rec.trials}번째 훈련에서
             <br />
@@ -89,6 +93,12 @@ function ShareView({ rec }: { rec: SharedRecord }) {
               <dt>첫 성공</dt>
               <dd>T{rec.trials}</dd>
             </div>
+            {rec.prediction && (
+              <div>
+                <dt>예측</dt>
+                <dd>{rec.prediction.correct ? '적중' : '빗나감'}</dd>
+              </div>
+            )}
           </dl>
           <p className={styles.desc}>
             {exp.title} — {exp.subtitle}를 직접 훈련시키는 실험이에요. 가입 없이 {exp.durationMin}분이면 해볼 수 있어요.

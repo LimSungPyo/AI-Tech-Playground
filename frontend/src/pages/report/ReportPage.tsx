@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router'
-import { getExperiment, getReport, runTrial } from '../../api'
-import type { ExperimentDetail, Report, ReportSnapshot, TrialResult } from '../../api/types'
+import { getExperiment, getReport } from '../../api'
+import type { ExperimentDetail, Point, Report, ReportSnapshot, TrialMetric } from '../../api/types'
 import {
   Button,
   CHARACTERS,
@@ -20,6 +20,27 @@ import { useReplay } from './components/useReplay'
 import styles from './ReportPage.module.css'
 
 type Metric = 'rate' | 'time' | 'collisions'
+
+/** 차트 탭별 제목 · 값 · 축 */
+const METRIC: Record<
+  Metric,
+  { tab: string; title: string; pick: (m: TrialMetric) => number; format: (y: number) => string; unit: string }
+> = {
+  rate: { tab: '성공률', title: '회차별 성공률', pick: (m) => m.successRate, format: (y) => `${y}%`, unit: '%' },
+  time: { tab: '도달 시간', title: '회차별 평균 도달 시간', pick: (m) => m.timeSec, format: (y) => `${y}s`, unit: 's' },
+  collisions: { tab: '충돌 수', title: '회차별 평균 충돌 수', pick: (m) => m.collisions, format: (y) => String(y), unit: '회' },
+}
+
+/** 0부터 최댓값을 덮는 깔끔한 눈금 4칸 */
+function niceTicks(max: number) {
+  const raw = max / 4
+  const mag = 10 ** Math.floor(Math.log10(raw || 1))
+  const step = [1, 2, 2.5, 5, 10].map((k) => k * mag).find((k) => k >= raw) ?? raw
+  return [0, 1, 2, 3, 4].map((i) => Math.round(i * step * 100) / 100)
+}
+
+/** "미션 1 · 먹이 찾기" → "먹이 찾기" */
+const missionName = (title: string) => title.replace(/^미션\s*\d+\s*·\s*/, '')
 
 /** 1회차 리플레이 길이(ms). 100회차는 평균 도달 시간 비율만큼 짧아진다 */
 const BASE_REPLAY_MS = 6000
@@ -64,30 +85,39 @@ function ReportView({ report, exp }: { report: Report; exp: ExperimentDetail }) 
   const name = CHARACTERS[exp.character].name
   const { before, after } = report
 
-  // 리포트에는 경로가 없어 trial을 한 번 실행해 path(최근) · firstPath(1회차)를 받는다
-  const trial = useApi<TrialResult>(
-    () => runTrial(exp.id, { missionId: exp.missions[0]?.id ?? 'm1', speed: 1 }),
-    [exp.id],
-  )
   const durations = [BASE_REPLAY_MS, (BASE_REPLAY_MS * after.timeSec) / (before.timeSec || 1)]
   const replay = useReplay(durations)
 
   const firstSuccess = report.events[0]?.trial
   const cleared = exp.missions.find((m) => m.status === 'cleared') ?? exp.missions[0]
+  const prediction = report.prediction
+  const shareTitle = report.missionTitle ? missionName(report.missionTitle) : (cleared?.title ?? exp.title)
   const shareData = useMemo(
     () => ({
       code: exp.code,
       character: exp.character,
       characterName: name,
-      missionTitle: cleared?.title ?? exp.title,
+      missionTitle: shareTitle,
       stats: [
         { label: '최종 성공률', value: `${Math.round(after.successRate)}%` },
         ...(firstSuccess ? [{ label: '첫 성공', value: `${firstSuccess}번째 훈련` }] : []),
-        { label: '훈련', value: `${after.trial}회` },
+        // 예측 기록이 없으면 훈련 횟수로 대신한다
+        prediction
+          ? { label: '예측', value: prediction.correct ? '적중 ✓' : '빗나감' }
+          : { label: '훈련', value: `${after.trial}회` },
       ],
     }),
-    [exp.code, exp.character, exp.title, name, cleared?.title, after.successRate, after.trial, firstSuccess],
+    [exp.code, exp.character, name, shareTitle, after.successRate, after.trial, firstSuccess, prediction],
   )
+
+  // 차트: v2 metrics(회차별 3지표). 없으면 성공률 곡선만
+  const metrics = report.metrics
+  const m = METRIC[metric]
+  const series = metrics?.length
+    ? metrics.map((t) => ({ x: t.trial, y: m.pick(t) }))
+    : report.curve.map((c) => ({ x: c.trial, y: c.successRate }))
+  const yTicks = metric === 'rate' ? [0, 25, 50, 75, 100] : niceTicks(Math.max(...series.map((p) => p.y), 1))
+  const yDomain: [number, number] = [0, yTicks[yTicks.length - 1]]
 
   const compare: { label: string; from: string; to: string; delta: string }[] = [
     {
@@ -114,22 +144,24 @@ function ReportView({ report, exp }: { report: Report; exp: ExperimentDetail }) 
     snap: ReportSnapshot
     title: string
     expression: 'confused' | 'champion'
-    path: TrialResult['path']
+    path: Point[]
   }[] = [
     {
       snap: before,
       title: '엉뚱한 움직임',
       expression: 'confused',
-      path: trial.data?.firstPath ?? [],
+      path: report.replay?.first ?? [],
     },
     {
       snap: after,
       title: '능숙한 행동',
       expression: 'champion',
-      path: trial.data?.path ?? [],
+      path: report.replay?.last ?? [],
     },
   ]
   const threshold = cleared?.successThreshold ?? 60
+  const scene = cleared?.scene ?? exp.scene
+  const hasReplay = replays.every((r) => r.path.length > 0)
 
   return (
     <div className={styles.page}>
@@ -155,28 +187,20 @@ function ReportView({ report, exp }: { report: Report; exp: ExperimentDetail }) 
       <div className={styles.chartRow}>
         <GlassCard padding="lg" radius="lg" className={styles.chartCard}>
           <div className={styles.chartHead}>
-            <h2 className={styles.cardTitle}>회차별 성공률</h2>
+            <h2 className={styles.cardTitle}>{m.title}</h2>
             <SegmentedControl<Metric>
               size="sm"
               value={metric}
               onChange={setMetric}
-              items={[
-                { value: 'rate', label: '성공률' },
-                {
-                  value: 'time',
-                  label: <span title="곧 열려요">도달 시간</span>,
-                  disabled: true,
-                },
-                {
-                  value: 'collisions',
-                  label: <span title="곧 열려요">충돌 수</span>,
-                  disabled: true,
-                },
-              ]}
+              items={(Object.keys(METRIC) as Metric[]).map((k) => ({
+                value: k,
+                label: METRIC[k].tab,
+                disabled: k !== 'rate' && !metrics?.length,
+              }))}
             />
           </div>
           <LineChart
-            data={report.curve.map((c) => ({ x: c.trial, y: c.successRate }))}
+            data={series}
             events={report.events.map((e) => ({
               x: e.trial,
               label: `T${e.trial}`,
@@ -184,9 +208,11 @@ function ReportView({ report, exp }: { report: Report; exp: ExperimentDetail }) 
             height={320}
             xDomain={[1, after.trial]}
             xTicks={[1, 25, 50, 75, 100].filter((t) => t <= after.trial)}
-            yTicks={[0, 25, 50, 75, 100]}
+            yTicks={yTicks}
+            yDomain={yDomain}
             formatX={(x) => (x === 1 ? 'Trial 1' : String(x))}
-            label={`회차별 성공률 ${Math.round(before.successRate)}%에서 ${Math.round(after.successRate)}%`}
+            formatY={m.format}
+            label={`${m.title} ${m.format(series[0]?.y ?? 0)}에서 ${m.format(series[series.length - 1]?.y ?? 0)}`}
           />
           <ul className={styles.legend}>
             {report.events.map((e) => (
@@ -221,15 +247,14 @@ function ReportView({ report, exp }: { report: Report; exp: ExperimentDetail }) 
         <div className={styles.replays}>
           {replays.map((r, i) => (
             <GlassCard key={r.snap.trial} padding="sm" radius="lg" className={styles.replayCard}>
-              {trial.loading ? (
-                <Skeleton height={300} />
-              ) : r.path.length ? (
+              {r.path.length ? (
                 <ReplayArena
                   path={r.path}
                   t={replay.progress[i]}
                   expression={r.expression}
                   label={`Trial ${r.snap.trial} 리플레이`}
-                  goal={trial.data?.path[trial.data.path.length - 1]}
+                  goal={scene?.food}
+                  obstacles={scene?.obstacles}
                 />
               ) : (
                 <EmptyState
@@ -256,7 +281,7 @@ function ReportView({ report, exp }: { report: Report; exp: ExperimentDetail }) 
           className={styles.playBtn}
           iconLeft={<Icon name="play" size={14} />}
           onClick={replay.play}
-          disabled={!trial.data || replay.playing}
+          disabled={!hasReplay || replay.playing}
         >
           {replay.progress[0] >= 1 ? '다시 재생' : '나란히 재생'}
         </Button>
