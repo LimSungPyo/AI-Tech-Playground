@@ -14,9 +14,11 @@ const TABS = ['기본 정보', '미션', '캐릭터', '기술 카드', '공개 �
 
 const STAGE_LABEL: Record<ModuleStage, string> = {
   idea: '아이디어',
+  voting: '투표 중',
   design: '설계 중',
   build: '개발 중',
   qa: 'QA',
+  scheduled: '오픈 예정',
   live: '공개',
 }
 

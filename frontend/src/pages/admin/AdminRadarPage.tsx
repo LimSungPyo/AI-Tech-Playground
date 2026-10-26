@@ -17,6 +17,7 @@ const STATUS: Record<RadarCandidateStatus, { label: string; tone: PillTone }> = 
   pending: { label: '대기', tone: 'neutral' },
   approved: { label: '승인', tone: 'success' },
   rejected: { label: '제외', tone: 'danger' },
+  merged: { label: '병합', tone: 'neutral' },
 }
 
 /** 과장 표현 자동 경고(F-00 운영 원칙) */

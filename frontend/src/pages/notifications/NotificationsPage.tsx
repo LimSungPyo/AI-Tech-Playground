@@ -25,6 +25,10 @@ const KIND_TAB: Record<Notification['kind'], Exclude<Tab, 'all'>> = {
   badge: 'badge',
   inquiry: 'inquiry',
   system: 'system',
+  // v2 종류: 전용 탭이 생기기 전까지 가까운 탭에 묶는다
+  character: 'badge',
+  ranking: 'experiment',
+  radar: 'system',
 }
 
 const KIND_LABEL: Record<Notification['kind'], string> = {
@@ -33,6 +37,9 @@ const KIND_LABEL: Record<Notification['kind'], string> = {
   badge: '배지',
   inquiry: '문의 · 운영',
   system: '시스템',
+  character: '캐릭터',
+  ranking: '랭킹',
+  radar: '레이더',
 }
 
 function KindIcon({ kind }: { kind: Notification['kind'] }) {

@@ -104,4 +104,5 @@ export const api = {
     request<T>(path, { ...opts, method: 'POST', body }),
   put: <T>(path: string, body?: unknown, opts?: Omit<RequestOptions, 'method' | 'body'>) =>
     request<T>(path, { ...opts, method: 'PUT', body }),
+  del: <T>(path: string, opts?: Omit<RequestOptions, 'method' | 'body'>) => request<T>(path, { ...opts, method: 'DELETE' }),
 }
