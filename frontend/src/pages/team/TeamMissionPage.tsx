@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { getTeamMission, getTeamMissionResult } from '../../api'
-import type { CharacterId } from '../../api'
+import type { CharacterId, TeamEvent } from '../../api'
 import { Badge, Button, Character, CHARACTERS, cx, EmptyState, GlassCard, Icon, Popover, Skeleton } from '../../components'
 import { useApi } from '../../hooks/useApi'
 import { TeamGraph } from './components/TeamGraph'
@@ -54,6 +54,14 @@ export default function TeamMissionPage() {
   const next = messages.find((msg) => msg.at > elapsed)
   const spoke = new Set(shown.map((s) => s.from))
   const name = (c: CharacterId) => CHARACTERS[c].name
+  const sec = Math.floor(Math.min(elapsed, (total ?? TAIL) - TAIL))
+  // 재생 중에는 지금까지 뜬 줄로 세고, 끝나면 result.metrics(v2)
+  const countEvents = (kind: TeamEvent['kind']) => shown.filter((msg) => msg.event?.kind === kind).length
+  const metrics = (done && result.data?.metrics) || {
+    messages: shown.length,
+    toolCalls: countEvents('tool_call'),
+    searches: countEvents('retrieve'),
+  }
 
   return (
     <div className={styles.page}>
@@ -103,7 +111,7 @@ export default function TeamMissionPage() {
             {m && (
               <span className={cx(styles.status, done && styles.statusDone)}>
                 <span className={styles.dot} aria-hidden />
-                {done ? '완료' : '실행 중'} · {Math.floor(Math.min(elapsed, (total ?? TAIL) - TAIL))}s
+                {done ? '완료' : '실행 중'} · {sec}s
               </span>
             )}
           </div>
@@ -117,6 +125,7 @@ export default function TeamMissionPage() {
                     <span className={styles.msgTech}>{TECH[msg.from] ?? ''}</span>
                   </span>
                   <p className={styles.bubble}>{msg.text}</p>
+                  {msg.event && <code className={styles.event}>{msg.event.text}</code>}
                 </div>
               </li>
             ))}
@@ -139,9 +148,9 @@ export default function TeamMissionPage() {
             {m && <TeamGraph members={m.members.map((x) => x.character)} spoke={spoke} active={done ? undefined : shown.at(-1)?.from} />}
           </GlassCard>
           <div className={styles.metrics}>
-            <Metric label="메시지" value={shown.length} />
-            <Metric label="참여" value={spoke.size} />
-            <Metric label="경과(초)" value={Math.floor(Math.min(elapsed, (total ?? TAIL) - TAIL))} />
+            <Metric label="메시지" value={metrics.messages} />
+            <Metric label="도구 호출" value={metrics.toolCalls} />
+            <Metric label="검색" value={metrics.searches} />
           </div>
           <GlassCard padding="md" radius="lg">
             <h2 className={styles.h2}>최종 계획</h2>

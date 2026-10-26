@@ -38,13 +38,10 @@ export function nodeMeta(node: TreeNode, showStatus: boolean) {
   return exp ? `${STATUS_LABEL[node.status]} · EXP ${exp}` : STATUS_LABEL[node.status]
 }
 
-/** 이 노드에 묶인 실험 id 목록(experimentId + 설명 속 "EXP #003 #004") */
+/** 이 노드에 묶인 실험 id 목록. v2 experimentIds가 없으면 experimentId 하나 */
 export function nodeCodes(node: TreeNode) {
-  const ids = new Set<string>()
-  if (node.experimentId) ids.add(node.experimentId)
-  const m = node.description.match(META_RE)
-  if (m) for (const code of m[1].matchAll(/#(\d{3})/g)) ids.add(code[1])
-  return [...ids]
+  if (node.experimentIds?.length) return node.experimentIds
+  return node.experimentId ? [node.experimentId] : []
 }
 
 /** 실험 진행 한 줄. 예: "진행 중 34%", "완료 91%" */

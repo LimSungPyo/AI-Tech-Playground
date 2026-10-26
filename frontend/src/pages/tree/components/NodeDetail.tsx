@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import type { DexEntry, ExperimentSummary, TechCard, TreeNode } from '../../../api'
+import type { ExperimentSummary, TechCard, TreeNode } from '../../../api'
 import { Badge, Button, Character, cx, Drawer, Icon, ProgressBar } from '../../../components'
 import { experimentProgress, nodeCodes, nodeDescription, STATUS_LABEL } from '../treeMeta'
 import styles from './NodeDetail.module.css'
@@ -9,7 +9,6 @@ interface Props {
   nodes: TreeNode[]
   experiments: ExperimentSummary[]
   cards: TechCard[]
-  dex: DexEntry[]
   isMember: boolean
   loginTo: string
   onClose: () => void
@@ -19,7 +18,7 @@ interface Props {
 const STATUS_TONE = { done: 'success', in_progress: 'dark', open: 'success', locked: 'neutral' } as const
 
 /** H-01 기술 트리 · 노드 상세 (오른쪽 서랍) */
-export function NodeDetail({ node, nodes, experiments, cards, dex, isMember, loginTo, onClose, onSelect }: Props) {
+export function NodeDetail({ node, nodes, experiments, cards, isMember, loginTo, onClose, onSelect }: Props) {
   return (
     <Drawer open={!!node} onClose={onClose} eyebrow={node ? `NODE · ${node.title}` : undefined} className={styles.drawer}>
       {node && (
@@ -28,7 +27,6 @@ export function NodeDetail({ node, nodes, experiments, cards, dex, isMember, log
           nodes={nodes}
           experiments={experiments}
           cards={cards}
-          dex={dex}
           isMember={isMember}
           loginTo={loginTo}
           onSelect={onSelect}
@@ -38,12 +36,12 @@ export function NodeDetail({ node, nodes, experiments, cards, dex, isMember, log
   )
 }
 
-function DetailBody({ node, nodes, experiments, cards, dex, isMember, loginTo, onSelect }: Omit<Props, 'node' | 'onClose'> & { node: TreeNode }) {
+function DetailBody({ node, nodes, experiments, cards, isMember, loginTo, onSelect }: Omit<Props, 'node' | 'onClose'> & { node: TreeNode }) {
   const codes = nodeCodes(node)
   const exps = codes.map((id) => experiments.find((e) => e.id === id)).filter((e): e is ExperimentSummary => !!e)
   const main = exps[0]
-  const card = cards.find((c) => c.experimentId === node.experimentId)
-  const mastery = isMember && node.character ? dex.find((d) => d.character === node.character && d.obtained) : undefined
+  const card = cards.find((c) => c.experimentId === (node.experimentId ?? codes[0]))
+  const mastery = isMember ? node.mastery : undefined
   const parents = node.parents.map((id) => nodes.find((n) => n.id === id)).filter((n): n is TreeNode => !!n)
   const children = nodes.filter((n) => n.parents.includes(node.id))
 
@@ -73,12 +71,12 @@ function DetailBody({ node, nodes, experiments, cards, dex, isMember, loginTo, o
         <div className={styles.mastery}>
           <div className={styles.masteryHead}>
             <strong>이 노드 숙련도</strong>
-            <span className={styles.masteryValue}>{mastery.level} / 3</span>
+            <span className={styles.masteryValue}>
+              {mastery.level} / {mastery.max}
+            </span>
           </div>
-          <ProgressBar value={mastery.level} max={3} size="sm" />
-          <span className={styles.caption}>
-            {mastery.level >= 3 ? `${mastery.name} MASTER 달성` : `${CODE(mastery.experimentId)} 미션을 더 깨면 Lv.${mastery.level + 1}`}
-          </span>
+          <ProgressBar value={mastery.level} max={mastery.max} size="sm" />
+          <span className={styles.caption}>{mastery.hint}</span>
         </div>
       )}
       {isMember && node.status === 'locked' && node.unlockCondition && (
@@ -154,5 +152,3 @@ function DetailBody({ node, nodes, experiments, cards, dex, isMember, loginTo, o
     </div>
   )
 }
-
-const CODE = (id: string) => `#${id}`

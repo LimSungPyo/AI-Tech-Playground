@@ -11,7 +11,7 @@ interface Props {
   skipTo?: string
 }
 
-/** 온보딩 상단 진행 표시: 1 만나기 — 2 관심사 — 3 수준 · 건너뛰기 */
+/** 온보딩 상단 진행 표시: 1 만나기 — 2 관심사 — 3 수준 · 건너뛰기 (FocusLayout 헤더 바로 아래) */
 export function StepBar({ step, rightLabel, skipTo }: Props) {
   return (
     <div className={styles.bar}>

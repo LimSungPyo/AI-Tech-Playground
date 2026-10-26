@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
-import { getRanking } from '../../api'
+import { getExperiment, getRanking } from '../../api'
 import type { RankingRow } from '../../api'
 import { useAuth } from '../../auth/useAuth'
 import { Button, Character, EmptyState, GlassCard, IconButton, SegmentedControl, Skeleton, cx } from '../../components'
@@ -8,7 +8,7 @@ import { useApi } from '../../hooks/useApi'
 import { ReportModal } from './components/ReportModal'
 import styles from './RankingPage.module.css'
 
-// 랭킹 대상 탭. 랭킹 API는 실험 단위라 미션 1·2는 같은 #001 표를 쓴다
+// 랭킹 대상 탭. 미션 · 기간은 GET /experiments/{id}/ranking 쿼리로 넘긴다
 const BOARDS = [
   { key: '001-m1', label: '미션 1 · 먹이 찾기', eyebrow: '#001 미션 1', experiment: '001', mission: 'm1' },
   { key: '001-m2', label: '미션 2 · 장애물', eyebrow: '#001 미션 2', experiment: '001', mission: 'm2' },
@@ -24,6 +24,8 @@ const PERIODS = [
 ] as const
 type Period = (typeof PERIODS)[number]['value']
 
+const firstSuccess = (r: RankingRow) => (r.firstSuccessTrial ? `T${r.firstSuccessTrial}` : '—')
+
 const PODIUM_ORDER = [1, 0, 2] // 2위 · 1위 · 3위
 
 // W2 world 담당 · 경로 /ranking — H-05 랭킹 전체 · H-06 닉네임 신고
@@ -35,7 +37,12 @@ export default function RankingPage() {
   const board = BOARDS.find((b) => b.key === params.get('board')) ?? BOARDS[0]
   const [period, setPeriod] = useState<Period>('week')
   const [reporting, setReporting] = useState<RankingRow>()
-  const ranking = useApi((signal) => getRanking(board.experiment, signal), [board.experiment])
+  const ranking = useApi(
+    (signal) => getRanking(board.experiment, signal, { mission: board.mission, period }),
+    [board.experiment, board.mission, period],
+  )
+  const experiment = useApi((signal) => getExperiment(board.experiment, signal), [board.experiment])
+  const participants = experiment.data?.participants
 
   const rows = ranking.data ?? []
   const podium = rows.filter((r) => r.rank <= 3)
@@ -58,7 +65,9 @@ export default function RankingPage() {
         <div>
           <span className={styles.eyebrow}>RANKING · {board.eyebrow}</span>
           <h1 className={styles.h1}>{periodLabel} 랭킹</h1>
-          <p className={styles.lead}>매주 월요일 00:00 초기화</p>
+          <p className={styles.lead}>
+            매주 월요일 00:00 초기화{participants ? ` · ${participants.toLocaleString('ko-KR')}명 참여` : ''}
+          </p>
         </div>
         <SegmentedControl label="기간" items={[...PERIODS]} value={period} onChange={setPeriod} />
       </header>
@@ -128,7 +137,7 @@ export default function RankingPage() {
                     <td className={styles.rank}>{r.rank}</td>
                     <td className={styles.nick}>{r.nickname}</td>
                     <td>{Math.round(r.successRate)}%</td>
-                    <td>—</td>
+                    <td>{firstSuccess(r)}</td>
                     <td>{r.trials}</td>
                     <td className={styles.more}>
                       {!r.isMe && <IconButton icon="more" label={`${r.nickname} 신고`} variant="ghost" size="sm" onClick={() => report(r)} />}
@@ -148,7 +157,7 @@ export default function RankingPage() {
                       <td className={styles.rank}>{me.rank}</td>
                       <td className={styles.nick}>{me.nickname} (나)</td>
                       <td>{Math.round(me.successRate)}%</td>
-                      <td>—</td>
+                      <td>{firstSuccess(me)}</td>
                       <td>{me.trials}</td>
                       <td />
                     </tr>
