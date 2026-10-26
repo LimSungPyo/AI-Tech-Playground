@@ -1,0 +1,58 @@
+.wrap {
+  position: relative;
+  aspect-ratio: 320 / 230;
+  margin: var(--space-4) 0 var(--space-6);
+}
+.svg {
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  height: auto;
+}
+.assign {
+  stroke: var(--color-accent-indigo);
+  stroke-width: 2.5;
+}
+.report {
+  fill: none;
+  stroke: var(--color-line-strong);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+  transition: stroke var(--motion-duration) var(--motion-ease);
+}
+.reportOn {
+  stroke: var(--color-text-tertiary);
+}
+.node {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+.active {
+  transform: scale(1.18);
+  background: var(--color-accent-indigo-soft);
+}
+.legend {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: flex;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+.legendAssign {
+  color: var(--color-text-link);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node,
+  .report {
+    transition: none;
+  }
+}

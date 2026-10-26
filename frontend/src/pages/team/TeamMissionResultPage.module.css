@@ -1,0 +1,177 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 940px;
+  margin: 0 auto;
+  padding: var(--space-4) 0 var(--space-16);
+}
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-link);
+}
+.h1 {
+  font-size: 48px;
+  font-weight: var(--weight-black);
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+.lead {
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+}
+
+.lineup {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--space-5);
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+}
+.member {
+  composes: glass from '../../components/glass.module.css';
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 300px;
+  padding: var(--space-6) var(--space-4);
+  border-radius: var(--radius-card);
+  text-align: center;
+}
+.mvp {
+  padding-top: var(--space-10);
+  padding-bottom: var(--space-8);
+  box-shadow:
+    inset 0 0 0 3px var(--color-accent-why),
+    var(--shadow-glass);
+}
+.mvpBadge {
+  position: absolute;
+  top: var(--space-4);
+}
+.portrait {
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 128px;
+  margin-bottom: var(--space-2);
+  border-radius: 50%;
+  background: var(--color-accent-indigo-soft);
+}
+.mvp .portrait {
+  width: 160px;
+  height: 160px;
+  background: var(--color-accent-why-soft);
+}
+.name {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-black);
+  color: var(--color-text-primary);
+}
+.role {
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-skeleton);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.contrib {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+
+.record {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-skeleton);
+}
+.stat span {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+.stat strong {
+  font-family: var(--font-number);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-black);
+  color: var(--color-text-primary);
+}
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.timeline li {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-xs);
+  background: var(--color-accent-indigo-soft);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--color-glass-dark);
+  font-size: var(--text-lg);
+  color: var(--color-text-on-tint);
+}
+.cardEyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-accent-cyan);
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+@media (max-width: 1024px) {
+  .lineup {
+    flex-wrap: wrap;
+  }
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
