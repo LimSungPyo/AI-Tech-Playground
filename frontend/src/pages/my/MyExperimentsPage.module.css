@@ -1,0 +1,139 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.sort {
+  width: 160px;
+}
+.search {
+  width: 240px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 160px 150px;
+  align-items: center;
+  gap: var(--space-6);
+}
+.thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-lg);
+}
+.body {
+  min-width: 0;
+}
+.codeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-link);
+}
+.title {
+  margin-top: var(--space-2);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-black);
+}
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.bar {
+  flex: 0 1 320px;
+}
+.meta {
+  display: flex;
+  gap: var(--space-6);
+  margin-top: var(--space-3);
+}
+.meta dt {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+.meta dd {
+  font-family: var(--font-number);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+.meta .gain {
+  color: var(--color-accent-success);
+}
+.trend {
+  height: 48px;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.notifyList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.notify {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-glass-clear-nested);
+}
+.notifyBody {
+  flex: 1;
+  min-width: 0;
+}
+.notifyTitle {
+  font-weight: var(--weight-bold);
+}
+.notifyState {
+  font-size: var(--text-sm);
+  color: var(--color-text-link);
+}
+.mute {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.mute:hover {
+  color: var(--color-accent-danger);
+}
+
+@media (max-width: 1024px) {
+  .row {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+  .thumb {
+    width: 96px;
+    height: 96px;
+  }
+  .trend {
+    display: none;
+  }
+  .actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+  }
+  .notifyList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

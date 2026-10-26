@@ -1,0 +1,19 @@
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 50%;
+  font-family: var(--font-number);
+  font-weight: var(--weight-black);
+  color: var(--color-text-on-tint);
+  box-shadow:
+    0 0 0 3px var(--color-glass-rim),
+    var(--shadow-soft);
+}
+.off {
+  background: var(--color-glass-clear-nested);
+  border: 1.5px dashed var(--color-line-strong);
+  color: var(--color-text-tertiary);
+  box-shadow: none;
+}
