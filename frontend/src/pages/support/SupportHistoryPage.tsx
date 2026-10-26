@@ -38,13 +38,14 @@ function Thread({ inquiry }: { inquiry: Inquiry }) {
         <div className={cx(styles.bubble, styles.answer)}>
           <p className={styles.who}>
             <Logo iconOnly size={24} />
-            AI Tech Playground 운영팀
+            AI Tech Playground 운영팀{inquiry.answeredAt && ` · ${mdhm(inquiry.answeredAt)}`}
           </p>
           {inquiry.answer}
         </div>
       ) : (
         <div className={cx(styles.bubble, styles.waiting)}>
-          답변을 준비하고 있어요. 보통 24시간 안에 답하고, 답변이 오면 알림으로 알려드려요.
+          답변을 준비하고 있어요. 보통 24시간 안에 답하고
+          {inquiry.notify === false ? '요. 알림을 받지 않기로 해서 이 화면에서 확인해 주세요.' : ', 답변이 오면 알림으로 알려드려요.'}
         </div>
       )}
       <div className={styles.foot}>
@@ -170,7 +171,11 @@ export default function SupportHistoryPage() {
                   <span className={styles.id}>{selected.id}</span>
                   <h2 className={styles.detailTitle}>{selected.title}</h2>
                 </div>
-                <p className={styles.category}>{selected.category}</p>
+                <p className={styles.category}>
+                  {[selected.category, selected.experimentId && `#${selected.experimentId}`, selected.trial !== undefined && `Trial ${selected.trial}`]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
                 <Thread key={selected.id} inquiry={selected} />
               </>
             ) : (

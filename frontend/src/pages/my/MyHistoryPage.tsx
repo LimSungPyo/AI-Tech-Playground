@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getDashboard, getHistory, type DayMinutes, type MeHistory } from '../../api'
+import {
+  getDashboard,
+  getHistory,
+  type DayMinutes,
+  type HistoryLogKind,
+  type HistoryStats,
+  type MeHistory,
+} from '../../api'
 import {
   BarMini,
   Badge,
@@ -14,6 +21,7 @@ import {
   Mascot,
   SegmentedControl,
   Skeleton,
+  cx,
   type BadgeTone,
   useToast,
 } from '../../components'
@@ -42,11 +50,24 @@ const KIND: Record<Kind, { label: string; tone: BadgeTone }> = {
   achieve: { label: '달성', tone: 'success' },
 }
 
-/** 로그 문장으로 종류를 나눈다(API에 kind가 없어서) */
-function kindOf(text: string): Kind {
-  if (/WHY\?|근거/.test(text)) return 'why'
-  if (/달성|첫 성공|배지|마스터/.test(text)) return 'achieve'
+const KIND_OF_API: Record<HistoryLogKind, Kind> = { training: 'train', why: 'why', achievement: 'achieve' }
+
+type Log = MeHistory['logs'][number]
+
+/** 로그 종류(v2 kind). 없으면 문장으로 나눈다 */
+function kindOf(log: Log): Kind {
+  if (log.kind) return KIND_OF_API[log.kind]
+  if (/WHY\?|근거/.test(log.text)) return 'why'
+  if (/달성|첫 성공|배지|마스터/.test(log.text)) return 'achieve'
   return 'train'
+}
+
+/** 학습하지 않은 날(성공률 없음)은 앞 값으로 이어 선이 끊기지 않게 한다 */
+function rateLine(days: MeHistory['days']) {
+  const rates = days.map((d) => d.successRate)
+  if (rates.every((r) => r === undefined)) return undefined
+  let prev = rates.find((r) => r !== undefined) ?? 0
+  return rates.map((r) => (prev = r ?? prev))
 }
 
 /** 실험 id → 캐릭터 */
@@ -55,10 +76,10 @@ const characterOf = (experimentId: string) =>
 
 // W2 my 담당 · 경로 /my/history · C-06 학습 기록
 export default function MyHistoryPage() {
-  const history = useApi((s) => getHistory(s), [])
-  const dash = useApi((s) => getDashboard(s), [])
   const toast = useToast()
   const [period, setPeriod] = useState<Period>('week')
+  const history = useApi((s) => getHistory(s, period), [period])
+  const dash = useApi((s) => getDashboard(s), [])
   const [filter, setFilter] = useState<LogFilter>('all')
 
   if (history.error) {
@@ -77,8 +98,11 @@ export default function MyHistoryPage() {
   const week = h?.days ?? []
   // 기간별 날짜 범위: 이번 주 = /me/history, 이번 달 = 최근 5주, 전체 = 대시보드 잔디 전체
   const days = period === 'week' ? week : period === 'month' ? calendar.slice(-35) : calendar
-  const range = days.length > 0 ? `${formatFullDate(days[0].date)} – ${formatMonthDay(days[days.length - 1].date)}` : ''
   const periodLabel = period === 'week' ? '이번 주' : period === 'month' ? '이번 달' : '전체'
+  const range =
+    h?.rangeLabel ??
+    (days.length > 0 ? `${formatFullDate(days[0].date)} – ${formatMonthDay(days[days.length - 1].date)} · ${periodLabel}` : '')
+  const line = rateLine(week)
 
   const exportCsv = () => {
     if (!h) return
@@ -87,7 +111,7 @@ export default function MyHistoryPage() {
       ...days.map((d) => [d.date, String(d.minutes)]),
       [],
       ['datetime', 'experiment', 'kind', 'text'],
-      ...h.logs.map((l) => [l.date, `#${l.experimentId}`, KIND[kindOf(l.text)].label, l.text]),
+      ...h.logs.map((l) => [l.date, `#${l.experimentId}`, KIND[kindOf(l)].label, l.text]),
     ]
     const csv = rows.map((r) => r.map((c) => `"${c.replaceAll('"', '""')}"`).join(',')).join('\n')
     const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }))
@@ -103,7 +127,7 @@ export default function MyHistoryPage() {
     <div className={my.page}>
       <PageTitle
         title="학습 기록"
-        sub={range ? `${range} · ${periodLabel}` : ' '}
+        sub={range || ' '}
         right={
           <>
             <SegmentedControl<Period>
@@ -135,15 +159,28 @@ export default function MyHistoryPage() {
         </>
       ) : (
         <>
-          <Stats days={days} logs={h.logs} calendar={calendar} period={period} />
+          {h.stats ? (
+            <ApiStats stats={h.stats} period={period} />
+          ) : (
+            <Stats days={days} logs={h.logs} calendar={calendar} period={period} />
+          )}
 
           <div className={styles.row}>
             <GlassCard radius="lg" className={styles.chart}>
               <div className={my.cardHead}>
-                <h2 className={my.cardTitle}>{period === 'week' ? '요일별 학습 시간' : `${periodLabel} 학습 잔디`}</h2>
+                <h2 className={my.cardTitle}>
+                  {period === 'week' ? `요일별 학습 시간${line ? ' · 성공률' : ''}` : `${periodLabel} 학습 잔디`}
+                </h2>
                 {period === 'week' ? (
-                  <span className={styles.legend}>
-                    <span className={styles.legendBar} aria-hidden /> 학습 시간
+                  <span className={styles.legends}>
+                    <span className={styles.legend}>
+                      <span className={styles.legendBar} aria-hidden /> 학습 시간
+                    </span>
+                    {line && (
+                      <span className={cx(styles.legend, styles.legendRate)}>
+                        <span className={styles.legendDot} aria-hidden /> 성공률
+                      </span>
+                    )}
                   </span>
                 ) : (
                   <GrassLegend />
@@ -152,15 +189,17 @@ export default function MyHistoryPage() {
               {period === 'week' ? (
                 <BarMini
                   height={240}
-                  label="요일별 학습 시간"
+                  label={line ? '요일별 학습 시간 · 성공률' : '요일별 학습 시간'}
                   data={week.map((d) => ({ label: `${weekday(d.date)} ${formatMinutes(d.minutes)}`, value: d.minutes }))}
+                  line={line}
+                  lineMax={100}
                 />
               ) : (
                 <Grass days={days} size={period === 'month' ? 28 : 18} monthLabels />
               )}
             </GlassCard>
 
-            <WeeklySummary week={week} logs={h.logs} />
+            <WeeklySummary week={week} logs={h.logs} summary={h.weeklySummary} />
           </div>
 
           <GlassCard radius="lg">
@@ -196,7 +235,7 @@ function Stats({
   const total = sumMinutes(days)
   const keys = new Set(days.map((d) => d.date))
   const inRange = logs.filter((l) => keys.has(dateKey(l.date)))
-  const whyLogs = inRange.filter((l) => kindOf(l.text) === 'why')
+  const whyLogs = inRange.filter((l) => kindOf(l) === 'why')
   const active = days.filter((d) => d.minutes > 0)
   const best = active.reduce<DayMinutes | undefined>((b, d) => (!b || d.minutes > b.minutes ? d : b), undefined)
 
@@ -224,31 +263,75 @@ function Stats({
   )
 }
 
-function StatCard({ label, value, caption }: { label: string; value: string; caption: string }) {
+/** v2 기간별 통계(훈련 횟수 · WHY? 열람 · 평균 성공률 변화) */
+function ApiStats({ stats, period }: { stats: HistoryStats; period: Period }) {
+  const prevLabel = period === 'week' ? '지난주' : period === 'month' ? '지난달' : ''
+  const delta = stats.minutesDelta
+  const sign = (n: number) => (n >= 0 ? '+' : '−')
+  return (
+    <div className={styles.stats}>
+      <StatCard
+        label="학습 시간"
+        value={formatMinutes(stats.minutes, true)}
+        caption={prevLabel ? `${prevLabel} 대비 ${sign(delta)}${formatMinutes(Math.abs(delta))}` : '처음부터 지금까지'}
+      />
+      <StatCard label="훈련 횟수" value={`${stats.trials}회`} caption={`×10 훈련 ${stats.batchRuns}번 포함`} link />
+      <StatCard
+        label="WHY? 열람"
+        value={`${stats.whyViews}번`}
+        caption={stats.whyPeakDate ? `가장 많이 본 날 · ${formatMonthDay(stats.whyPeakDate)}` : ' '}
+        link
+      />
+      <StatCard
+        label="평균 성공률 변화"
+        value={`${sign(stats.rateChange)}${Math.abs(stats.rateChange)}%p`}
+        caption={stats.rateChangeLabel}
+      />
+    </div>
+  )
+}
+
+function StatCard({ label, value, caption, link }: { label: string; value: string; caption: string; link?: boolean }) {
   return (
     <GlassCard padding="md" className={styles.stat}>
       <span className={styles.statLabel}>{label}</span>
       <strong className={styles.statValue}>{value}</strong>
-      <span className={styles.statCaption}>{caption}</span>
+      <span className={cx(styles.statCaption, link && styles.statCaptionLink)}>{caption}</span>
     </GlassCard>
   )
 }
 
-/** 이번 주 기록으로 만든 요약 카드(AI 주간 요약 자리) */
-function WeeklySummary({ week, logs }: { week: DayMinutes[]; logs: MeHistory['logs'] }) {
+/** AI 주간 요약(v2 weeklySummary). 없으면 이번 주 기록으로 문장을 만든다 */
+function WeeklySummary({
+  week,
+  logs,
+  summary,
+}: {
+  week: DayMinutes[]
+  logs: MeHistory['logs']
+  summary: MeHistory['weeklySummary']
+}) {
+  if (summary) {
+    return (
+      <GlassCard radius="lg" className={styles.summary}>
+        <SummaryHead />
+        <p className={styles.summaryText}>{summary.text}</p>
+        {summary.suggestion && (
+          <div className={styles.next}>
+            <p className={styles.nextLabel}>다음 주 제안</p>
+            <p>{summary.suggestion}</p>
+          </div>
+        )}
+      </GlassCard>
+    )
+  }
   const total = sumMinutes(week)
   const best = week.reduce<DayMinutes | undefined>((b, d) => (!b || d.minutes > b.minutes ? d : b), undefined)
-  const whyCount = logs.filter((l) => kindOf(l.text) === 'why').length
+  const whyCount = logs.filter((l) => kindOf(l) === 'why').length
   const latest = logs[0]
   return (
     <GlassCard radius="lg" className={styles.summary}>
-      <div className={styles.summaryHead}>
-        <Mascot expression="scientist" size={52} />
-        <div>
-          <h2 className={styles.summaryTitle}>AI 해설 · 주간 요약</h2>
-          <p className={my.caption}>매주 월요일 자동 생성</p>
-        </div>
-      </div>
+      <SummaryHead />
       {total === 0 ? (
         <p className={styles.summaryText}>이번 주에는 아직 학습 기록이 없어요. 짧게라도 한 번 훈련해 볼까요?</p>
       ) : (
@@ -268,9 +351,21 @@ function WeeklySummary({ week, logs }: { week: DayMinutes[]; logs: MeHistory['lo
   )
 }
 
+function SummaryHead() {
+  return (
+    <div className={styles.summaryHead}>
+      <Mascot expression="scientist" size={52} />
+      <div>
+        <h2 className={styles.summaryTitle}>AI 해설 · 주간 요약</h2>
+        <p className={my.caption}>매주 월요일 자동 생성</p>
+      </div>
+    </div>
+  )
+}
+
 function Timeline({ logs, filter }: { logs: MeHistory['logs']; filter: LogFilter }) {
   const navigate = useNavigate()
-  const items = logs.filter((l) => filter === 'all' || kindOf(l.text) === filter)
+  const items = logs.filter((l) => filter === 'all' || kindOf(l) === filter)
   if (items.length === 0) {
     return <EmptyState compact expression="sleep" title="이 조건의 활동이 없어요" />
   }
@@ -289,7 +384,7 @@ function Timeline({ logs, filter }: { logs: MeHistory['logs']; filter: LogFilter
           </h3>
           <ul className={styles.logs}>
             {list.map((l) => {
-              const kind = KIND[kindOf(l.text)]
+              const kind = KIND[kindOf(l)]
               return (
                 <li key={`${l.date}-${l.text}`}>
                   <button type="button" className={styles.log} onClick={() => navigate(`/experiments/${l.experimentId}/report`)}>

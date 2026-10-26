@@ -58,11 +58,12 @@ export default function DashboardPage() {
 
   const { user, stats, streak } = d
   const calendar = streak.calendar
-  const total = sumMinutes(calendar)
-  const thisWeek = sumMinutes(calendar.slice(-7))
+  const total = d.totalMinutes ?? sumMinutes(calendar)
+  const weekDelta = d.weekMinutesDelta ?? sumMinutes(calendar.slice(-7))
+  const best = d.bestStreak ?? streak.best ?? longestStreak(calendar)
   const played = (exps.data ?? []).filter((e) => e.progress)
   const masters = (chars.data ?? []).filter((c) => c.state === 'master')
-  const xp = 'xp' in d ? (d as { xp?: { current: number; next: number } }).xp : undefined
+  const xp = d.xp
 
   return (
     <div className={my.page}>
@@ -75,7 +76,8 @@ export default function DashboardPage() {
           <div className={styles.nameRow}>
             <h1 className={styles.name}>{user.nickname}</h1>
             <Badge tone="solid" size="md">
-              Lv.{user.level} 탐험가
+              Lv.{user.level}
+              {user.title && ` ${user.title}`}
             </Badge>
             {d.partner && (
               <Badge tone="pink" size="md">
@@ -90,7 +92,7 @@ export default function DashboardPage() {
             <div className={styles.xp}>
               <ProgressBar value={xp.current} max={xp.next} size="sm" className={styles.xpBar} />
               <span className={my.caption}>
-                {xp.current.toLocaleString()} / {xp.next.toLocaleString()} XP · Lv.{user.level + 1}까지{' '}
+                {xp.current.toLocaleString()} / {xp.next.toLocaleString()} XP · Lv.{xp.nextLevel}까지{' '}
                 {(xp.next - xp.current).toLocaleString()}
               </span>
             </div>
@@ -103,7 +105,7 @@ export default function DashboardPage() {
 
       {/* 핵심 지표 */}
       <div className={styles.stats}>
-        <StatCard label="총 실험 시간" value={formatMinutes(total)} caption={`이번 주 +${formatMinutes(thisWeek)}`} />
+        <StatCard label="총 실험 시간" value={formatMinutes(total)} caption={`이번 주 +${formatMinutes(weekDelta)}`} />
         <StatCard
           label="완료한 실험"
           value={`${stats.experiments}개`}
@@ -114,7 +116,7 @@ export default function DashboardPage() {
           value={`${masters.length}명`}
           caption={masters.map((c) => c.name).join(' · ') || '아직 없어요'}
         />
-        <StatCard label="연속 학습" value={`${streak.days}일`} caption={`최고 기록 ${longestStreak(calendar)}일`} />
+        <StatCard label="연속 학습" value={`${streak.days}일`} caption={`최고 기록 ${best}일`} />
       </div>
 
       <div className={styles.row}>

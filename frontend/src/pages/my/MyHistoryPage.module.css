@@ -22,6 +22,9 @@
   font-size: var(--text-xs);
   color: var(--color-accent-success);
 }
+.statCaptionLink {
+  color: var(--color-text-link);
+}
 
 .row {
   display: grid;
@@ -38,6 +41,19 @@
   gap: var(--space-1);
   font-size: var(--text-xs);
   color: var(--color-text-link);
+}
+.legends {
+  display: inline-flex;
+  gap: var(--space-3);
+}
+.legendRate {
+  color: var(--color-accent-warning);
+}
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-accent-warning);
 }
 .legendBar {
   width: 10px;

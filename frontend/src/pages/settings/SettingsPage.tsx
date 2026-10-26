@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { getSettings, saveSettings } from '../../api'
-import type { MeSettings, SkillLevel } from '../../api'
+import { connectSocial, disconnectSocial, getSettings, isApiError, requestDataExport, saveSettings } from '../../api'
+import type { MeSettings, SkillLevel, SocialConnection, SocialProvider } from '../../api'
 import { useAuth } from '../../auth/useAuth'
 import {
   Avatar,
@@ -15,6 +16,7 @@ import {
   useToast,
 } from '../../components'
 import { useApi } from '../../hooks/useApi'
+import { EmailChangeModal, ResetRecordsModal } from './components/AccountModals'
 import { SettingRow, SettingsCard } from './components/SettingsCard'
 import { WithdrawFlow } from './components/WithdrawFlow'
 import type { WithdrawStep } from './components/WithdrawFlow'
@@ -27,7 +29,29 @@ const WHY_LEVELS: { value: SkillLevel; label: string }[] = [
   { value: 'advanced', label: '숫자만' },
 ]
 
-const SOCIALS = ['Google', '카카오', 'GitHub']
+const SOCIALS: { provider: SocialProvider; name: string }[] = [
+  { provider: 'google', name: 'Google' },
+  { provider: 'kakao', name: '카카오' },
+  { provider: 'github', name: 'GitHub' },
+]
+
+type A11yKey = keyof NonNullable<MeSettings['a11y']>
+const A11Y_DEFAULT: NonNullable<MeSettings['a11y']> = {
+  reduceMotion: false,
+  highContrast: false,
+  largeText: false,
+  captions: false,
+}
+
+/** 개발 확인용: `?socialCode=conflict`면 백엔드 샘플이 409를 돌려준다 */
+const sampleSocialCode = () => new URLSearchParams(window.location.search).get('socialCode') ?? 'sample'
+
+/** 비밀번호 마지막 변경 → "7일 전" */
+function changedAgo(value?: string) {
+  if (!value) return '주기적으로 바꾸면 더 안전해요'
+  const days = Math.floor((Date.now() - new Date(value).getTime()) / 86_400_000)
+  return `마지막 변경 · ${days <= 0 ? '오늘' : `${days}일 전`}`
+}
 
 function parseStep(raw: string | null): WithdrawStep | null {
   return raw === '1' || raw === '2' || raw === '3' ? (Number(raw) as WithdrawStep) : null
@@ -41,7 +65,12 @@ export default function SettingsPage() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const { data, error, loading, reload, setData } = useApi((s) => getSettings(s), [])
+  // 효과음은 API에 없어 이 기기에만 저장
   const [prefs, setPref] = useLocalPrefs()
+  const [emailOpen, setEmailOpen] = useState(false)
+  const [resetOpen, setResetOpen] = useState(false)
+  const [socialBusy, setSocialBusy] = useState<SocialProvider>()
+  const [exporting, setExporting] = useState(false)
 
   const step = parseStep(params.get('withdraw'))
   const setStep = (next: WithdrawStep | null) => {
@@ -56,12 +85,13 @@ export default function SettingsPage() {
     )
   }
 
-  /** 바로 저장(낙관적 갱신). 실패하면 되돌린다 */
+  /** 바로 저장(낙관적 갱신). 실패하면 되돌린다. 연결 계정 · 이메일은 읽기 전용이라 화면 값 유지 */
   const save = async (next: MeSettings) => {
     const prev = data
     setData(next)
     try {
-      setData(await saveSettings(next))
+      const saved = await saveSettings(next)
+      setData((cur) => ({ ...saved, connections: cur?.connections ?? saved.connections, email: cur?.email ?? saved.email }))
     } catch {
       setData(prev)
       toast.show({ title: '저장하지 못했어요', description: '잠시 뒤 다시 시도해 주세요', tone: 'danger' })
@@ -71,7 +101,68 @@ export default function SettingsPage() {
     if (data) void save({ ...data, notifications: { ...data.notifications, [key]: value } })
   }
 
-  const notReady = (title: string) => toast.show({ title, description: '아직 준비 중인 기능이에요' })
+  const setA11y = (key: A11yKey, value: boolean) => {
+    if (data) void save({ ...data, a11y: { ...A11Y_DEFAULT, ...data.a11y, [key]: value } })
+  }
+
+  const setConnection = (provider: SocialProvider, connected: boolean) =>
+    setData((cur) =>
+      cur
+        ? {
+            ...cur,
+            connections: SOCIALS.map(({ provider: p }) => {
+              const prev = cur.connections?.find((c) => c.provider === p) ?? { provider: p, connected: false }
+              return p === provider ? { ...prev, connected, email: connected ? prev.email : undefined } : prev
+            }),
+          }
+        : cur,
+    )
+
+  const onSocial = async (social: (typeof SOCIALS)[number], conn?: SocialConnection) => {
+    setSocialBusy(social.provider)
+    try {
+      if (conn?.connected) {
+        const ok = await modal.alert({
+          title: `${social.name} 연결을 해제할까요?`,
+          message: '해제해도 이메일 · 비밀번호로 계속 로그인할 수 있어요.',
+          confirmLabel: '연결 해제',
+          cancelLabel: '취소',
+        })
+        if (!ok) return
+        await disconnectSocial(social.provider)
+        setConnection(social.provider, false)
+        toast.show({ title: `${social.name} 연결을 해제했어요` })
+      } else {
+        await connectSocial(social.provider, sampleSocialCode())
+        setConnection(social.provider, true)
+        toast.show({ title: `${social.name} 계정을 연결했어요`, tone: 'success' })
+      }
+    } catch (e) {
+      toast.show({
+        title: isApiError(e) && e.status === 409 ? '이미 다른 계정에 연결된 소셜 계정이에요' : '연결 상태를 바꾸지 못했어요',
+        description: e instanceof Error ? e.message : undefined,
+        tone: 'danger',
+      })
+    } finally {
+      setSocialBusy(undefined)
+    }
+  }
+
+  const onExport = async () => {
+    setExporting(true)
+    try {
+      const res = await requestDataExport()
+      toast.show({
+        title: '내려받기를 요청했어요',
+        description: `${res.readyInMin}분 안에 ${res.email}로 보내 드릴게요`,
+        tone: 'success',
+      })
+    } catch {
+      toast.show({ title: '요청하지 못했어요', description: '잠시 뒤 다시 시도해 주세요', tone: 'danger' })
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const onLogout = async () => {
     const ok = await modal.alert({
@@ -85,18 +176,9 @@ export default function SettingsPage() {
     navigate('/')
   }
 
-  const onReset = async () => {
-    const ok = await modal.alert({
-      title: '학습 기록을 초기화할까요?',
-      message: '모든 실험 기록과 캐릭터 레벨이 처음으로 돌아가요. 되돌릴 수 없어요.',
-      confirmLabel: '초기화',
-      cancelLabel: '취소',
-      tone: 'danger',
-    })
-    if (ok) notReady('학습 기록 초기화')
-  }
-
   const partner = user?.partner ?? null
+  const email = data?.email ?? user?.email
+  const a11y = { ...A11Y_DEFAULT, ...data?.a11y }
 
   return (
     <div className={styles.page}>
@@ -127,23 +209,35 @@ export default function SettingsPage() {
           <div className={styles.grid}>
             <div className={styles.col}>
               <SettingsCard title="계정">
-                <SettingRow title="이메일" description={user?.email}>
-                  <Button variant="secondary" size="sm" onClick={() => notReady('이메일 변경')}>
+                <SettingRow title="이메일" description={email}>
+                  <Button variant="secondary" size="sm" onClick={() => setEmailOpen(true)}>
                     변경
                   </Button>
                 </SettingRow>
-                <SettingRow title="비밀번호" description="주기적으로 바꾸면 더 안전해요">
+                <SettingRow title="비밀번호" description={changedAgo(data.passwordChangedAt)}>
                   <Button variant="secondary" size="sm" to="/settings/password">
                     변경
                   </Button>
                 </SettingRow>
-                {SOCIALS.map((name) => (
-                  <SettingRow key={name} title={name} description="연결 안 됨">
-                    <Button variant="secondary" size="sm" onClick={() => notReady(`${name} 연결`)}>
-                      연결
-                    </Button>
-                  </SettingRow>
-                ))}
+                {SOCIALS.map((social) => {
+                  const conn = data.connections?.find((c) => c.provider === social.provider)
+                  return (
+                    <SettingRow
+                      key={social.provider}
+                      title={social.name}
+                      description={conn?.connected ? `연결됨${conn.email ? ` · ${conn.email}` : ''}` : '연결 안 됨'}
+                    >
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={socialBusy === social.provider}
+                        onClick={() => void onSocial(social, conn)}
+                      >
+                        {conn?.connected ? '연결 해제' : '연결'}
+                      </Button>
+                    </SettingRow>
+                  )
+                })}
               </SettingsCard>
 
               <SettingsCard title="학습 환경">
@@ -163,8 +257,8 @@ export default function SettingsPage() {
                       { value: '2', label: '2x' },
                       { value: '4', label: '4x' },
                     ]}
-                    value={prefs.speed}
-                    onChange={(v) => setPref('speed', v)}
+                    value={String(data.trainingSpeed ?? 1)}
+                    onChange={(v) => void save({ ...data, trainingSpeed: Number(v) as 1 | 2 | 4 })}
                   />
                 </SettingRow>
                 <SettingRow title="파트너 캐릭터" description="홈 · 프로필에 함께 나와요">
@@ -185,8 +279,8 @@ export default function SettingsPage() {
                       { value: 'ko', label: '한국어' },
                       { value: 'en', label: 'English' },
                     ]}
-                    value={prefs.language}
-                    onChange={(v) => setPref('language', v)}
+                    value={data.language ?? 'ko'}
+                    onChange={(language) => void save({ ...data, language })}
                   />
                 </SettingRow>
               </SettingsCard>
@@ -211,8 +305,8 @@ export default function SettingsPage() {
                 <SettingRow title="랭킹 변동" description="내 순위가 바뀌면 알려줘요">
                   <Toggle
                     aria-label="랭킹 변동"
-                    checked={prefs.rankingAlert}
-                    onChange={(e) => setPref('rankingAlert', e.target.checked)}
+                    checked={data.rankingAlert ?? false}
+                    onChange={(e) => void save({ ...data, rankingAlert: e.target.checked })}
                   />
                 </SettingRow>
                 <SettingRow title="마케팅 정보 수신" description="이벤트 · 소식 (선택 동의)">
@@ -228,22 +322,22 @@ export default function SettingsPage() {
                 <SettingRow title="동작 줄이기" description="반전 연출 · 캐러셀 자동 넘김을 끄고 페이드만 사용">
                   <Toggle
                     aria-label="동작 줄이기"
-                    checked={prefs.reduceMotion}
-                    onChange={(e) => setPref('reduceMotion', e.target.checked)}
+                    checked={a11y.reduceMotion}
+                    onChange={(e) => setA11y('reduceMotion', e.target.checked)}
                   />
                 </SettingRow>
                 <SettingRow title="큰 글씨" description="본문 16 → 18px">
                   <Toggle
                     aria-label="큰 글씨"
-                    checked={prefs.largeText}
-                    onChange={(e) => setPref('largeText', e.target.checked)}
+                    checked={a11y.largeText}
+                    onChange={(e) => setA11y('largeText', e.target.checked)}
                   />
                 </SettingRow>
                 <SettingRow title="고대비 모드" description="유리 효과를 줄이고 대비를 높여요">
                   <Toggle
                     aria-label="고대비 모드"
-                    checked={prefs.highContrast}
-                    onChange={(e) => setPref('highContrast', e.target.checked)}
+                    checked={a11y.highContrast}
+                    onChange={(e) => setA11y('highContrast', e.target.checked)}
                   />
                 </SettingRow>
                 <SettingRow title="효과음" description="성공 · 반전 순간의 짧은 소리">
@@ -259,13 +353,14 @@ export default function SettingsPage() {
                 variant="secondary"
                 size="sm"
                 iconLeft={<Icon name="download" size={14} />}
-                onClick={() => notReady('학습 데이터 내려받기')}
+                loading={exporting}
+                onClick={onExport}
               >
                 내려받기
               </Button>
             </SettingRow>
             <SettingRow title="학습 기록 초기화" description="모든 실험 기록과 캐릭터 레벨이 처음으로 돌아가요">
-              <Button variant="secondary" size="sm" className={styles.dangerOutline} onClick={onReset}>
+              <Button variant="secondary" size="sm" className={styles.dangerOutline} onClick={() => setResetOpen(true)}>
                 초기화
               </Button>
             </SettingRow>
@@ -289,6 +384,8 @@ export default function SettingsPage() {
       </section>
 
       <WithdrawFlow step={step} onStep={setStep} />
+      <EmailChangeModal open={emailOpen} current={email} onClose={() => setEmailOpen(false)} />
+      <ResetRecordsModal open={resetOpen} onClose={() => setResetOpen(false)} />
     </div>
   )
 }
