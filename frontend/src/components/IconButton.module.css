@@ -1,0 +1,73 @@
+.button {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-primary);
+  transition:
+    transform var(--motion-fast) var(--motion-ease),
+    background-color var(--motion-duration) var(--motion-ease);
+}
+.button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sm {
+  width: 32px;
+  height: 32px;
+}
+.md {
+  width: 42px;
+  height: 42px;
+}
+.lg {
+  width: 84px;
+  height: 84px;
+}
+
+.glass {
+  composes: glassFlat from './glass.module.css';
+}
+.glass:hover:not(:disabled) {
+  background: var(--color-glass-solid);
+}
+
+.ghost {
+  color: var(--color-text-secondary);
+}
+.ghost:hover:not(:disabled) {
+  background: var(--color-accent-indigo-soft);
+  color: var(--color-text-link);
+}
+
+.primary {
+  background: var(--color-glass-tint);
+  color: var(--color-text-on-tint);
+  box-shadow: var(--shadow-button), var(--shadow-inset-highlight);
+}
+
+/* Glass Kit 아이콘 타일(둥근 사각 유리 + 인디고 아이콘) */
+.tile {
+  composes: glass from './glass.module.css';
+  border-radius: var(--radius-card);
+  color: var(--color-accent-indigo);
+}
+.tile:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.dot {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent-danger);
+  box-shadow: 0 0 0 2px var(--color-bg-cream);
+}

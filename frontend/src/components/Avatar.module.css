@@ -1,0 +1,19 @@
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--color-accent-pink-soft);
+}
+.initial {
+  background: var(--color-accent-cyan);
+  color: var(--color-glass-dark);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+}
+.ring {
+  box-shadow:
+    0 0 0 2px var(--color-glass-rim),
+    0 0 0 4px var(--color-accent-indigo);
+}

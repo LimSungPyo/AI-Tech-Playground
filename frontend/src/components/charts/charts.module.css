@@ -1,0 +1,148 @@
+.chart {
+  width: 100%;
+  min-width: 0;
+}
+.chart svg {
+  display: block;
+  overflow: visible;
+}
+
+.grid {
+  stroke: var(--color-line);
+  stroke-width: 1;
+}
+.tickY,
+.tickX,
+.barLabel,
+.barValue,
+.eventLabel {
+  font-family: var(--font-number);
+  font-size: 11px;
+  fill: var(--color-text-tertiary);
+}
+.tickY {
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+.tickX,
+.barLabel,
+.barValue {
+  text-anchor: middle;
+}
+.barValue {
+  font-weight: var(--weight-bold);
+  fill: var(--color-text-secondary);
+}
+
+.line {
+  fill: none;
+  stroke: var(--color-accent-indigo);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.compare {
+  fill: none;
+  stroke: var(--color-text-tertiary);
+  stroke-width: 2;
+  stroke-dasharray: 4 5;
+  stroke-linecap: round;
+}
+.dot {
+  fill: var(--color-accent-indigo);
+  stroke: var(--color-text-on-tint);
+  stroke-width: 2.5;
+}
+.event {
+  stroke: var(--color-accent-why-ink);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  opacity: 0.6;
+}
+.eventLabel {
+  fill: var(--color-accent-why-ink);
+  font-weight: var(--weight-bold);
+}
+
+.bar {
+  fill: var(--color-accent-indigo-faint);
+}
+.barStrong {
+  fill: var(--color-accent-indigo);
+}
+.overlay {
+  fill: none;
+  stroke: var(--color-accent-warning);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.spark {
+  flex: none;
+  overflow: visible;
+}
+.spark path {
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.spark-indigo path {
+  stroke: var(--color-accent-indigo);
+}
+.spark-indigo circle {
+  fill: var(--color-accent-indigo);
+}
+.spark-success path {
+  stroke: var(--color-accent-success);
+}
+.spark-success circle {
+  fill: var(--color-accent-success);
+}
+.spark-danger path {
+  stroke: var(--color-accent-danger);
+}
+.spark-danger circle {
+  fill: var(--color-accent-danger);
+}
+
+.grass {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.grassDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+.cell {
+  display: block;
+  border-radius: 9px;
+}
+.lv0 {
+  background: var(--color-track);
+}
+.lv1 {
+  background: var(--color-accent-indigo-faint);
+}
+.lv2 {
+  background: var(--color-accent-indigo-light);
+  opacity: 0.55;
+}
+.lv3 {
+  background: var(--color-accent-indigo-light);
+}
+.lv4 {
+  background: var(--color-accent-indigo);
+}
+.grassLabel {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+.today {
+  color: var(--color-text-link);
+  font-weight: var(--weight-bold);
+}

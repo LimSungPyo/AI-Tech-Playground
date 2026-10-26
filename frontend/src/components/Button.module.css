@@ -1,0 +1,116 @@
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+  transition:
+    transform var(--motion-fast) var(--motion-ease),
+    background-color var(--motion-duration) var(--motion-ease),
+    box-shadow var(--motion-duration) var(--motion-ease),
+    opacity var(--motion-duration) var(--motion-ease);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.label {
+  display: inline-block;
+}
+
+/* 크기 */
+.sm {
+  height: 34px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+}
+.md {
+  height: 44px;
+  padding: 0 var(--space-6);
+  font-size: var(--text-md);
+}
+.lg {
+  height: 54px;
+  padding: 0 var(--space-8);
+  font-size: var(--text-lg);
+}
+
+.square {
+  border-radius: var(--radius-md);
+}
+
+.block {
+  display: flex;
+  width: 100%;
+}
+
+/* 주요 = 인디고 92% + 상단 광택 */
+.primary {
+  background: linear-gradient(180deg, var(--color-accent-indigo-light) -40%, var(--color-glass-tint) 60%);
+  color: var(--color-text-on-tint);
+  box-shadow: var(--shadow-button), var(--shadow-inset-highlight);
+}
+.primary:hover:not(:disabled) {
+  background-color: var(--color-accent-indigo-light);
+  box-shadow: 0 10px 22px var(--color-accent-indigo-faint), var(--shadow-inset-highlight);
+}
+
+/* 보조 = 유리 버튼 */
+.secondary {
+  composes: glassFlat from './glass.module.css';
+  color: var(--color-text-primary);
+}
+.secondary:hover:not(:disabled) {
+  background: var(--color-glass-solid);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--color-text-link);
+}
+.ghost:hover:not(:disabled) {
+  background: var(--color-accent-indigo-soft);
+}
+
+.why {
+  background: var(--color-accent-why);
+  color: var(--color-text-primary);
+  box-shadow: 0 6px 16px var(--color-accent-why-soft), var(--shadow-inset-highlight);
+}
+.why:hover:not(:disabled) {
+  background: var(--color-accent-yellow);
+}
+
+.danger {
+  background: var(--color-accent-danger);
+  color: var(--color-text-on-tint);
+  box-shadow: 0 6px 16px var(--color-accent-danger-soft), var(--shadow-inset-highlight);
+}
+.danger:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.dark {
+  background: var(--color-glass-dark);
+  color: var(--color-text-on-tint);
+}
+.dark:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.loading {
+  cursor: progress;
+}

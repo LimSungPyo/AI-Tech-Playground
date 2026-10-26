@@ -1,0 +1,26 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: calc(var(--content-max) + var(--page-gutter) * 2);
+  margin: 0 auto;
+  padding: var(--space-6) var(--page-gutter) 0;
+}
+.skip {
+  position: absolute;
+  left: var(--space-4);
+  top: -48px;
+  z-index: calc(var(--z-header) + 1);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-indigo);
+  color: var(--color-text-on-tint);
+  transition: top var(--motion-duration) var(--motion-ease);
+}
+.skip:focus {
+  top: var(--space-4);
+}
