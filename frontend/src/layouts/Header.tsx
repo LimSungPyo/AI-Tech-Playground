@@ -4,7 +4,8 @@ import { useAuth } from '../auth/useAuth'
 import { Avatar, Badge, Button, Icon, IconButton, Logo, useModal } from '../components'
 import { cx } from '../components/cx'
 import styles from './Header.module.css'
-import { MAIN_NAV, loginPath } from './nav'
+import { LoginPopup } from '../pages/auth/global'
+import { MAIN_NAV } from './nav'
 import { NotificationMenu } from './NotificationMenu'
 import { ProfileMenu } from './ProfileMenu'
 
@@ -17,6 +18,7 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [menu, setMenu] = useState<'notifications' | 'profile' | null>(null)
   const [unread, setUnread] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
   const bellRef = useRef<HTMLButtonElement>(null)
   const profileRef = useRef<HTMLButtonElement>(null)
 
@@ -112,7 +114,7 @@ export function Header() {
                 <span>Tech Drop #001</span>
                 <Badge tone="danger">NEW</Badge>
               </Link>
-              <Button variant="secondary" to={loginPath(loc)}>
+              <Button variant="secondary" aria-haspopup="dialog" onClick={() => setLoginOpen(true)}>
                 로그인
               </Button>
               <Button variant="primary" to="/signup" className={styles.signup}>
@@ -122,6 +124,8 @@ export function Header() {
           )}
         </div>
       </div>
+      {/* 08:L-01 로그인 팝업. 로그인하면 지금 화면에 머문다(768px 이하는 바텀시트) */}
+      <LoginPopup open={loginOpen} onClose={() => setLoginOpen(false)} />
     </header>
   )
 }

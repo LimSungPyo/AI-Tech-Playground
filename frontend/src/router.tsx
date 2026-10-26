@@ -8,6 +8,7 @@ import { RequireAdmin, RequireMember } from './auth/guards'
 import { AdminLayout } from './layouts/AdminLayout'
 import { AppLayout } from './layouts/AppLayout'
 import { FocusLayout } from './layouts/FocusLayout'
+import type { FocusRouteHandle } from './layouts/FocusLayout'
 import { MyLayout } from './layouts/MyLayout'
 import { RootLayout } from './layouts/RootLayout'
 import { RouteError } from './layouts/RouteError'
@@ -74,6 +75,9 @@ const AdminAuditPage = lazy(() => import('./pages/admin/AdminAuditPage'))
 const NotFoundPage = lazy(() => import('./pages/errors/NotFoundPage'))
 const KitPage = lazy(() => import('./pages/dev/KitPage'))
 
+/** FocusLayout 오른쪽 위를 로그인 링크로 바꾸는 route handle */
+const toLogin = (label: string): FocusRouteHandle => ({ focusAction: { label, to: '/login' } })
+
 export const router = createBrowserRouter([
   {
     // 전역 팝업 · 토스트 provider (라우터 안에 있어야 팝업 안 Link가 동작한다)
@@ -109,8 +113,6 @@ export const router = createBrowserRouter([
             children: [
               { path: 'experiments/:id/missions/:missionId/clear', element: <MissionClearPage /> },
               { path: 'experiments/:id/report', element: <ReportPage /> },
-              { path: 'onboarding', element: <OnboardingPage /> },
-              { path: 'onboarding/partner', element: <PartnerPage /> },
               { path: 'team-missions/:id', element: <TeamMissionPage /> },
               { path: 'team-missions/:id/result', element: <TeamMissionResultPage /> },
               { path: 'notifications', element: <NotificationsPage /> },
@@ -140,18 +142,26 @@ export const router = createBrowserRouter([
         element: <FocusLayout />,
         children: [
           { path: 'login', element: <LoginPage /> },
-          { path: 'signup', element: <SignupPage /> },
-          { path: 'signup/verify', element: <VerifyEmailPage /> },
+          { path: 'signup', element: <SignupPage />, handle: toLogin('이미 계정이 있나요? 로그인') },
+          { path: 'signup/verify', element: <VerifyEmailPage />, handle: { focusAction: { label: '회원가입 1/3' } } satisfies FocusRouteHandle },
           { path: 'signup/done', element: <SignupDonePage /> },
           { path: 'password/forgot', element: <ForgotPasswordPage /> },
-          { path: 'password/reset', element: <ResetPasswordPage /> },
+          { path: 'password/reset', element: <ResetPasswordPage />, handle: toLogin('← 로그인으로') },
           { path: 'account/locked', element: <AccountLockedPage /> },
-          { path: 'account/social-conflict', element: <SocialConflictPage /> },
+          { path: 'account/social-conflict', element: <SocialConflictPage />, handle: toLogin('← 로그인으로') },
           { path: 'account/restore', element: <AccountRestorePage /> },
           { path: 'maintenance', element: <MaintenancePage /> },
           { path: 'admin/login', element: <AdminLoginPage /> },
           { path: 'admin/reauth', element: <AdminReauthPage /> },
           { path: 'admin/blocked', element: <AdminBlockedPage /> },
+          {
+            // 온보딩(G-05 · A-02 · G-06 · A-03): 내비 없는 헤더. 회원 전용
+            element: <RequireMember />,
+            children: [
+              { path: 'onboarding', element: <OnboardingPage /> },
+              { path: 'onboarding/partner', element: <PartnerPage /> },
+            ],
+          },
         ],
       },
       {

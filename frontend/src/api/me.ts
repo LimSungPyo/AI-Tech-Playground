@@ -31,6 +31,8 @@ export const getHistory = (signal?: AbortSignal) => api.get<MeHistory>('/me/hist
 export const getSettings = (signal?: AbortSignal) => api.get<MeSettings>('/me/settings', undefined, signal)
 export const saveSettings = (body: MeSettings) => api.put<MeSettings>('/me/settings', body)
 export const updateProfile = (body: ProfileRequest) => api.put<User>('/me/profile', body)
-export const changePassword = (current: string, next: string) => api.put<Ok>('/me/password', { current, next })
+/** 현재 비밀번호가 틀린 401은 세션 만료가 아니므로 silent401 */
+export const changePassword = (current: string, next: string) =>
+  api.put<Ok>('/me/password', { current, next }, { silent401: true })
 export const withdraw = (password: string, reason: string) =>
-  api.post<WithdrawResult>('/me/withdraw', { password, reason })
+  api.post<WithdrawResult>('/me/withdraw', { password, reason }, { silent401: true })

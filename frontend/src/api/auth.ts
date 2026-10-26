@@ -33,9 +33,9 @@ export const forgotPassword = (email: string) =>
   api.post<Ok & { expiresInMin: number }>('/auth/password/forgot', { email })
 
 export const resetPassword = (resetToken: string, password: string) =>
-  api.post<Ok>('/auth/password/reset', { resetToken, password })
+  api.post<Ok>('/auth/password/reset', { resetToken, password }, { silent401: true })
 
 export const restoreAccount = (email: string) =>
-  api.post<Ok & { deletionScheduledAt: string }>('/auth/restore', { email })
+  api.post<Ok & { deletionScheduledAt: string }>('/auth/restore', { email }, { silent401: true })
 
 export const mergeGuestTrials = (trials: number) => api.post<{ merged: number }>('/auth/guest/merge', { trials })

@@ -28,6 +28,10 @@ export interface User {
   skill: SkillLevel
   partner: CharacterId | null
   hasPlayed: boolean
+  /** v2 · 레벨 칭호("탐험가"). 사이드바 "Lv.7 탐험가" */
+  title?: string
+  /** v2 · 마지막으로 멈춘 실험 회차(기억된 회원 홈 07:M-01) */
+  lastPlayed?: { experimentId: string; code: string; title: string; trial: number }
 }
 
 export interface ExperimentSummary {
@@ -304,6 +308,15 @@ export interface MeHome {
   radar: RadarKeyword[]
   techDrop: { code: string; title: string; dDay: number; subscribed: boolean }
   team: { ready: boolean; text: string; missionId: string }
+  /** v2 · 휴면 복귀(07:M-07). 휴면 계정이 아니면 키가 빠진다 */
+  dormant?: DormantInfo
+}
+/** v2 · 07:M-07 휴면 복귀 웰컴 */
+export interface DormantInfo {
+  daysAway: number
+  highlights: string[]
+  /** "드로시 깨우고 이어하기" 이동 경로 */
+  continueTo?: string
 }
 export interface OnboardingRequest {
   interests: string[]
