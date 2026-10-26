@@ -24,3 +24,6 @@
   font-weight: var(--weight-bold);
   color: var(--color-text-tertiary);
 }
+.title {
+  font-size: var(--text-2xl);
+}

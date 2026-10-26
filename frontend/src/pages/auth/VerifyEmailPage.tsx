@@ -80,7 +80,7 @@ export default function VerifyEmailPage() {
       <div className={styles.icon} aria-hidden>
         <Icon name="mail" size={64} strokeWidth={1.6} />
       </div>
-      <h1 className={a.title}>메일로 보낸 6자리를 입력해 주세요</h1>
+      <h1 className={`${a.title} ${styles.title}`}>메일로 보낸 6자리를 입력해 주세요</h1>
       <p className={styles.email}>{email}</p>
       <div className={styles.otp}>
         <OtpInput value={code} onChange={setCode} onComplete={(v) => void submit(v)} error={!!error} disabled={submitting || expired} autoFocus />
