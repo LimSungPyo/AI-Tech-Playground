@@ -47,7 +47,9 @@ export default function CardsPage() {
             </div>
             <ProgressBar value={got} max={list.length || 1} size="sm" />
             <p className={styles.collectCaption}>
-              {got < list.length ? `아직 못 만난 카드 ${list.length - got}장 · 실험을 끝내고 반전을 보면 열려요` : '모든 카드를 모았어요!'}
+              {got < list.length
+                ? `아직 못 만난 카드 ${list.length - got}장 · 실험을 끝내고 반전을 보면 열려요`
+                : '모든 카드를 모았어요!'}
             </p>
           </div>
         )}
@@ -59,13 +61,22 @@ export default function CardsPage() {
             전체
           </Chip>
           {topics.map((t) => (
-            <Chip key={t} selected={topic === t} onClick={() => setTopic(topic === t ? null : t)} className={styles.chip}>
+            <Chip
+              key={t}
+              selected={topic === t}
+              onClick={() => setTopic(topic === t ? null : t)}
+              className={styles.chip}
+            >
               {t}
             </Chip>
           ))}
         </div>
         <div className={styles.chips}>
-          <Chip selected={owned === 'owned'} onClick={() => setOwned(owned === 'owned' ? 'all' : 'owned')} className={styles.chip}>
+          <Chip
+            selected={owned === 'owned'}
+            onClick={() => setOwned(owned === 'owned' ? 'all' : 'owned')}
+            className={styles.chip}
+          >
             획득 {got}
           </Chip>
           <Chip
@@ -112,7 +123,11 @@ function CardTile({ card, exp }: { card: TechCard; exp?: ExperimentSummary }) {
   const code = exp?.code ?? `#${card.experimentId}`
   if (!card.unlocked) {
     return (
-      <Link to={`/experiments/${card.experimentId}`} className={cx(styles.tile, styles.locked)} aria-label={`잠긴 카드 · ${code} 플레이 시 획득`}>
+      <Link
+        to={`/experiments/${card.experimentId}`}
+        className={cx(styles.tile, styles.locked)}
+        aria-label={`잠긴 카드 · ${code} 플레이 시 획득`}
+      >
         <span className={styles.topic}>{topic}</span>
         <div className={styles.art}>{exp && <Character id={exp.character} size={96} locked alt="" />}</div>
         <p className={styles.name}>???</p>

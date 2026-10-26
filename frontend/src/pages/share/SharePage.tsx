@@ -3,7 +3,18 @@ import { Link, useParams } from 'react-router'
 import { getShared, runTrial } from '../../api'
 import type { SharedRecord } from '../../api/types'
 import { useAuth } from '../../auth/useAuth'
-import { Avatar, Button, CHARACTERS, Character, EmptyState, Icon, Mascot, Modal, ProgressBar, Skeleton } from '../../components'
+import {
+  Avatar,
+  Button,
+  CHARACTERS,
+  Character,
+  EmptyState,
+  Icon,
+  Mascot,
+  Modal,
+  ProgressBar,
+  Skeleton,
+} from '../../components'
 import { useApi } from '../../hooks/useApi'
 import { ReplayArena } from '../report/components/ReplayArena'
 import { useReplay } from '../report/components/useReplay'
@@ -128,7 +139,10 @@ function ShareView({ rec }: { rec: SharedRecord }) {
 
 /** 공유한 사람의 리플레이(1회차 vs 최근) — POST trials 한 번으로 경로를 받는다 */
 function ReplayModal({ open, onClose, rec }: { open: boolean; onClose: () => void; rec: SharedRecord }) {
-  const trial = useApi(open ? () => runTrial(rec.experiment.id, { missionId: 'm1', speed: 1 }) : null, [open, rec.experiment.id])
+  const trial = useApi(open ? () => runTrial(rec.experiment.id, { missionId: 'm1', speed: 1 }) : null, [
+    open,
+    rec.experiment.id,
+  ])
   const replay = useReplay([4000, 2000])
   const goal = trial.data?.path[trial.data.path.length - 1]
   return (
@@ -140,7 +154,11 @@ function ReplayModal({ open, onClose, rec }: { open: boolean; onClose: () => voi
       title={`${rec.nickname} 님의 ${CHARACTERS[rec.character].name}`}
       showClose
       footer={
-        <Button iconLeft={<Icon name="play" size={14} />} onClick={replay.play} disabled={!trial.data || replay.playing}>
+        <Button
+          iconLeft={<Icon name="play" size={14} />}
+          onClick={replay.play}
+          disabled={!trial.data || replay.playing}
+        >
           나란히 재생
         </Button>
       }
@@ -150,11 +168,23 @@ function ReplayModal({ open, onClose, rec }: { open: boolean; onClose: () => voi
       {trial.data && (
         <div className={styles.replays}>
           <figure>
-            <ReplayArena path={trial.data.firstPath} t={replay.progress[0]} expression="confused" label="1회차" goal={goal} />
+            <ReplayArena
+              path={trial.data.firstPath}
+              t={replay.progress[0]}
+              expression="confused"
+              label="1회차"
+              goal={goal}
+            />
             <figcaption>TRIAL 1</figcaption>
           </figure>
           <figure>
-            <ReplayArena path={trial.data.path} t={replay.progress[1]} expression="champion" label={`${rec.trials}회차`} goal={goal} />
+            <ReplayArena
+              path={trial.data.path}
+              t={replay.progress[1]}
+              expression="champion"
+              label={`${rec.trials}회차`}
+              goal={goal}
+            />
             <figcaption>TRIAL {rec.trials}</figcaption>
           </figure>
         </div>

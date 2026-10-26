@@ -32,7 +32,10 @@ function pointAt(path: Point[], t: number): Point {
   for (let i = 0; i < seg.length; i++) {
     if (left <= seg[i] || i === seg.length - 1) {
       const r = seg[i] ? Math.min(1, left / seg[i]) : 1
-      return { x: path[i].x + (path[i + 1].x - path[i].x) * r, y: path[i].y + (path[i + 1].y - path[i].y) * r }
+      return {
+        x: path[i].x + (path[i + 1].x - path[i].x) * r,
+        y: path[i].y + (path[i + 1].y - path[i].y) * r,
+      }
     }
     left -= seg[i]
   }

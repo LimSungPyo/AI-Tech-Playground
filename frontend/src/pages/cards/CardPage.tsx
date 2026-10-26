@@ -62,7 +62,11 @@ export default function CardPage() {
           <div className={styles.portrait}>
             {c.unlocked ? (
               <>
-                {isDrosi ? <Mascot expression="neuron" size={260} alt="" /> : <Character id={character} size={240} alt="" />}
+                {isDrosi ? (
+                  <Mascot expression="neuron" size={260} alt="" />
+                ) : (
+                  <Character id={character} size={240} alt="" />
+                )}
                 <NeuralOverlay className={styles.net} ringOnly={isDrosi} />
               </>
             ) : (
@@ -85,7 +89,8 @@ export default function CardPage() {
                   <Icon name="lock" size={32} /> 아직 잠긴 기술 카드예요
                 </h1>
                 <p className={styles.heroBody}>
-                  {exp.data ? `${exp.data.code} ${exp.data.title}` : '이 실험'}을 끝내고 반전을 보면 「{c.title}」 카드가 열려요.
+                  {exp.data ? `${exp.data.code} ${exp.data.title}` : '이 실험'}을 끝내고 반전을 보면 「{c.title}」
+                  카드가 열려요.
                 </p>
                 <Button to={`/experiments/${c.experimentId}`} className={styles.replayBtn}>
                   실험 보러 가기
@@ -192,6 +197,9 @@ export default function CardPage() {
 
 /** "어디까지가 초파리?" — 캐릭터 이름 대신 생물 이름을 쓴다 */
 function speciesOf(id: keyof typeof CHARACTERS) {
-  const map: Partial<Record<keyof typeof CHARACTERS, string>> = { drosi: '초파리', wormy: '선충' }
+  const map: Partial<Record<keyof typeof CHARACTERS, string>> = {
+    drosi: '초파리',
+    wormy: '선충',
+  }
   return map[id] ?? CHARACTERS[id].name
 }

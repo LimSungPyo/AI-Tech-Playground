@@ -2,7 +2,19 @@ import { Link, useParams } from 'react-router'
 import { getCard, getExperiment, getRanking } from '../../api'
 import type { ExperimentDetail, Mission } from '../../api/types'
 import { useAuth } from '../../auth/useAuth'
-import { Badge, Button, CHARACTERS, Character, EmptyState, Icon, Mascot, ProgressBar, Skeleton, Tag, cx } from '../../components'
+import {
+  Badge,
+  Button,
+  CHARACTERS,
+  Character,
+  EmptyState,
+  Icon,
+  Mascot,
+  ProgressBar,
+  Skeleton,
+  Tag,
+  cx,
+} from '../../components'
 import { useApi } from '../../hooks/useApi'
 import { LEVEL_LABEL, pct, thumbBg } from './experimentMeta'
 import styles from './ExperimentDetailPage.module.css'
@@ -51,22 +63,25 @@ export default function ExperimentDetailPage() {
 }
 
 function Detail({ exp, isMember }: { exp: ExperimentDetail; isMember: boolean }) {
-  const ranking = useApi((signal) => getRanking(exp.id, signal), [exp.id])
-  const card = useApi(exp.cardId ? (signal) => getCard(exp.cardId, signal) : null, [exp.cardId])
+  const playable = exp.status === 'open' || exp.status === 'in_progress'
+  const ranking = useApi(playable ? (signal) => getRanking(exp.id, signal) : null, [playable, exp.id])
+  // 잠김 · 오픈 예정 실험은 기술 카드가 아직 없다
+  const card = useApi(playable && exp.cardId ? (signal) => getCard(exp.cardId, signal) : null, [playable, exp.cardId])
 
   const missions = exp.missions
   const openMission = missions.find((m) => m.status === 'open')
   const cleared = missions.filter((m) => m.status === 'cleared')
   const lastCleared = cleared[cleared.length - 1]
   const firstMission = missions[0]
-  const playable = exp.status === 'open' || exp.status === 'in_progress'
   const hasProgress = isMember && exp.progress && exp.status === 'in_progress'
   const briefing = (m: Mission) => `/experiments/${exp.id}/missions/${m.id}/briefing`
 
   // 주 버튼: 열린 미션 시작 → 없으면 첫 미션
   const primary = isMember ? (openMission ?? firstMission) : firstMission
   const progressLine = [
-    ...cleared.map((m) => `미션 ${missionNo(m, missions)} 완료${m.bestRate !== undefined ? ` ${pct(m.bestRate)}` : ''}`),
+    ...cleared.map(
+      (m) => `미션 ${missionNo(m, missions)} 완료${m.bestRate !== undefined ? ` ${pct(m.bestRate)}` : ''}`,
+    ),
     ...(openMission ? [`미션 ${missionNo(openMission, missions)} 열림`] : []),
     ...(exp.progress ? [`Trial ${exp.progress.trial} / ${exp.progress.maxTrial}`] : []),
   ].join(' · ')
@@ -103,16 +118,23 @@ function Detail({ exp, isMember }: { exp: ExperimentDetail; isMember: boolean })
               <dt>미션당</dt>
               <dd>약 {exp.durationMin}분</dd>
             </div>
-            <div>
-              <dt>1회차 → 100회차</dt>
-              <dd>
-                {pct(exp.stats.firstTrialRate)} → {pct(exp.stats.hundredthTrialRate)}
-              </dd>
-            </div>
-            <div>
-              <dt>평균 향상</dt>
-              <dd>+{Math.round(exp.stats.hundredthTrialRate - exp.stats.firstTrialRate)}%p</dd>
-            </div>
+            {exp.stats.hundredthTrialRate > 0 && (
+              <>
+                <div>
+                  <dt>1회차 → 100회차</dt>
+                  <dd>
+                    {pct(exp.stats.firstTrialRate)} → {pct(exp.stats.hundredthTrialRate)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>평균 향상</dt>
+                  <dd>
+                    +{Math.round(exp.stats.hundredthTrialRate - exp.stats.firstTrialRate)}
+                    %p
+                  </dd>
+                </div>
+              </>
+            )}
           </dl>
 
           {hasProgress && exp.progress && (
@@ -120,7 +142,12 @@ function Detail({ exp, isMember }: { exp: ExperimentDetail; isMember: boolean })
               <Mascot expression="happy" size={48} alt="" />
               <div className={styles.progressText}>
                 <p className={styles.progressTitle}>내 진행 · {CHARACTERS[exp.character].name} 성장 중</p>
-                <ProgressBar value={exp.progress.trial} max={exp.progress.maxTrial} size="sm" className={styles.progressBar} />
+                <ProgressBar
+                  value={exp.progress.trial}
+                  max={exp.progress.maxTrial}
+                  size="sm"
+                  className={styles.progressBar}
+                />
                 <p className={styles.progressLine}>{progressLine}</p>
               </div>
             </div>
@@ -147,7 +174,7 @@ function Detail({ exp, isMember }: { exp: ExperimentDetail; isMember: boolean })
                 해금 조건 보기
               </Button>
             )}
-            {exp.cardId && (
+            {playable && exp.cardId && (
               <Link to={cardTo} className={styles.textLink}>
                 기술 카드 보기
               </Link>
@@ -216,33 +243,43 @@ function Detail({ exp, isMember }: { exp: ExperimentDetail; isMember: boolean })
           </ul>
         </div>
 
-        <Link to={cardTo} className={styles.techCard}>
-          <span className={styles.techEyebrow}>TECH CARD</span>
-          {card.data ? <p className={styles.techTitle}>{card.data.title}</p> : <Skeleton shape="text" width={200} />}
-          <p className={styles.techCaption}>반전을 보면 열려요 · 읽으면 "기술 카드 수집가" +1</p>
-        </Link>
-
-        <div className={styles.ranking}>
-          <h2 className={styles.boxTitle}>이번 주 랭킹</h2>
-          {ranking.loading && <Skeleton shape="text" lines={3} />}
-          {ranking.data && (
-            <ol className={styles.rankList}>
-              {rankRows.map((r) => (
-                <li key={`${r.rank}-${r.nickname}`} className={cx(r.isMe && styles.me)}>
-                  <span className={styles.rankNo}>{r.rank}</span>
-                  <span className={styles.rankName}>
-                    {r.nickname}
-                    {r.isMe ? ' (나)' : ''}
-                  </span>
-                  <span className={styles.rankRate}>{pct(r.successRate)}</span>
-                </li>
-              ))}
-            </ol>
-          )}
-          <Link to="/ranking" className={styles.textLink}>
-            전체 랭킹
+        {playable ? (
+          <Link to={cardTo} className={styles.techCard}>
+            <span className={styles.techEyebrow}>TECH CARD</span>
+            {card.data ? <p className={styles.techTitle}>{card.data.title}</p> : <Skeleton shape="text" width={200} />}
+            <p className={styles.techCaption}>반전을 보면 열려요 · 읽으면 "기술 카드 수집가" +1</p>
           </Link>
-        </div>
+        ) : (
+          <div className={styles.techCard}>
+            <span className={styles.techEyebrow}>TECH CARD</span>
+            <p className={styles.techTitle}>???</p>
+            <p className={styles.techCaption}>실험이 열리면 기술 카드도 함께 공개돼요</p>
+          </div>
+        )}
+
+        {playable && (
+          <div className={styles.ranking}>
+            <h2 className={styles.boxTitle}>이번 주 랭킹</h2>
+            {ranking.loading && <Skeleton shape="text" lines={3} />}
+            {ranking.data && (
+              <ol className={styles.rankList}>
+                {rankRows.map((r) => (
+                  <li key={`${r.rank}-${r.nickname}`} className={cx(r.isMe && styles.me)}>
+                    <span className={styles.rankNo}>{r.rank}</span>
+                    <span className={styles.rankName}>
+                      {r.nickname}
+                      {r.isMe ? ' (나)' : ''}
+                    </span>
+                    <span className={styles.rankRate}>{pct(r.successRate)}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <Link to="/ranking" className={styles.textLink}>
+              전체 랭킹
+            </Link>
+          </div>
+        )}
       </section>
     </div>
   )

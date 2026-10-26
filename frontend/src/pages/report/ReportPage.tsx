@@ -65,7 +65,10 @@ function ReportView({ report, exp }: { report: Report; exp: ExperimentDetail }) 
   const { before, after } = report
 
   // 리포트에는 경로가 없어 trial을 한 번 실행해 path(최근) · firstPath(1회차)를 받는다
-  const trial = useApi<TrialResult>(() => runTrial(exp.id, { missionId: exp.missions[0]?.id ?? 'm1', speed: 1 }), [exp.id])
+  const trial = useApi<TrialResult>(
+    () => runTrial(exp.id, { missionId: exp.missions[0]?.id ?? 'm1', speed: 1 }),
+    [exp.id],
+  )
   const durations = [BASE_REPLAY_MS, (BASE_REPLAY_MS * after.timeSec) / (before.timeSec || 1)]
   const replay = useReplay(durations)
 
@@ -107,9 +110,24 @@ function ReportView({ report, exp }: { report: Report; exp: ExperimentDetail }) 
     },
   ]
 
-  const replays: { snap: ReportSnapshot; title: string; expression: 'confused' | 'champion'; path: TrialResult['path'] }[] = [
-    { snap: before, title: '엉뚱한 움직임', expression: 'confused', path: trial.data?.firstPath ?? [] },
-    { snap: after, title: '능숙한 행동', expression: 'champion', path: trial.data?.path ?? [] },
+  const replays: {
+    snap: ReportSnapshot
+    title: string
+    expression: 'confused' | 'champion'
+    path: TrialResult['path']
+  }[] = [
+    {
+      snap: before,
+      title: '엉뚱한 움직임',
+      expression: 'confused',
+      path: trial.data?.firstPath ?? [],
+    },
+    {
+      snap: after,
+      title: '능숙한 행동',
+      expression: 'champion',
+      path: trial.data?.path ?? [],
+    },
   ]
   const threshold = cleared?.successThreshold ?? 60
 
@@ -144,14 +162,25 @@ function ReportView({ report, exp }: { report: Report; exp: ExperimentDetail }) 
               onChange={setMetric}
               items={[
                 { value: 'rate', label: '성공률' },
-                { value: 'time', label: <span title="곧 열려요">도달 시간</span>, disabled: true },
-                { value: 'collisions', label: <span title="곧 열려요">충돌 수</span>, disabled: true },
+                {
+                  value: 'time',
+                  label: <span title="곧 열려요">도달 시간</span>,
+                  disabled: true,
+                },
+                {
+                  value: 'collisions',
+                  label: <span title="곧 열려요">충돌 수</span>,
+                  disabled: true,
+                },
               ]}
             />
           </div>
           <LineChart
             data={report.curve.map((c) => ({ x: c.trial, y: c.successRate }))}
-            events={report.events.map((e) => ({ x: e.trial, label: `T${e.trial}` }))}
+            events={report.events.map((e) => ({
+              x: e.trial,
+              label: `T${e.trial}`,
+            }))}
             height={320}
             xDomain={[1, after.trial]}
             xTicks={[1, 25, 50, 75, 100].filter((t) => t <= after.trial)}
@@ -203,14 +232,20 @@ function ReportView({ report, exp }: { report: Report; exp: ExperimentDetail }) 
                   goal={trial.data?.path[trial.data.path.length - 1]}
                 />
               ) : (
-                <EmptyState compact expression={r.expression} title="REPLAY" description="리플레이를 불러오지 못했어요" />
+                <EmptyState
+                  compact
+                  expression={r.expression}
+                  title="REPLAY"
+                  description="리플레이를 불러오지 못했어요"
+                />
               )}
               <div className={styles.replayFoot}>
                 <strong>
                   TRIAL {r.snap.trial} — {r.title}
                 </strong>
                 <span className={styles.mono}>
-                  목표 도달 {r.snap.successRate >= threshold ? '성공' : '실패'} · {r.snap.timeSec}s · 충돌 {r.snap.collisions}회
+                  목표 도달 {r.snap.successRate >= threshold ? '성공' : '실패'} · {r.snap.timeSec}s · 충돌{' '}
+                  {r.snap.collisions}회
                 </span>
               </div>
             </GlassCard>

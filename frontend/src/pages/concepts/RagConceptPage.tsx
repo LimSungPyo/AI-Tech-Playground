@@ -8,10 +8,26 @@ import styles from './RagConceptPage.module.css'
 // 15는 확장 모듈 컨셉이라 Figma 예시 화면을 그대로 보여 주는 정적 화면이다(질문 · 검색 동작 없음).
 const CITES = ['[1] 곤충 겹눈의 구조', '[2] 초파리 눈 색소 연구', '[3] 드로시 캐릭터 설정']
 const PASSAGES = [
-  { text: '초파리를 포함한 곤충의 눈은 수백 개의 낱눈이 모인 겹눈 구조로…', score: 0.91, used: true },
-  { text: '초파리 눈의 붉은 색은 색소에서 비롯되며, 과도한 빛을 걸러…', score: 0.84, used: true },
-  { text: '드로시는 초파리에서 이름을 딴 마스코트로, 빨간 겹눈과…', score: 0.79, used: true },
-  { text: '초파리는 유전학 연구에 오래 쓰여 온 모델 생물로…', score: 0.62, used: false },
+  {
+    text: '초파리를 포함한 곤충의 눈은 수백 개의 낱눈이 모인 겹눈 구조로…',
+    score: 0.91,
+    used: true,
+  },
+  {
+    text: '초파리 눈의 붉은 색은 색소에서 비롯되며, 과도한 빛을 걸러…',
+    score: 0.84,
+    used: true,
+  },
+  {
+    text: '드로시는 초파리에서 이름을 딴 마스코트로, 빨간 겹눈과…',
+    score: 0.79,
+    used: true,
+  },
+  {
+    text: '초파리는 유전학 연구에 오래 쓰여 온 모델 생물로…',
+    score: 0.62,
+    used: false,
+  },
 ]
 const FLOW = ['질문하기', '검색 결과 확인', '유사도 시각화', '기술 카드', '다시 질문']
 
@@ -65,8 +81,8 @@ export default function RagConceptPage() {
               </SoonButton>
             </div>
             <p className={styles.answerText}>
-              초파리의 눈은 수백 개의 작은 눈이 모인 겹눈이에요 [1]. 빨간색은 눈 속 색소 때문인데, 이 색소가 강한 빛으로부터 눈을
-              보호하는 역할을 해요 [2]. 드로시의 눈도 이 특징을 그대로 따왔어요 [3].
+              초파리의 눈은 수백 개의 작은 눈이 모인 겹눈이에요 [1]. 빨간색은 눈 속 색소 때문인데, 이 색소가 강한
+              빛으로부터 눈을 보호하는 역할을 해요 [2]. 드로시의 눈도 이 특징을 그대로 따왔어요 [3].
             </p>
             <div className={styles.cites}>
               {CITES.map((c) => (
@@ -108,7 +124,12 @@ export default function RagConceptPage() {
           <GlassCard padding="lg">
             <h2 className={styles.cardTitle}>임베딩 지도</h2>
             <p className={styles.caption}>질문(★)과 가까운 문단일수록 답변에 쓰일 확률이 높아요.</p>
-            <svg viewBox="0 0 100 80" className={styles.map} role="img" aria-label="질문과 문단 사이 거리를 나타낸 임베딩 지도">
+            <svg
+              viewBox="0 0 100 80"
+              className={styles.map}
+              role="img"
+              aria-label="질문과 문단 사이 거리를 나타낸 임베딩 지도"
+            >
               {SCATTER.map((p, i) => (
                 <circle key={i} cx={p.x} cy={p.y * 0.8} r={0.9} className={styles.scatter} />
               ))}

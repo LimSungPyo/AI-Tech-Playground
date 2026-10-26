@@ -33,10 +33,18 @@ export function VoteModal({ open, vote, onClose, onVoted }: Props) {
     try {
       const next = await castVote(vote.id, selected)
       onVoted(next)
-      toast.show({ title: '투표했어요', description: '결과는 마감 후 알림으로 알려 드려요', tone: 'success' })
+      toast.show({
+        title: '투표했어요',
+        description: '결과는 마감 후 알림으로 알려 드려요',
+        tone: 'success',
+      })
       onClose()
     } catch (e) {
-      toast.show({ title: '투표하지 못했어요', description: e instanceof Error ? e.message : undefined, tone: 'danger' })
+      toast.show({
+        title: '투표하지 못했어요',
+        description: e instanceof Error ? e.message : undefined,
+        tone: 'danger',
+      })
     } finally {
       setBusy(false)
     }
@@ -72,7 +80,12 @@ export function VoteModal({ open, vote, onClose, onVoted }: Props) {
             onClick={() => setPicked(o.id)}
           >
             <span className={styles.title}>{o.title}</span>
-            <ProgressBar value={o.votes} max={total || 1} size="sm" valueLabel={`${total ? Math.round((o.votes / total) * 100) : 0}%`} />
+            <ProgressBar
+              value={o.votes}
+              max={total || 1}
+              size="sm"
+              valueLabel={`${total ? Math.round((o.votes / total) * 100) : 0}%`}
+            />
           </button>
         ))}
       </div>

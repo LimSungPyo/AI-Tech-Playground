@@ -60,7 +60,11 @@ export default function RevealPage() {
   const dark = phase === 'xray' || phase === 'text'
 
   return (
-    <div className={cx(styles.stage, dark && styles.dark, reduced && styles.reduced)} role="region" aria-label="반전 연출">
+    <div
+      className={cx(styles.stage, dark && styles.dark, reduced && styles.reduced)}
+      role="region"
+      aria-label="반전 연출"
+    >
       <Button
         variant={dark ? 'dark' : 'secondary'}
         size="sm"
@@ -75,7 +79,11 @@ export default function RevealPage() {
         <div className={cx(styles.hero, styles[phase])}>
           {/* 컷 1·2: 평소 화면 → 스캔 라인 지나가며 투명해짐 */}
           <div className={styles.normalLayer}>
-            {isDrosi ? <Mascot expression="champion" size={280} alt="" /> : <Character id={character} size={280} alt="" />}
+            {isDrosi ? (
+              <Mascot expression="champion" size={280} alt="" />
+            ) : (
+              <Character id={character} size={280} alt="" />
+            )}
           </div>
           {/* 컷 3: 엑스레이 — 신경망 모드 */}
           <div className={styles.xrayLayer}>

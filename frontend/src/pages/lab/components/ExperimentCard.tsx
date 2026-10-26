@@ -10,7 +10,12 @@ export interface ExperimentCardProps {
   state: CardState
   /** 카드 아래 한 줄(진행 · 결과 · 해금 조건) */
   caption: string
-  action: { label: string; to?: string; onClick?: () => void; primary?: boolean }
+  action: {
+    label: string
+    to?: string
+    onClick?: () => void
+    primary?: boolean
+  }
 }
 
 /** G-01 실험 카드: 위 캐릭터 썸네일 + 아래 코드 · 난이도 · 제목 · 진행 · 버튼 */
@@ -18,13 +23,19 @@ export function ExperimentCard({ exp, state, caption, action }: ExperimentCardPr
   const locked = state === 'locked'
   const showBar = state === 'in_progress' && exp.progress
   // 카드 본문 클릭은 상세로. 잠김 · 오픈 예정은 버튼만 동작한다
-  const detailTo = state === 'locked' || state === 'coming_soon' || state === 'voting' ? undefined : `/experiments/${exp.id}`
+  const detailTo =
+    state === 'locked' || state === 'coming_soon' || state === 'voting' ? undefined : `/experiments/${exp.id}`
   const actionEl = action.to ? (
     <Button size="md" variant={action.primary ? 'primary' : 'secondary'} to={action.to} className={styles.action}>
       {action.label}
     </Button>
   ) : (
-    <Button size="md" variant={action.primary ? 'primary' : 'secondary'} onClick={action.onClick} className={styles.action}>
+    <Button
+      size="md"
+      variant={action.primary ? 'primary' : 'secondary'}
+      onClick={action.onClick}
+      className={styles.action}
+    >
       {action.label}
     </Button>
   )

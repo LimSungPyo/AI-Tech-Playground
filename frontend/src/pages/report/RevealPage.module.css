@@ -101,11 +101,7 @@
   position: absolute;
   inset: -20px;
   border-radius: var(--radius-card);
-  background: repeating-linear-gradient(
-    180deg,
-    var(--color-accent-indigo-soft) 0 4px,
-    transparent 4px 9px
-  );
+  background: repeating-linear-gradient(180deg, var(--color-accent-indigo-soft) 0 4px, transparent 4px 9px);
   overflow: hidden;
 }
 .scanlines::after {

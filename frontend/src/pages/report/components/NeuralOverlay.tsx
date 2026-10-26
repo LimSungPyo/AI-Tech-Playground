@@ -24,20 +24,27 @@ export function NeuralOverlay({ className, ringOnly }: { className?: string; rin
       <circle cx="50" cy="52" r="47" className={styles.ring} />
       {!ringOnly &&
         EDGES.map(([a, b]) => (
-        <line
-          key={`${a.id}-${b.id}`}
-          x1={a.x}
-          y1={a.y}
-          x2={b.x}
-          y2={b.y}
-          className={styles.edge}
-          style={{ animationDelay: `${a.layer * 180 + 90}ms` }}
-        />
-      ))}
+          <line
+            key={`${a.id}-${b.id}`}
+            x1={a.x}
+            y1={a.y}
+            x2={b.x}
+            y2={b.y}
+            className={styles.edge}
+            style={{ animationDelay: `${a.layer * 180 + 90}ms` }}
+          />
+        ))}
       {!ringOnly &&
         NODES.map((n) => (
-        <circle key={n.id} cx={n.x} cy={n.y} r={1.8} className={styles.node} style={{ animationDelay: `${n.layer * 180}ms` }} />
-      ))}
+          <circle
+            key={n.id}
+            cx={n.x}
+            cy={n.y}
+            r={1.8}
+            className={styles.node}
+            style={{ animationDelay: `${n.layer * 180}ms` }}
+          />
+        ))}
     </svg>
   )
 }

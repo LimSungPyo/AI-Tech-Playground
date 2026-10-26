@@ -7,14 +7,23 @@ import type { ExperimentCardProps } from './ExperimentCard'
 export function cardCopy(
   exp: ExperimentSummary,
   state: CardState,
-  extra: { votePct?: number; voteDDay?: number; treeNodeId?: string; onVote?: () => void },
+  extra: {
+    votePct?: number
+    voteDDay?: number
+    treeNodeId?: string
+    onVote?: () => void
+  },
 ): Pick<ExperimentCardProps, 'caption' | 'action'> {
   const p = exp.progress
   switch (state) {
     case 'in_progress':
       return {
         caption: p ? `Trial ${p.trial} / ${p.maxTrial} · 성공률 ${pct(p.successRate)}` : '진행 중',
-        action: { label: '이어하기', to: `/experiments/${exp.id}`, primary: true },
+        action: {
+          label: '이어하기',
+          to: `/experiments/${exp.id}`,
+          primary: true,
+        },
       }
     case 'done':
       return {
@@ -24,7 +33,11 @@ export function cardCopy(
     case 'open':
       return {
         caption: `${exp.subtitle} · 약 ${exp.durationMin}분`,
-        action: { label: '시작하기', to: `/experiments/${exp.id}`, primary: true },
+        action: {
+          label: '시작하기',
+          to: `/experiments/${exp.id}`,
+          primary: true,
+        },
       }
     case 'coming_soon':
       return {
@@ -42,7 +55,10 @@ export function cardCopy(
     case 'locked':
       return {
         caption: exp.unlockCondition ?? '잠김',
-        action: { label: '조건 보기', to: extra.treeNodeId ? `/tree?node=${extra.treeNodeId}` : '/tree' },
+        action: {
+          label: '조건 보기',
+          to: extra.treeNodeId ? `/tree?node=${extra.treeNodeId}` : '/tree',
+        },
       }
   }
 }

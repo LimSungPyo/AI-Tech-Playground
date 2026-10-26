@@ -31,5 +31,9 @@ export function useReplay(durations: number[]) {
 
   useEffect(() => () => cancelAnimationFrame(raf.current), [])
 
-  return { progress: durations.map((d) => Math.min(1, elapsed / Math.max(1, d))), playing, play }
+  return {
+    progress: durations.map((d) => Math.min(1, elapsed / Math.max(1, d))),
+    playing,
+    play,
+  }
 }

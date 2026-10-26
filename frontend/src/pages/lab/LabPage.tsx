@@ -24,11 +24,22 @@ import type { CardState } from './experimentMeta'
 import styles from './LabPage.module.css'
 
 type SortKey = 'recommended' | 'code' | 'progress'
-const SORT_LABEL: Record<SortKey, string> = { recommended: '추천순', code: '번호순', progress: '진행률순' }
+const SORT_LABEL: Record<SortKey, string> = {
+  recommended: '추천순',
+  code: '번호순',
+  progress: '진행률순',
+}
 const STATE_FILTERS: CardState[] = ['in_progress', 'done', 'open', 'coming_soon', 'locked']
 
 const DAY = 24 * 60 * 60 * 1000
-const RECOMMEND_ORDER: Record<CardState, number> = { in_progress: 0, done: 1, open: 1, coming_soon: 2, voting: 3, locked: 4 }
+const RECOMMEND_ORDER: Record<CardState, number> = {
+  in_progress: 0,
+  done: 1,
+  open: 1,
+  coming_soon: 2,
+  voting: 3,
+  locked: 4,
+}
 
 // W2 growth 담당 · 경로 /lab · G-01 실험실 (79:10213)
 export default function LabPage() {
@@ -52,10 +63,9 @@ export default function LabPage() {
 
   // 이어하기 배너: 회원의 첫 진행 중 실험 + 그 실험의 열린 미션
   const continueExp = isMember ? all.find((e) => states.get(e.id) === 'in_progress') : undefined
-  const continueDetail = useApi(
-    continueExp ? (signal) => getExperiment(continueExp.id, signal) : null,
-    [continueExp?.id],
-  )
+  const continueDetail = useApi(continueExp ? (signal) => getExperiment(continueExp.id, signal) : null, [
+    continueExp?.id,
+  ])
   const openMission = continueDetail.data?.missions.find((m) => m.status === 'open')
 
   const vote = voteApi.data
@@ -82,7 +92,9 @@ export default function LabPage() {
       return [...filtered].sort((a, b) => rate(b) - rate(a))
     }
     // 추천순: 하던 실험 → 끝낸 실험 → 열린 실험 → 오픈 예정 → 투표 중 → 잠김
-    return [...filtered].sort((a, b) => RECOMMEND_ORDER[states.get(a.id) ?? 'open'] - RECOMMEND_ORDER[states.get(b.id) ?? 'open'])
+    return [...filtered].sort(
+      (a, b) => RECOMMEND_ORDER[states.get(a.id) ?? 'open'] - RECOMMEND_ORDER[states.get(b.id) ?? 'open'],
+    )
   }, [all, q, level, stateFilter, states, sort])
 
   const nodeFor = (expId: string) => tree.data?.nodes.find((n) => n.experimentId === expId)?.id
@@ -96,7 +108,8 @@ export default function LabPage() {
           <h1 className={styles.title}>실험실</h1>
           {list.data ? (
             <p className={styles.sub}>
-              실험 {all.length}개 · 열린 실험 {openCount} · 오픈 예정 {countOf('coming_soon')} · 투표 중 {countOf('voting')}
+              실험 {all.length}개 · 열린 실험 {openCount} · 오픈 예정 {countOf('coming_soon')} · 투표 중{' '}
+              {countOf('voting')}
             </p>
           ) : (
             <Skeleton shape="text" width={280} />
@@ -159,7 +172,14 @@ export default function LabPage() {
         >
           정렬: {SORT_LABEL[sort]} <Icon name="chevron-down" size={14} />
         </button>
-        <Popover open={sortOpen} onClose={() => setSortOpen(false)} anchorRef={sortRef} width={160} role="menu" label="정렬">
+        <Popover
+          open={sortOpen}
+          onClose={() => setSortOpen(false)}
+          anchorRef={sortRef}
+          width={160}
+          role="menu"
+          label="정렬"
+        >
           <ul className={styles.sortMenu}>
             {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
               <li key={k}>

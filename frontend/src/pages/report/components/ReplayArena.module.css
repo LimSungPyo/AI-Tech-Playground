@@ -4,8 +4,7 @@
   height: auto;
   border-radius: var(--radius-md);
   background:
-    radial-gradient(circle at 80% 20%, var(--color-accent-why-soft), transparent 45%),
-    var(--color-glass-clear-nested);
+    radial-gradient(circle at 80% 20%, var(--color-accent-why-soft), transparent 45%), var(--color-glass-clear-nested);
   box-shadow: inset 0 0 0 1px var(--color-glass-rim);
 }
 .ghost {

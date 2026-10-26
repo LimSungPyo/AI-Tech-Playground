@@ -18,13 +18,34 @@ const PALETTE: { name: string; level: string; tone?: Tone }[] = [
 // 캔버스 좌표(710 × 600 기준)
 const W = 710
 const H = 600
-const NODES: { id: string; kind: '입력' | '블록'; name: string; x: number; y: number; tone?: Tone }[] = [
+const NODES: {
+  id: string
+  kind: '입력' | '블록'
+  name: string
+  x: number
+  y: number
+  tone?: Tone
+}[] = [
   { id: 'camera', kind: '입력', name: '카메라', x: 25, y: 130 },
   { id: 'vision', kind: '블록', name: '비전', x: 200, y: 130, tone: 'vision' },
-  { id: 'memory', kind: '블록', name: '메모리', x: 380, y: 255, tone: 'memory' },
+  {
+    id: 'memory',
+    kind: '블록',
+    name: '메모리',
+    x: 380,
+    y: 255,
+    tone: 'memory',
+  },
   { id: 'rl', kind: '블록', name: '강화학습', x: 540, y: 255, tone: 'rl' },
   { id: 'smell', kind: '입력', name: '냄새 센서', x: 25, y: 380 },
-  { id: 'connectome', kind: '블록', name: '커넥톰 회로', x: 200, y: 380, tone: 'connectome' },
+  {
+    id: 'connectome',
+    kind: '블록',
+    name: '커넥톰 회로',
+    x: 200,
+    y: 380,
+    tone: 'connectome',
+  },
 ]
 const NW = 138
 const NH = 70
@@ -48,7 +69,9 @@ const TRAITS = [
 export default function CreateYourAiPage() {
   return (
     <div className={styles.page}>
-      <ComingSoonBanner>Create Your AI는 기술 트리를 모두 거친 뒤 열리는 장기 목표예요. 지금은 모습만 미리 볼 수 있어요.</ComingSoonBanner>
+      <ComingSoonBanner>
+        Create Your AI는 기술 트리를 모두 거친 뒤 열리는 장기 목표예요. 지금은 모습만 미리 볼 수 있어요.
+      </ComingSoonBanner>
       <header className={styles.head}>
         <Badge tone="dark" size="md">
           COMING LATER · 장기 목표
@@ -91,7 +114,12 @@ export default function CreateYourAiPage() {
               <div
                 key={n.id}
                 className={cx(styles.node, n.tone ? styles[`n-${n.tone}`] : styles.input)}
-                style={{ left: `${(n.x / W) * 100}%`, top: `${(n.y / H) * 100}%`, width: `${(NW / W) * 100}%`, height: `${(NH / H) * 100}%` }}
+                style={{
+                  left: `${(n.x / W) * 100}%`,
+                  top: `${(n.y / H) * 100}%`,
+                  width: `${(NW / W) * 100}%`,
+                  height: `${(NH / H) * 100}%`,
+                }}
               >
                 <span className={styles.nodeKind}>{n.kind}</span>
                 <span className={styles.nodeName}>{n.name}</span>

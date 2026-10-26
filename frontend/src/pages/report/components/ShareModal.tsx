@@ -27,7 +27,11 @@ export function ShareModal({ open, onClose, experimentId, data }: Props) {
       .then((r) => alive && setUrl(new URL(r.url, window.location.origin).toString()))
       .catch((e: unknown) => {
         if (!alive) return
-        toast.show({ title: '공유 링크를 만들지 못했어요', description: e instanceof Error ? e.message : undefined, tone: 'danger' })
+        toast.show({
+          title: '공유 링크를 만들지 못했어요',
+          description: e instanceof Error ? e.message : undefined,
+          tone: 'danger',
+        })
         setUrl(`${window.location.origin}/experiments/${experimentId}`)
       })
     return () => {
@@ -63,9 +67,17 @@ export function ShareModal({ open, onClose, experimentId, data }: Props) {
     if (!url) return
     try {
       await navigator.clipboard.writeText(url)
-      toast.show({ title: '링크를 복사했어요', description: url, tone: 'success' })
+      toast.show({
+        title: '링크를 복사했어요',
+        description: url,
+        tone: 'success',
+      })
     } catch {
-      toast.show({ title: '복사하지 못했어요', description: url, tone: 'danger' })
+      toast.show({
+        title: '복사하지 못했어요',
+        description: url,
+        tone: 'danger',
+      })
     }
   }
 
