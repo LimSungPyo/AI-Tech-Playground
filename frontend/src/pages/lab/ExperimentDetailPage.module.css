@@ -1,0 +1,297 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-bottom: var(--space-16);
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+}
+.back:hover {
+  color: var(--color-text-link);
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: var(--space-10);
+  align-items: start;
+}
+.portrait {
+  display: grid;
+  place-items: center;
+  width: 340px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 6px var(--color-glass-rim),
+    var(--shadow-glass);
+}
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-2);
+}
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  color: var(--color-text-link);
+}
+.tag {
+  height: 24px;
+  font-size: var(--text-xs);
+}
+.title {
+  font-size: 48px;
+  font-weight: var(--weight-black);
+  line-height: 1.2;
+  color: var(--color-text-primary);
+}
+.desc {
+  font-size: var(--text-lg);
+  color: var(--color-text-secondary);
+}
+.stats {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+.stats dt {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+.stats dd {
+  font-family: var(--font-number);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-black);
+  color: var(--color-text-primary);
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--color-accent-indigo-soft);
+  box-shadow: inset 0 0 0 1px var(--color-glass-rim);
+}
+.progressText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.progressTitle {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+}
+.progressBar {
+  max-width: 360px;
+}
+.progressLine {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.textLink {
+  padding: 0 var(--space-3);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-link);
+}
+.textLink:hover {
+  text-decoration: underline;
+}
+.unlock {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+.sectionTitle {
+  margin-bottom: var(--space-5);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-black);
+}
+.missions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+.mission {
+  composes: glass from '../../components/glass.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  border-radius: var(--radius-card);
+  color: var(--color-text-primary);
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+a.mission:hover {
+  transform: translateY(-2px);
+}
+.m-open {
+  box-shadow:
+    inset 0 0 0 2.5px var(--color-accent-indigo),
+    var(--shadow-glass);
+}
+.m-locked .missionTitle,
+.m-locked .missionGoal {
+  color: var(--color-text-tertiary);
+}
+.missionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.missionNo {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.04em;
+  color: var(--color-text-link);
+}
+.missionTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-black);
+}
+.missionGoal {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.missionCaption {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+.missionNew {
+  color: var(--color-text-link);
+  font-weight: var(--weight-medium);
+}
+
+.bottom {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 0.9fr;
+  gap: var(--space-5);
+  align-items: start;
+}
+.learn,
+.ranking {
+  composes: glass from '../../components/glass.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border-radius: var(--radius-card);
+}
+.boxTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+.learnList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  font-size: var(--text-md);
+  color: var(--color-text-primary);
+}
+.techCard {
+  composes: glass from '../../components/glass.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  border-radius: var(--radius-card);
+  background: var(--color-glass-dark);
+  color: var(--color-text-on-tint);
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+.techCard:hover {
+  transform: translateY(-2px);
+}
+.techEyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  color: var(--color-accent-cyan);
+}
+.techTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-black);
+}
+.techCaption {
+  font-size: var(--text-xs);
+  color: var(--color-text-on-dark-secondary);
+}
+.rankList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+}
+.rankList li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-md);
+}
+.rankNo {
+  width: 16px;
+  font-family: var(--font-number);
+  color: var(--color-text-tertiary);
+}
+.rankName {
+  flex: 1;
+}
+.rankRate {
+  font-family: var(--font-number);
+  font-weight: var(--weight-bold);
+}
+.me .rankNo,
+.me .rankName {
+  color: var(--color-text-link);
+  font-weight: var(--weight-bold);
+}
+.ranking .textLink {
+  padding: 0;
+}
+
+@media (max-width: 1024px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .portrait {
+    width: 240px;
+    justify-self: center;
+  }
+  .missions,
+  .bottom {
+    grid-template-columns: 1fr;
+  }
+}
+.learnList li::before {
+  content: '· ';
+}
