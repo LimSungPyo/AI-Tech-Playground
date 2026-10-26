@@ -1,23 +1,23 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { getAdminCard, getCards, saveAdminCard } from '../../api'
+import { getAdminCard, getAdminCards, saveAdminCard } from '../../api'
 import { isApiError } from '../../api/client'
-import type { TechCard } from '../../api/types'
+import type { TechCard, TechCardStatus } from '../../api/types'
 import { Button, Character, Icon, Input, Select, Textarea, cx, useModal, useToast } from '../../components'
 import { useApi } from '../../hooks/useApi'
 import { CheckList, LoadError, PageHead, Panel, PanelSkeleton } from './components/AdminUi'
 import a from './components/admin.module.css'
 import { STEP_ORDER, cardChecklist, findHype } from './components/cardRules'
 import type { StepKind } from './components/cardRules'
-import { characterOf } from './components/format'
+import { characterOf, md } from './components/format'
 import styles from './AdminCardsPage.module.css'
 
-type Stage = 'write' | 'review' | 'approve' | 'publish'
-const STAGES: { value: Stage; label: string }[] = [
-  { value: 'write', label: '작성' },
-  { value: 'review', label: '검토' },
-  { value: 'approve', label: '승인' },
-  { value: 'publish', label: '게시' },
+/** 카드 status(v2) = 진행 단계 */
+const STAGES: { value: TechCardStatus; label: string; title: string }[] = [
+  { value: 'draft', label: '작성', title: '초안' },
+  { value: 'review', label: '검토', title: '초안' },
+  { value: 'approved', label: '승인', title: '승인됨' },
+  { value: 'published', label: '게시', title: '게시' },
 ]
 type Level = 'easy' | 'detail' | 'numbers'
 const LEVELS: { value: Level; label: string }[] = [
@@ -77,8 +77,11 @@ export default function AdminCardsPage() {
   const toast = useToast()
   const modal = useModal()
   const [params, setParams] = useSearchParams()
-  const list = useApi((signal) => getCards(signal), [])
-  const cardId = params.get('id') ?? list.data?.[0]?.id ?? null
+  const list = useApi((signal) => getAdminCards(signal), [])
+  const cards = list.data?.cards
+  // 기본은 검토 대기 카드(없으면 첫 카드)
+  const cardId = params.get('id') ?? (cards?.find((c) => c.status === 'review') ?? cards?.[0])?.id ?? null
+  const meta = cards?.find((c) => c.id === cardId)
   const card = useApi(cardId ? (signal) => getAdminCard(cardId, signal) : null, [cardId])
 
   // 불러온 카드를 편집용 초안으로 복사(카드가 바뀔 때만)
@@ -89,7 +92,6 @@ export default function AdminCardsPage() {
     setDraft(card.data ? structuredClone(card.data) : null)
   }
 
-  const [stage, setStage] = useState<Stage>('review')
   const [level, setLevel] = useState<Level>('easy')
   const [comment, setComment] = useState('')
   const [newSource, setNewSource] = useState({ title: '', url: '' })
@@ -105,13 +107,18 @@ export default function AdminCardsPage() {
       return { ...d, steps }
     })
 
-  const save = async (kind: 'save' | 'review' | 'publish') => {
+  const save = async (kind: 'save' | 'review' | 'publish', status?: TechCardStatus) => {
     if (!draft) return false
     setSaving(kind)
     try {
-      const saved = await saveAdminCard(draft)
+      const saved = await saveAdminCard(status ? { ...draft, status } : draft)
       setLoaded(saved)
       setDraft(structuredClone(saved))
+      list.setData((prev) =>
+        prev
+          ? { cards: prev.cards.map((c) => (c.id === saved.id ? { ...c, title: saved.title, status: saved.status ?? c.status } : c)) }
+          : prev,
+      )
       return true
     } catch (e) {
       toast.show({ title: '저장하지 못했어요', description: isApiError(e) ? e.message : undefined, tone: 'danger' })
@@ -125,8 +132,7 @@ export default function AdminCardsPage() {
     if (await save('save')) toast.show({ title: '초안을 저장했어요', tone: 'success' })
   }
   const onRequestReview = async () => {
-    if (await save('review')) {
-      setStage('review')
+    if (await save('review', 'review')) {
       toast.show({ title: '검토를 요청했어요', description: '검토자에게 알림이 갔어요' })
     }
   }
@@ -146,18 +152,18 @@ export default function AdminCardsPage() {
       confirmLabel: '게시하기',
       cancelLabel: '취소',
     })
-    if (ok && (await save('publish'))) {
-      setStage('publish')
+    if (ok && (await save('publish', 'published'))) {
       toast.show({ title: '기술 카드를 게시했어요', tone: 'success' })
     }
   }
 
+  const stage = draft?.status ?? meta?.status ?? 'draft'
   const stageIndex = STAGES.findIndex((s) => s.value === stage)
   const error = list.error ?? card.error
 
   return (
     <>
-      <PageHead title={`기술 카드 · ${draft?.title ?? ''} (${STAGES[stageIndex].label === '게시' ? '게시' : '초안'})`} />
+      <PageHead title={`기술 카드 · ${draft?.title ?? ''} (${STAGES[stageIndex].title})`} />
 
       <div className={styles.toolbar}>
         <ol className={styles.stages} aria-label="카드 진행 단계">
@@ -172,13 +178,21 @@ export default function AdminCardsPage() {
             </li>
           ))}
         </ol>
-        {list.data && (
+        {meta && (
+          <span className={styles.meta}>
+            작성 {meta.author} · {md(meta.updatedAt)} 수정
+          </span>
+        )}
+        {cards && (
           <Select
             aria-label="편집할 카드"
             className={styles.picker}
             value={cardId ?? ''}
             onChange={(e) => setParams({ id: e.target.value })}
-            options={list.data.map((c) => ({ value: c.id, label: `${c.id} · ${c.title}` }))}
+            options={cards.map((c) => ({
+              value: c.id,
+              label: `#${c.experimentId} · ${c.title} · ${STAGES.find((s) => s.value === c.status)?.label ?? c.status}`,
+            }))}
           />
         )}
       </div>
@@ -305,7 +319,7 @@ export default function AdminCardsPage() {
               <Button variant="secondary" pill={false} loading={saving === 'review'} disabled={saving !== null} onClick={() => void onRequestReview()}>
                 검토 요청
               </Button>
-              <Button pill={false} loading={saving === 'publish'} disabled={saving !== null || stage === 'publish'} onClick={() => void onPublish()}>
+              <Button pill={false} loading={saving === 'publish'} disabled={saving !== null || stage === 'published'} onClick={() => void onPublish()}>
                 승인하고 게시
               </Button>
             </div>

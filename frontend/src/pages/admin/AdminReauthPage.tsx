@@ -5,8 +5,8 @@ import { adminLogin, adminOtp } from '../../api'
 import { isApiError } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { Button, Icon, OtpInput, PasswordInput, Spinner } from '../../components'
-import type { BlockedState } from './AdminLoginPage'
 import { AdminConsoleBadge, AuthShell } from './components/AuthShell'
+import { blockedState } from './components/blocked'
 import authStyles from './components/AuthShell.module.css'
 import styles from './AdminReauthPage.module.css'
 
@@ -58,7 +58,7 @@ export default function AdminReauthPage() {
     } catch (e) {
       setBusy(false)
       if (isApiError(e) && e.code === 'IP_BLOCKED') {
-        navigate('/admin/blocked', { replace: true, state: { email: user.email, at: Date.now() } satisfies BlockedState })
+        navigate('/admin/blocked', { replace: true, state: blockedState(e, user.email) })
         return
       }
       setCode('')

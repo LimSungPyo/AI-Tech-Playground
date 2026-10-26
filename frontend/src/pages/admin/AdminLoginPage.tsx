@@ -6,14 +6,9 @@ import { isApiError } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { Button, Icon, Input, Logo, OtpInput, PasswordInput } from '../../components'
 import { AuthShell } from './components/AuthShell'
+import { blockedState } from './components/blocked'
 import authStyles from './components/AuthShell.module.css'
 import styles from './AdminLoginPage.module.css'
-
-/** 차단 화면(G-11)에 넘기는 시도 정보 */
-export interface BlockedState {
-  email?: string
-  at: number
-}
 
 // W2 admin 담당 · 경로 /admin/login — F-01 관리자 로그인 (2단계 인증)
 export default function AdminLoginPage() {
@@ -40,7 +35,7 @@ export default function AdminLoginPage() {
     } catch (e) {
       setBusy(false)
       if (isApiError(e) && e.code === 'IP_BLOCKED') {
-        navigate('/admin/blocked', { replace: true, state: { email, at: Date.now() } satisfies BlockedState })
+        navigate('/admin/blocked', { replace: true, state: blockedState(e, email) })
         return
       }
       setCode('')

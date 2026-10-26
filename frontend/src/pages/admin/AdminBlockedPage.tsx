@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useAuth } from '../../auth/useAuth'
 import { Button, useModal } from '../../components'
-import type { BlockedState } from './AdminLoginPage'
+import type { BlockedState } from './components/blocked'
 import { AuthShell } from './components/AuthShell'
 import authStyles from './components/AuthShell.module.css'
 import { ymdhm } from './components/format'
@@ -55,7 +55,7 @@ export default function AdminBlockedPage() {
 
         <dl className={styles.info}>
           <dt>접속 IP</dt>
-          <dd>외부 네트워크</dd>
+          <dd>{state?.ip ? `${state.ip} (외부 네트워크)` : '외부 네트워크'}</dd>
           <dt>시간</dt>
           <dd>{ymdhm(new Date(at))}</dd>
           {email && (

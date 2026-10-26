@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { sendAdminNotification } from '../../api'
+import { getAdminSentNotifications, sendAdminNotification } from '../../api'
 import { isApiError } from '../../api/client'
-import { Button, Input, Mascot, Select, Textarea, Toggle, useModal, useToast } from '../../components'
-import { FilterPills, PageHead, Panel, Pill } from './components/AdminUi'
+import { Button, Input, Mascot, Select, Skeleton, Textarea, Toggle, useModal, useToast } from '../../components'
+import { useApi } from '../../hooks/useApi'
+import { FilterPills, LoadError, PageHead, Panel, Pill } from './components/AdminUi'
 import a from './components/admin.module.css'
-import { mdhm } from './components/format'
+import { md, mdhm, num } from './components/format'
 import styles from './AdminNotificationsPage.module.css'
 
 type Kind = 'open' | 'dormant' | 'notice' | 'answer'
@@ -41,11 +42,6 @@ function isNight(local: string) {
   return Number.isNaN(d.getTime()) || d.getHours() >= 21 || d.getHours() < 9
 }
 
-interface Sent {
-  title: string
-  audience: string
-  sendAt: string
-}
 
 // W2 admin 담당 · 경로 /admin/notifications — F-12 알림 발송
 export default function AdminNotificationsPage() {
@@ -58,7 +54,7 @@ export default function AdminNotificationsPage() {
   const [body, setBody] = useState('')
   const [sendAt, setSendAt] = useState(defaultSendAt)
   const [busy, setBusy] = useState(false)
-  const [sent, setSent] = useState<Sent[]>([])
+  const recent = useApi((signal) => getAdminSentNotifications(signal), [])
   const [touched, setTouched] = useState(false)
 
   const night = isNight(sendAt)
@@ -84,7 +80,12 @@ export default function AdminNotificationsPage() {
     try {
       const at = new Date(sendAt).toISOString()
       await sendAdminNotification({ audience, title: title.trim(), body: body.trim(), sendAt: at })
-      setSent((s) => [{ title: title.trim(), audience: audienceLabel, sendAt: at }, ...s])
+      // 방금 예약한 알림을 최근 발송 맨 위에 붙인다(수신자 수는 발송 시점에 정해짐)
+      recent.setData((prev) =>
+        prev
+          ? { items: [{ id: `local-${at}`, title: title.trim(), audience: audienceLabel, recipients: 0, sentAt: at, status: 'scheduled' }, ...prev.items] }
+          : prev,
+      )
       toast.show({ title: '알림 발송을 예약했어요', description: `${audienceLabel} · ${mdhm(at)}`, tone: 'success' })
       setTouched(false)
     } catch (e) {
@@ -191,17 +192,25 @@ export default function AdminNotificationsPage() {
             </ul>
           </Panel>
           <Panel title="최근 발송">
-            {sent.length === 0 ? (
-              <p className={a.muted}>이번 세션에서 예약한 알림이 아직 없어요.</p>
+            {recent.error ? (
+              <LoadError error={recent.error} onRetry={recent.reload} />
+            ) : !recent.data ? (
+              <Skeleton shape="text" lines={3} />
+            ) : recent.data.items.length === 0 ? (
+              <p className={a.muted}>최근 발송한 알림이 없어요.</p>
             ) : (
               <ul className={styles.sent}>
-                {sent.map((s, i) => (
-                  <li key={`${s.sendAt}-${i}`}>
+                {recent.data.items.map((s) => (
+                  <li key={s.id}>
                     <strong>{s.title}</strong>
                     <span className={a.muted}>
-                      {mdhm(s.sendAt)} · {s.audience}
+                      {s.status === 'scheduled' ? `${mdhm(s.sentAt)} · ${s.audience}` : `${md(s.sentAt)} · ${num(s.recipients)}명`}
                     </span>
-                    <Pill tone="indigo">예약됨</Pill>
+                    {s.status === 'scheduled' ? (
+                      <Pill tone="indigo">예약됨</Pill>
+                    ) : (
+                      <Pill tone="success">{s.openRate !== undefined ? `열람 ${s.openRate}%` : '발송 완료'}</Pill>
+                    )}
                   </li>
                 ))}
               </ul>
