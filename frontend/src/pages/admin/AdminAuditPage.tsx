@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { getAdminAudit } from '../../api'
+import { getAdminAudit, inviteAdmin } from '../../api'
+import { isApiError } from '../../api/client'
 import type { AdminAudit } from '../../api/types'
 import { Avatar, Button, Icon, Input, Modal, Select, Skeleton, Toggle, useToast } from '../../components'
 import { useApi } from '../../hooks/useApi'
@@ -65,11 +66,27 @@ function PermissionMatrix() {
 // W2 admin 담당 · 경로 /admin/audit — F-13 권한 · 감사 로그
 export default function AdminAuditPage() {
   const toast = useToast()
-  const { data, error, reload } = useApi((signal) => getAdminAudit(signal), [])
+  const { data, error, reload, setData } = useApi((signal) => getAdminAudit(signal), [])
   const [tab, setTab] = useState<Tab>('roles')
   const [riskyOnly, setRiskyOnly] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [invite, setInvite] = useState({ email: '', role: ROLES[1] })
+  const [inviting, setInviting] = useState(false)
+
+  const sendInvite = async () => {
+    setInviting(true)
+    try {
+      const res = await inviteAdmin(invite.email.trim(), invite.role)
+      setData((prev) => (prev && !prev.admins.some((x) => x.id === res.invited.id) ? { ...prev, admins: [...prev.admins, res.invited] } : prev))
+      setInviteOpen(false)
+      toast.show({ title: '초대 요청을 보냈어요', description: `${invite.email} · ${res.invited.role} · 슈퍼관리자 승인 대기`, tone: 'success' })
+      setInvite({ email: '', role: ROLES[1] })
+    } catch (e) {
+      toast.show({ title: '초대하지 못했어요', description: isApiError(e) ? e.message : undefined, tone: 'danger' })
+    } finally {
+      setInviting(false)
+    }
+  }
 
   const roleOf = (name: string) => data?.admins.find((x) => x.name === name)?.role ?? '—'
   const logs = (data?.logs ?? []).filter((l) => !riskyOnly || isRisky(l))
@@ -174,18 +191,10 @@ export default function AdminAuditPage() {
         description="초대 메일의 링크로 2단계 인증을 등록하면 권한이 열려요. 슈퍼관리자 승인 후 적용돼요."
         footer={
           <>
-            <Button variant="secondary" pill={false} onClick={() => setInviteOpen(false)}>
+            <Button variant="secondary" pill={false} disabled={inviting} onClick={() => setInviteOpen(false)}>
               취소
             </Button>
-            <Button
-              pill={false}
-              disabled={!/^\S+@\S+\.\S+$/.test(invite.email)}
-              onClick={() => {
-                setInviteOpen(false)
-                toast.show({ title: '초대 요청을 보냈어요', description: `${invite.email} · ${invite.role} · 슈퍼관리자 승인 대기`, tone: 'success' })
-                setInvite({ email: '', role: ROLES[1] })
-              }}
-            >
+            <Button pill={false} loading={inviting} disabled={!/^\S+@\S+\.\S+$/.test(invite.email)} onClick={() => void sendInvite()}>
               초대 요청
             </Button>
           </>

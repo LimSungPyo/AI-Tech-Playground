@@ -115,3 +115,19 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.category {
+  background: var(--color-glass-solid);
+  color: var(--color-text-primary);
+}
+.memo {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-track);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}
+.memo strong {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}

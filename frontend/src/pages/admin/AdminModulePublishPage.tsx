@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { getAdminModules, publishModule } from '../../api'
+import { changeModuleStage, getAdminModules, publishModule } from '../../api'
 import { isApiError } from '../../api/client'
 import type { ModuleStage } from '../../api/types'
 import { Button, CHARACTERS, Character, Checkbox, EmptyState, Select, Toggle, cx, useModal, useToast } from '../../components'
@@ -42,10 +42,18 @@ const AUDIENCES = [
 ]
 
 const pad = (n: number) => String(n).padStart(2, '0')
-/** datetime-local 기본값: 7일 뒤 10:00 */
-function defaultOpenAt() {
+/** datetime-local 기본값: note의 "10.31 10:00"(v2), 없으면 7일 뒤 10:00 */
+function defaultOpenAt(note?: string) {
+  const m = note?.match(/(\d{1,2})\.(\d{1,2})\s+(\d{1,2}):(\d{2})/)
+  if (m) return `${new Date().getFullYear()}-${pad(Number(m[1]))}-${pad(Number(m[2]))}T${pad(Number(m[3]))}:${m[4]}`
   const d = new Date(Date.now() + 7 * 86_400_000)
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T10:00`
+}
+/** note "체크리스트 7/9"(v2) → 확인된 개수 */
+function checkedCount(note: string | undefined, stage: ModuleStage) {
+  const m = note?.match(/체크리스트\s+(\d+)\/\d+/)
+  if (m) return Number(m[1])
+  return stage === 'live' ? CHECKS.length : 0
 }
 const WEEK = ['일', '월', '화', '수', '목', '금', '토']
 function openLabel(local: string) {
@@ -65,19 +73,23 @@ export default function AdminModulePublishPage() {
   const { id = '' } = useParams()
   const toast = useToast()
   const modal = useModal()
-  const { data, error, reload } = useApi((signal) => getAdminModules(signal), [])
+  const { data, error, reload, setData } = useApi((signal) => getAdminModules(signal), [])
   const mod = data?.modules.find((m) => m.id === id)
 
-  const [openAt, setOpenAt] = useState(defaultOpenAt)
+  const [openAt, setOpenAt] = useState(() => defaultOpenAt())
   const [audience, setAudience] = useState('all')
   const [carousel, setCarousel] = useState(true)
   const [notify, setNotify] = useState(true)
-  // QA 이상 단계면 앞의 7개는 이미 확인된 상태로 시작한다
+  // 모듈 note의 체크리스트 진행(v2)만큼 앞에서부터 확인된 상태로 시작한다
   const [checked, setChecked] = useState<boolean[] | null>(null)
   const [prevMod, setPrevMod] = useState(mod)
   if (mod !== prevMod) {
     setPrevMod(mod)
-    setChecked(CHECKS.map((_, i) => (mod?.stage === 'qa' || mod?.stage === 'live') && i < 7))
+    if (mod) {
+      const n = checkedCount(mod.note, mod.stage)
+      setChecked(CHECKS.map((_, i) => i < n))
+      setOpenAt(defaultOpenAt(mod.note))
+    }
   }
   const [busy, setBusy] = useState<null | 'save' | 'now' | 'schedule'>(null)
 
@@ -102,6 +114,11 @@ export default function AdminModulePublishPage() {
         openAt: kind === 'now' ? new Date().toISOString() : new Date(openAt).toISOString(),
         audience,
       })
+      if (kind !== 'save') {
+        const stage: ModuleStage = kind === 'now' ? 'live' : 'scheduled'
+        await changeModuleStage(mod.id, stage)
+        setData((d) => (d ? { modules: d.modules.map((x) => (x.id === mod.id ? { ...x, stage } : x)) } : d))
+      }
       toast.show({
         title: kind === 'now' ? '지금 공개했어요' : kind === 'save' ? '예약 설정을 저장했어요' : `${openLabel(openAt)} 공개를 예약했어요`,
         description: carousel ? '홈 캐러셀 · D-10 상세에 자동 반영돼요' : undefined,
@@ -127,6 +144,7 @@ export default function AdminModulePublishPage() {
   }
 
   const character = mod ? characterOf(mod.code) : undefined
+  const subscribers = mod?.note?.match(/알림 신청\s*([\d,]+)명/)?.[1]
 
   return (
     <>
@@ -154,8 +172,12 @@ export default function AdminModulePublishPage() {
               <dt>상태</dt>
               <dd className={styles.inline}>
                 <Pill tone="warning">{STAGE_LABEL[mod.stage]}</Pill>
-                <span aria-hidden>→</span>
-                <Pill tone="indigo">{mod.stage === 'live' ? '공개 중' : '오픈 예정'}</Pill>
+                {mod.stage !== 'live' && mod.stage !== 'scheduled' && (
+                  <>
+                    <span aria-hidden>→</span>
+                    <Pill tone="indigo">오픈 예정</Pill>
+                  </>
+                )}
               </dd>
 
               <dt>
@@ -186,7 +208,7 @@ export default function AdminModulePublishPage() {
 
               <dt>오픈 알림</dt>
               <dd>
-                <Toggle className={a.switchFirst} label="오픈 즉시 앱 알림 + 이메일" checked={notify} onChange={(e) => setNotify(e.target.checked)} />
+                <Toggle className={a.switchFirst} label={subscribers ? `알림 신청자 ${subscribers}명 · 오픈 즉시 앱 + 이메일` : '오픈 즉시 앱 알림 + 이메일'} checked={notify} onChange={(e) => setNotify(e.target.checked)} />
               </dd>
             </dl>
 

@@ -169,6 +169,14 @@
 .table td.num {
   font-family: var(--font-number);
 }
+.tableCompact th,
+.tableCompact td {
+  padding: 0 var(--space-2);
+}
+.tableCompact th:first-child,
+.tableCompact td:first-child {
+  padding-left: var(--space-3);
+}
 .table td.wrap {
   white-space: normal;
 }
@@ -258,6 +266,10 @@ label.switchFirst {
   gap: var(--space-4);
   align-items: start;
 }
+/* 표가 넓은 화면(F-03 · F-08): 오른쪽 상세를 380px까지로 */
+.grid2Wide {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+}
 .stack {
   display: flex;
   flex-direction: column;
@@ -266,7 +278,8 @@ label.switchFirst {
 }
 
 @media (max-width: 1180px) {
-  .grid2 {
+  .grid2,
+  .grid2Wide {
     grid-template-columns: minmax(0, 1fr);
   }
   .search {

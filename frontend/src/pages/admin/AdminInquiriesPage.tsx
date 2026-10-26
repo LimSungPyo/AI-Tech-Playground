@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { getAdminInquiries } from '../../api'
+import { answerAdminInquiry, getAdminInquiries } from '../../api'
+import { isApiError } from '../../api/client'
 import type { AdminInquiries } from '../../api/types'
 import { timeAgo } from '../../layouts/time'
 import { Button, EmptyState, Select, Skeleton, Textarea, cx, useToast } from '../../components'
@@ -22,6 +23,8 @@ const TEMPLATES = [
 ]
 
 const isHigh = (it: Item) => it.status.includes('높음')
+/** "우선순위 높음" → "높음" */
+const priority = (it: Item) => it.status.replace('우선순위', '').trim()
 
 // W2 admin 담당 · 경로 /admin/inquiries — F-10 문의 · 신고 (?tab=report)
 export default function AdminInquiriesPage() {
@@ -29,33 +32,46 @@ export default function AdminInquiriesPage() {
   const toast = useToast()
   const [params, setParams] = useSearchParams()
   const tab: Tab = params.get('tab') === 'report' ? 'report' : params.get('tab') === 'done' ? 'done' : 'open'
-  const { data, error, reload } = useApi((signal) => getAdminInquiries(signal), [])
+  const { data, error, reload, setData } = useApi((signal) => getAdminInquiries(signal), [])
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [answered, setAnswered] = useState<string[]>([])
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [memos, setMemos] = useState<Record<string, string>>({})
   const [template, setTemplate] = useState('')
+  const [sending, setSending] = useState(false)
 
   const items = data?.items ?? []
-  const open = items.filter((i) => !answered.includes(i.id))
+  const open = items.filter((i) => !i.answer)
   const lists: Record<Tab, Item[]> = {
-    open: open.filter((i) => i.kind === 'inquiry'),
+    open,
     report: open.filter((i) => i.kind === 'report'),
-    done: items.filter((i) => answered.includes(i.id)),
+    done: items.filter((i) => i.answer),
   }
   const rows = lists[tab]
   const selected = rows.find((i) => i.id === selectedId) ?? rows[0] ?? null
-  const answer = selected ? (answers[selected.id] ?? '') : ''
+  const answer = selected ? (answers[selected.id] ?? selected.answer ?? '') : ''
+  const memo = selected ? (memos[selected.id] ?? selected.memo ?? '') : ''
 
-  const send = () => {
+  const send = async () => {
     if (!selected) return
     if (!answer.trim()) {
       toast.show({ title: '답변 내용을 입력해 주세요', tone: 'danger' })
       return
     }
-    setAnswered((x) => [...x, selected.id])
-    setSelectedId(null)
-    toast.show({ title: `${selected.id} 답변을 보냈어요`, description: '사용자 알림 센터 · 이메일로 전달돼요', tone: 'success' })
+    setSending(true)
+    try {
+      await answerAdminInquiry(selected.id, { body: answer.trim(), memo: memo.trim() || undefined })
+      setData((prev) =>
+        prev
+          ? { items: prev.items.map((i) => (i.id === selected.id ? { ...i, answer: answer.trim(), memo: memo.trim() || undefined } : i)) }
+          : prev,
+      )
+      setSelectedId(null)
+      toast.show({ title: `${selected.id} 답변을 보냈어요`, description: '사용자 알림 센터 · 이메일로 전달돼요', tone: 'success' })
+    } catch (e) {
+      toast.show({ title: '답변을 보내지 못했어요', description: isApiError(e) ? e.message : undefined, tone: 'danger' })
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -95,11 +111,11 @@ export default function AdminInquiriesPage() {
                     >
                       <span className={styles.itemTop}>
                         <span className={cx(styles.code, it.kind === 'report' && styles.codeReport)}>{it.id}</span>
-                        <Pill>{it.kind === 'report' ? '신고' : '문의'}</Pill>
+                        <Pill className={styles.category}>{it.category ?? (it.kind === 'report' ? '신고' : '문의')}</Pill>
                         <span className={styles.ago}>{timeAgo(it.createdAt)}</span>
                       </span>
                       <strong className={styles.itemTitle}>{it.title}</strong>
-                      <Pill tone={isHigh(it) ? 'danger' : 'neutral'}>{answered.includes(it.id) ? '답변 완료' : it.status}</Pill>
+                      <Pill tone={it.answer ? 'success' : isHigh(it) ? 'danger' : 'neutral'}>{it.answer ? '답변 완료' : it.status}</Pill>
                     </button>
                   </li>
                 ))}
@@ -112,22 +128,30 @@ export default function AdminInquiriesPage() {
               <div className={styles.detailHead}>
                 <span className={cx(styles.code, selected.kind === 'report' && styles.codeReport)}>{selected.id}</span>
                 <h2 className={styles.detailTitle}>{selected.title}</h2>
-                <Pill tone={isHigh(selected) ? 'danger' : 'indigo'} className={styles.priority}>
-                  {selected.status}
+                <Pill tone="indigo" className={styles.priority}>
+                  {['AI 분류', selected.category, priority(selected)].filter(Boolean).join(' · ')}
                 </Pill>
               </div>
               <div className={styles.message}>
                 <p className={a.muted}>
                   {selected.user} · {mdhm(selected.createdAt)} · {selected.kind === 'report' ? '신고' : '문의'}
                 </p>
-                <p className={styles.messageBody}>{selected.title}</p>
+                <p className={styles.messageBody}>{selected.body ?? selected.title}</p>
               </div>
 
               {tab === 'done' ? (
-                <div className={styles.sent}>
-                  <strong>보낸 답변</strong>
-                  <p>{answer}</p>
-                </div>
+                <>
+                  <div className={styles.sent}>
+                    <strong>보낸 답변</strong>
+                    <p>{answer}</p>
+                  </div>
+                  {memo && (
+                    <div className={styles.memo}>
+                      <strong>내부 메모 (사용자에게 안 보임)</strong>
+                      <p>{memo}</p>
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   <h3 className={styles.sub}>답변</h3>
@@ -153,7 +177,7 @@ export default function AdminInquiriesPage() {
                     label="내부 메모 (사용자에게 안 보임)"
                     rows={2}
                     placeholder="@담당자 후속 조치를 남겨 주세요"
-                    value={memos[selected.id] ?? ''}
+                    value={memo}
                     onChange={(e) => setMemos((s) => ({ ...s, [selected.id]: e.target.value }))}
                   />
                   <div className={styles.actions}>
@@ -168,7 +192,7 @@ export default function AdminInquiriesPage() {
                     >
                       보류
                     </Button>
-                    <Button pill={false} onClick={send}>
+                    <Button pill={false} loading={sending} onClick={() => void send()}>
                       답변 보내기
                     </Button>
                   </div>

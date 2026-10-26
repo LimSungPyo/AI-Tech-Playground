@@ -27,6 +27,8 @@ function splitAlert(text: string) {
   return m ? { label: m[1], value: m[2] } : { label: text, value: '' }
 }
 
+const SYSTEM_LABEL = { ok: '정상', warning: '주의', down: '장애' } as const
+
 const isDown = (delta: string | number) => String(delta).trim().startsWith('-')
 
 function Kpis({ kpis }: { kpis: AdminDashboard['kpis'] }) {
@@ -45,13 +47,38 @@ function Kpis({ kpis }: { kpis: AdminDashboard['kpis'] }) {
   )
 }
 
-/** 시스템 상태 — 모니터링 API가 아직 없어 Figma 고정 문구로 둔다 */
-const SYSTEM = [
-  { name: '레이더 크롤러', value: '10.13 09:00 완료 · 3,412건', level: 'ok' },
-  { name: '시뮬레이션 서버', value: 'CPU 62% · 큐 대기 14', level: 'ok' },
-  { name: '오류율', value: '0.31% (기준 0.5%)', level: 'warn' },
-  { name: '이메일 발송', value: '정상 · 지연 없음', level: 'ok' },
-] as const
+/** 전환율 선을 막대 높이 안에서 잘 보이게 0.15~0.85로 펼친다 */
+function spread(values: number[]) {
+  const lo = Math.min(...values)
+  const hi = Math.max(...values)
+  return values.map((v) => (hi > lo ? 0.15 + ((v - lo) / (hi - lo)) * 0.7 : 0.5))
+}
+
+/** F-02 "최근 7일 · DAU · 전환율". v2 dau가 없으면 신규 가입으로 대신 그린다 */
+function TrendChart({ dash }: { dash: AdminDashboard }) {
+  const dau = dash.dau ?? dash.signups
+  const peak = Math.max(...dau.map((d) => d.count))
+  const rates = dash.conversion?.map((c) => c.rate)
+  return (
+    <>
+      <BarMini
+        height={220}
+        data={dau.map((d) => ({ label: md(d.date), value: d.count, highlight: d.count === peak }))}
+        line={rates && rates.length === dau.length ? spread(rates) : undefined}
+        lineMax={1}
+        label={dash.dau ? '최근 7일 DAU와 게스트 → 회원 전환율' : '최근 7일 신규 가입 수'}
+      />
+      <p className={styles.legend}>
+        <span className={styles.legendBox} /> {dash.dau ? 'DAU' : '신규 가입'}
+        {rates && (
+          <span className={styles.legendLine}>
+            <span className={styles.legendDash} /> 게스트 → 회원 전환율
+          </span>
+        )}
+      </p>
+    </>
+  )
+}
 
 // W2 admin 담당 · 경로 /admin — F-02 대시보드
 export default function AdminDashboardPage() {
@@ -102,22 +129,14 @@ export default function AdminDashboardPage() {
             </Panel>
 
             <Panel
-              title="최근 7일 · 신규 가입"
+              title={dash.data.dau ? '최근 7일 · DAU · 전환율' : '최근 7일 · 신규 가입'}
               right={
                 <Link to="/admin/analytics" className={a.panelLink}>
                   주 단위 보기
                 </Link>
               }
             >
-              <BarMini
-                height={220}
-                data={dash.data.signups.map((s) => ({ label: md(s.date), value: s.count }))}
-                showValues
-                label="최근 7일 신규 가입 수"
-              />
-              <p className={styles.legend}>
-                <span className={styles.legendBox} /> 신규 가입
-              </p>
+              <TrendChart dash={dash.data} />
             </Panel>
           </div>
         </>
@@ -125,15 +144,26 @@ export default function AdminDashboardPage() {
 
       <div className={styles.row}>
         <Panel title="시스템 상태">
-          <ul className={styles.system}>
-            {SYSTEM.map((s) => (
-              <li key={s.name}>
-                {s.level === 'ok' ? <span className={cx(a.dot, styles.ok)} /> : <span className={styles.warnMark}>▲</span>}
-                <strong>{s.name}</strong>
-                <span>{s.value}</span>
-              </li>
-            ))}
-          </ul>
+          {dash.error ? null : !dash.data ? (
+            <Skeleton shape="text" lines={4} />
+          ) : (
+            <ul className={styles.system}>
+              {(dash.data.system ?? []).map((s) => (
+                <li key={s.name}>
+                  {s.status === 'ok' ? (
+                    <span className={cx(a.dot, styles.ok)} />
+                  ) : (
+                    <span className={cx(styles.warnMark, s.status === 'down' && styles.downMark)}>▲</span>
+                  )}
+                  <strong>
+                    {s.name}
+                    <span className="sr-only"> ({SYSTEM_LABEL[s.status]})</span>
+                  </strong>
+                  <span>{s.detail}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Panel>
 
         <Panel

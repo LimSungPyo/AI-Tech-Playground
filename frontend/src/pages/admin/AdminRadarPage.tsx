@@ -2,12 +2,13 @@ import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { decideRadar, getAdminRadar } from '../../api'
 import { isApiError } from '../../api/client'
-import type { AdminRadar, RadarCandidateStatus } from '../../api/types'
-import { Button, Icon, Textarea, cx, useModal, useToast } from '../../components'
+import type { AdminRadar, RadarCandidateStatus, RadarDecision } from '../../api/types'
+import { Button, CHARACTERS, Icon, Textarea, cx, useModal, useToast } from '../../components'
 import { useApi } from '../../hooks/useApi'
 import { CheckList, FilterPills, LoadError, PageHead, Panel, PanelSkeleton, Pill } from './components/AdminUi'
 import type { PillTone } from './components/AdminUi'
 import a from './components/admin.module.css'
+import { characterOf } from './components/format'
 import styles from './AdminRadarPage.module.css'
 
 type Candidate = AdminRadar['candidates'][number]
@@ -35,16 +36,44 @@ function parseSources(source: string) {
     })
 }
 
+/** "#003" → "#003 옥토" */
+function moduleLabel(code: string) {
+  const id = characterOf(code)
+  return id ? `${code} ${CHARACTERS[id].name}` : code
+}
+
+/** 경고 문구: v2 warning, 없으면 과장 표현 · 출처 단일을 직접 판정 */
+function warningOf(c: Candidate) {
+  if (c.warning) return c.warning
+  const hype = HYPE.some((h) => c.keyword.includes(h))
+  const single = parseSources(c.source).length < 2
+  return [hype && '과장', single && '출처 단일'].filter(Boolean).join(' · ')
+}
+
+/** 상태 배지. 대기 중 병합 제안이 있으면 "병합 제안", 경고로 제외됐으면 "제외 권장" */
+function statusOf(c: Candidate): { label: string; tone: PillTone } {
+  if (c.status === 'pending' && c.mergeInto) return { label: '병합 제안', tone: 'indigo' }
+  if (c.status === 'rejected' && c.warning) return { label: '제외 권장', tone: 'danger' }
+  return STATUS[c.status]
+}
+
 function qualityChecks(c: Candidate, all: Candidate[]) {
   const words = c.keyword.toLowerCase().split(/\s+/)
+  // 병합 제안으로 이미 묶인 후보(mergeInto)는 중복으로 보지 않는다
   const duplicate = all.some(
-    (o) => o.id !== c.id && o.status !== 'rejected' && o.keyword.toLowerCase().split(/\s+/).some((w) => w.length > 3 && words.includes(w)),
+    (o) =>
+      o.id !== c.id &&
+      o.status !== 'rejected' &&
+      o.status !== 'merged' &&
+      o.mergeInto !== c.id &&
+      c.mergeInto !== o.id &&
+      o.keyword.toLowerCase().split(/\s+/).some((w) => w.length > 3 && words.includes(w)),
   )
   return [
     { label: '출처 3종 이상', ok: parseSources(c.source).length >= 3 },
     { label: '중복 키워드 없음', ok: !duplicate },
     { label: '과장 표현 0건', ok: !HYPE.some((h) => c.keyword.includes(h)) },
-    { label: '점수 0.6 이상', ok: c.score >= 0.6 },
+    { label: '연결 모듈 지정', ok: Boolean(c.linkedModule) },
   ]
 }
 
@@ -70,12 +99,14 @@ export default function AdminRadarPage() {
   const rows = filter === 'all' ? candidates : candidates.filter((c) => c.status === filter)
   const selected = candidates.find((c) => c.id === selectedId) ?? rows[0] ?? null
 
-  const decide = async (c: Candidate, decision: 'approved' | 'rejected', message?: string) => {
+  const decide = async (c: Candidate, decision: RadarDecision, message?: string, mergeInto?: string) => {
     setBusy(true)
     try {
-      await decideRadar(c.id, decision)
+      await decideRadar(c.id, decision, mergeInto)
       setData((prev) =>
-        prev ? { candidates: prev.candidates.map((x) => (x.id === c.id ? { ...x, status: decision } : x)) } : prev,
+        prev
+          ? { candidates: prev.candidates.map((x) => (x.id === c.id ? { ...x, status: decision, mergeInto: mergeInto ?? x.mergeInto } : x)) }
+          : prev,
       )
       toast.show({
         title: message ?? (decision === 'approved' ? `"${c.keyword}" 승인했어요` : `"${c.keyword}" 제외했어요`),
@@ -92,15 +123,17 @@ export default function AdminRadarPage() {
   }
 
   const merge = async (c: Candidate) => {
-    const targets = candidates.filter((x) => x.id !== c.id && x.status !== 'rejected')
+    const targets = candidates
+      .filter((x) => x.id !== c.id && x.status !== 'rejected' && x.status !== 'merged')
+      .sort((x, y) => Number(y.id === c.mergeInto) - Number(x.id === c.mergeInto))
     const to = await modal.actionSheet({
       title: `"${c.keyword}"를 어느 키워드에 합칠까요?`,
       message: '병합하면 이 후보는 목록에서 빠지고 출처가 대상 키워드로 옮겨져요.',
-      options: targets.map((x) => ({ value: x.id, label: x.keyword })),
+      options: targets.map((x) => ({ value: x.id, label: x.id === c.mergeInto ? `${x.keyword} (제안)` : x.keyword })),
       cancelLabel: '취소',
     })
     const target = targets.find((x) => x.id === to)
-    if (target) await decide(c, 'rejected', `${c.keyword} → ${target.keyword} 병합했어요`)
+    if (target) await decide(c, 'merged', `${c.keyword} → ${target.keyword} 병합했어요`, target.id)
   }
 
   const publish = async () => {
@@ -158,12 +191,12 @@ export default function AdminRadarPage() {
       {error ? (
         <LoadError error={error} onRetry={reload} />
       ) : !data ? (
-        <div className={a.grid2}>
+        <div className={cx(a.grid2, a.grid2Wide)}>
           <PanelSkeleton height={320} />
           <PanelSkeleton height={320} />
         </div>
       ) : (
-        <div className={a.grid2}>
+        <div className={cx(a.grid2, a.grid2Wide)}>
           <Panel>
             <div className={styles.tableHead}>
               <FilterPills<Filter>
@@ -175,25 +208,29 @@ export default function AdminRadarPage() {
                   { value: 'pending', label: '대기', count: count('pending') },
                   { value: 'approved', label: '승인', count: count('approved') },
                   { value: 'rejected', label: '제외', count: count('rejected') },
+                  ...(count('merged') ? [{ value: 'merged' as const, label: '병합', count: count('merged') }] : []),
                 ]}
               />
               <span className={a.muted}>점수 = 증가율 × 출처 다양성 × 최신성</span>
             </div>
             <div className={a.tableWrap}>
-              <table className={a.table}>
+              <table className={cx(a.table, a.tableCompact)}>
                 <thead>
                   <tr>
                     <th>키워드</th>
                     <th>점수</th>
+                    <th>상승</th>
                     <th>출처</th>
-                    <th>경고</th>
+                    <th>병합 · 경고</th>
+                    <th>연결 모듈</th>
                     <th>상태</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((c) => {
-                    const hype = HYPE.some((h) => c.keyword.includes(h))
-                    const single = parseSources(c.source).length < 2
+                    const warning = warningOf(c)
+                    const mergeTarget = candidates.find((x) => x.id === c.mergeInto)
+                    const st = statusOf(c)
                     return (
                       <tr
                         key={c.id}
@@ -207,16 +244,20 @@ export default function AdminRadarPage() {
                           </button>
                         </td>
                         <td className={a.num}>{c.score.toFixed(2)}</td>
-                        <td>{c.source}</td>
+                        <td className={a.num}>{c.growth !== undefined ? `▲${c.growth}%` : '—'}</td>
+                        <td className={a.wrap}>{c.source}</td>
                         <td>
-                          {hype || single ? (
-                            <Pill tone="danger">{[hype && '과장', single && '출처 단일'].filter(Boolean).join(' · ')}</Pill>
+                          {mergeTarget ? (
+                            <Pill tone="indigo">→ {mergeTarget.keyword} 병합</Pill>
+                          ) : warning ? (
+                            <Pill tone="danger">{warning}</Pill>
                           ) : (
                             '—'
                           )}
                         </td>
+                        <td>{c.linkedModule ? moduleLabel(c.linkedModule) : '—'}</td>
                         <td>
-                          <Pill tone={STATUS[c.status].tone}>{STATUS[c.status].label}</Pill>
+                          <Pill tone={st.tone}>{st.label}</Pill>
                         </td>
                       </tr>
                     )
@@ -246,7 +287,9 @@ export default function AdminRadarPage() {
               <h2 className={styles.keyword}>{selected.keyword}</h2>
               <div className={styles.badges}>
                 <Pill tone="dark">점수 {selected.score.toFixed(2)}</Pill>
-                <Pill tone={STATUS[selected.status].tone}>{STATUS[selected.status].label}</Pill>
+                {selected.growth !== undefined && <Pill tone="success">▲{selected.growth}%</Pill>}
+                {selected.linkedModule && <Pill tone="indigo">{moduleLabel(selected.linkedModule)}</Pill>}
+                <Pill tone={statusOf(selected).tone}>{statusOf(selected).label}</Pill>
               </div>
 
               <h3 className={styles.sub}>출처 분포</h3>
@@ -270,7 +313,7 @@ export default function AdminRadarPage() {
               <h3 className={styles.sub}>품질 체크</h3>
               <CheckList items={qualityChecks(selected, candidates)} />
 
-              <Button block pill={false} disabled={busy || selected.status === 'rejected'} onClick={() => void approveAndDraft(selected)}>
+              <Button block pill={false} disabled={busy || selected.status === 'rejected' || selected.status === 'merged'} onClick={() => void approveAndDraft(selected)}>
                 승인하고 기술 카드 초안 만들기 →
               </Button>
             </Panel>

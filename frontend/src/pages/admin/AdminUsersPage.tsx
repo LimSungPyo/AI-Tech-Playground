@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { getAdminUsers } from '../../api'
 import type { AdminUserAction, AdminUserStatus, AdminUsers } from '../../api/types'
-import { Avatar, Button, EmptyState, Icon, Input, Skeleton, cx } from '../../components'
+import { Avatar, Button, CHARACTERS, Character, EmptyState, Icon, Input, Skeleton, cx } from '../../components'
 import { useApi } from '../../hooks/useApi'
 import { AccountActionModal } from './components/AccountActionModal'
 import { FilterPills, LoadError, PageHead, Panel, Pill } from './components/AdminUi'
@@ -21,19 +21,36 @@ const STATUS: Record<AdminUserStatus, { label: string; tone: PillTone }> = {
   withdrawing: { label: '탈퇴 유예', tone: 'warning' },
 }
 
-/** 상태별로 할 수 있는 계정 조치 */
-function actionsFor(status: AdminUserStatus): { action: AdminUserAction; label: string; variant: 'primary' | 'secondary' | 'danger' }[] {
+type ActionButton = { action: AdminUserAction; label: string; variant: 'primary' | 'secondary' | 'danger' | 'softDanger' }
+const RESET: ActionButton = { action: 'reset_password', label: '비밀번호 재설정 메일 보내기', variant: 'secondary' }
+const WIPE: ActionButton = { action: 'wipe', label: '학습 기록 초기화', variant: 'softDanger' }
+
+/** 상태별로 할 수 있는 계정 조치(F-08) */
+function actionsFor(status: AdminUserStatus): ActionButton[] {
   switch (status) {
     case 'withdrawing':
-      return [{ action: 'restore', label: '탈퇴 유예 복구', variant: 'primary' }]
+      return [
+        { action: 'restore', label: '탈퇴 유예 복구', variant: 'primary' },
+        RESET,
+        { action: 'unlock', label: '잠금 해제', variant: 'secondary' },
+        WIPE,
+      ]
     case 'suspended':
-      return [{ action: 'restore', label: '잠금 해제', variant: 'primary' }]
+      return [{ action: 'unlock', label: '잠금 해제', variant: 'primary' }, RESET, WIPE]
     default:
       return [
         { action: 'warn', label: '경고 보내기', variant: 'secondary' },
+        RESET,
         { action: 'suspend', label: '계정 잠금', variant: 'danger' },
+        WIPE,
       ]
   }
+}
+
+/** "Lv.7 · 웜이" */
+function levelPartner(u: User) {
+  const parts = [u.level !== undefined && `Lv.${u.level}`, u.partner && CHARACTERS[u.partner].name].filter(Boolean)
+  return parts.length ? parts.join(' · ') : '—'
 }
 
 function UserDetail({ user, onAction }: { user: User; onAction: (a: AdminUserAction) => void }) {
@@ -41,7 +58,13 @@ function UserDetail({ user, onAction }: { user: User; onAction: (a: AdminUserAct
   return (
     <Panel className={styles.detail}>
       <div className={styles.who}>
-        <Avatar name={user.nickname} size={56} />
+        {user.partner ? (
+          <span className={styles.partner}>
+            <Character id={user.partner} size={48} />
+          </span>
+        ) : (
+          <Avatar name={user.nickname} size={56} />
+        )}
         <div>
           <h2 className={styles.name}>{user.nickname}</h2>
           <p className={a.muted}>{user.email}</p>
@@ -66,11 +89,20 @@ function UserDetail({ user, onAction }: { user: User; onAction: (a: AdminUserAct
         <dd>{user.joinedAt}</dd>
         <dt>최근 접속</dt>
         <dd>{mdhm(user.lastSeenAt)}</dd>
+        <dt>레벨 · 파트너</dt>
+        <dd>{levelPartner(user)}</dd>
       </dl>
       <h3 className={styles.sub}>계정 조치</h3>
       <div className={styles.actions}>
         {actionsFor(user.status).map((x) => (
-          <Button key={x.action} block pill={false} variant={x.variant} onClick={() => onAction(x.action)}>
+          <Button
+            key={x.action}
+            block
+            pill={false}
+            variant={x.variant === 'softDanger' ? 'secondary' : x.variant}
+            className={cx(x.variant === 'softDanger' && styles.softDanger)}
+            onClick={() => onAction(x.action)}
+          >
             {x.label}
           </Button>
         ))}
@@ -102,7 +134,8 @@ export default function AdminUsersPage() {
   const selected = users.find((u) => u.id === selectedId) ?? rows[0] ?? null
 
   const applyAction = (u: User, action: AdminUserAction) => {
-    const status: AdminUserStatus | null = action === 'restore' ? 'active' : action === 'suspend' ? 'suspended' : null
+    const status: AdminUserStatus | null =
+      action === 'restore' || action === 'unlock' ? 'active' : action === 'suspend' ? 'suspended' : null
     if (status) setData((prev) => (prev ? { users: prev.users.map((x) => (x.id === u.id ? { ...x, status } : x)) } : prev))
   }
 
@@ -144,7 +177,7 @@ export default function AdminUsersPage() {
       {error ? (
         <LoadError error={error} onRetry={reload} />
       ) : (
-        <div className={a.grid2}>
+        <div className={cx(a.grid2, a.grid2Wide)}>
           <Panel>
             {!data ? (
               <Skeleton shape="text" lines={6} />
@@ -152,7 +185,7 @@ export default function AdminUsersPage() {
               <EmptyState expression="sleep" title="찾는 사용자가 없어요" description={q ? `"${q}" 검색 결과가 없어요.` : undefined} compact />
             ) : (
               <div className={a.tableWrap}>
-                <table className={a.table}>
+                <table className={cx(a.table, a.tableCompact)}>
                   <thead>
                     <tr>
                       <th>닉네임</th>
@@ -160,6 +193,7 @@ export default function AdminUsersPage() {
                       <th>상태</th>
                       <th>가입</th>
                       <th>마지막 접속</th>
+                      <th>레벨 · 파트너</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -176,6 +210,7 @@ export default function AdminUsersPage() {
                         </td>
                         <td className={a.num}>{md(u.joinedAt)}</td>
                         <td>{lastSeen(u.lastSeenAt)}</td>
+                        <td>{levelPartner(u)}</td>
                       </tr>
                     ))}
                   </tbody>

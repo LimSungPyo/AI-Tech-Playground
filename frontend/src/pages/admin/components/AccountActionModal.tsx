@@ -25,7 +25,6 @@ const ACTION_COPY: Record<AdminUserAction, { title: (u: User) => string; button:
     button: '경고 보내기',
     effects: ['알림 센터 · 이메일로 경고 안내 발송', '같은 사유로 3회 누적되면 잠금 검토 대상'],
   },
-  // v2 계약에 추가된 조치(화면 연결은 다음 단계)
   reset_password: {
     title: () => '비밀번호 재설정 메일을 보낼까요?',
     button: '메일 보내기',
@@ -34,7 +33,7 @@ const ACTION_COPY: Record<AdminUserAction, { title: (u: User) => string; button:
   unlock: {
     title: () => '계정 잠금을 해제할까요?',
     button: '잠금 해제',
-    effects: ['계정 상태 → 활성', '로그인 실패 횟수 초기화'],
+    effects: ['계정 상태 → 활성', '로그인 실패 횟수 초기화', '사용자에게 "잠금이 풀렸어요" 이메일 발송'],
   },
   wipe: {
     title: () => '학습 기록을 초기화할까요?',
