@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { trainBatch } from '../../../api'
-import type { BatchTraining as Batch, NeuronActivation, Point } from '../../../api'
+import type { BatchTraining as Batch, Point } from '../../../api'
 import { Badge, Button, EmptyState, GlassCard, LineChart, Mascot, ProgressBar, cx } from '../../../components'
-import { connectionChanges, fmtDelta, neuronName } from '../lib'
+import { fmtDelta } from '../lib'
 import { MiniScene } from './MiniScene'
 import { PlayHeader, TrialCounter } from './PlayHeader'
 import styles from './BatchTraining.module.css'
@@ -19,7 +19,9 @@ export interface BatchTrainingProps {
   /** 묶음 시작 전 회차 · 성공률 */
   startTrial: number
   startRate: number
-  neurons?: NeuronActivation[]
+  /** 미니 리플레이에 찍을 먹이 위치(지금 미션 장면) */
+  food?: Point
+  /** 묶음 응답이 오기 전 말풍선(직전 회차 일지) */
   monologue?: string
   isMember: boolean
   /** 나가기 확인 중에는 진행을 멈춘다 */
@@ -31,15 +33,6 @@ export interface BatchTrainingProps {
   /** 묶음 완료 후 플레이로 돌아가기 */
   onFinish: (batch: Batch) => void
   onError: (e: unknown, retry: () => void) => void
-}
-
-// 회차마다 조금씩 다른 미니 경로(장면 설계값 — 백엔드가 회차별 경로를 주지 않는다)
-function miniPath(trial: number): Point[] {
-  const bend = ((trial * 37) % 11) - 5
-  return Array.from({ length: 12 }, (_, i) => {
-    const t = i / 11
-    return { x: 16 + 70 * t, y: 72 - 50 * (3 * t * t - 2 * t * t * t) + Math.sin(t * Math.PI) * bend }
-  })
 }
 
 /** B-06 ×10 훈련 — 10개 회차를 빠르게 돌리며 미니 결과가 차례로 채워진다 */
@@ -82,7 +75,8 @@ export function BatchTraining(p: BatchTrainingProps) {
   const to = batch?.toTrial ?? startTrial + COUNT
   const shown = batch?.trials.slice(0, revealed) ?? []
   const nowRate = shown.length ? shown[shown.length - 1].successRate : startRate
-  const changes = p.neurons?.length ? connectionChanges(p.neurons) : []
+  const changes = batch?.connections ?? []
+  const monologue = batch?.journal ?? p.monologue
   const maxChange = Math.max(0.01, ...changes.map((c) => Math.abs(c.delta)))
 
   return (
@@ -123,14 +117,14 @@ export function BatchTraining(p: BatchTrainingProps) {
             {Array.from({ length: total }, (_, i) => {
               const trial = from + i
               const item = batch?.trials[i]
-              const prev = i === 0 ? startRate : batch?.trials[i - 1]?.successRate ?? startRate
               const done = i < revealed
               const current = i === revealed && running
-              const success = item ? item.successRate >= prev : true
+              const success = item?.success ?? true
               return (
                 <li key={trial} className={cx(styles.tile, current && styles.tileCurrent)}>
                   <MiniScene
-                    path={miniPath(trial)}
+                    path={item?.path}
+                    food={p.food}
                     tone={success ? 'success' : 'fail'}
                     reach={done ? (success ? 1 : 0.7) : 0.55}
                     obstacle={done && !success}
@@ -139,7 +133,7 @@ export function BatchTraining(p: BatchTrainingProps) {
                   <span className={styles.tileFoot}>
                     <strong>T{trial}</strong>
                     {done && item ? (
-                      <Badge tone={success ? 'success' : 'danger'}>{success ? `성공 · ${Math.round(item.successRate)}%` : '실패'}</Badge>
+                      <Badge tone={success ? 'success' : 'danger'}>{success ? (item.timeSec !== undefined ? `성공 · ${item.timeSec}s` : '성공') : '실패'}</Badge>
                     ) : current ? (
                       <Badge tone="indigo">진행 중</Badge>
                     ) : (
@@ -197,9 +191,7 @@ export function BatchTraining(p: BatchTrainingProps) {
               <ul className={styles.changes}>
                 {changes.map((c) => (
                   <li key={`${c.from}-${c.to}`}>
-                    <span>
-                      {neuronName(c.from)} → {neuronName(c.to)}
-                    </span>
+                    <span>{c.label}</span>
                     <span className={styles.changeTrack}>
                       <span
                         className={c.delta >= 0 ? styles.changePlus : styles.changeMinus}
@@ -214,13 +206,13 @@ export function BatchTraining(p: BatchTrainingProps) {
                 ))}
               </ul>
             ) : (
-              <EmptyState compact expression="neuron" title="1회 실행을 해 보면 연결 변화를 보여 줄게요" />
+              <EmptyState compact expression="neuron" title="훈련 결과가 오면 연결 변화를 보여 줄게요" />
             )}
           </GlassCard>
 
           <GlassCard padding="md" className={styles.talk}>
             <Mascot expression="training" size={112} alt="" float={running} />
-            {p.monologue && <p className={styles.bubble}>"{p.monologue}"</p>}
+            {monologue && <p className={styles.bubble}>"{monologue}"</p>}
           </GlassCard>
         </aside>
       </div>

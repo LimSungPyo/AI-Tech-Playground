@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { getExperiment, getMissionClear, getReport, shareExperiment } from '../../api'
 import { Button, CHARACTERS, EmptyState, Icon, Mascot, Skeleton, cx, useToast } from '../../components'
 import { useApi } from '../../hooks/useApi'
-import { loadPrediction, parseRange } from './lib'
+import { compactRange } from './lib'
 import styles from './MissionClearPage.module.css'
 
 // 미션별 축하 제목(화면 고정 카피). 없으면 일반 문장
@@ -63,16 +63,13 @@ export default function MissionClearPage() {
     )
   }
 
-  const { mission, rate, unlocked, badge } = clear.data
+  const { mission, rate, unlocked, badge, firstSuccessTrial: firstSuccess, myPrediction: prediction, predictionCorrect: correct } = clear.data
   const experiment = exp.data
   const index = Math.max(0, experiment.missions.findIndex((m) => m.id === mission.id))
   const name = CHARACTERS[experiment.character]?.name ?? '드로시'
-  const firstSuccess = report.data?.events[index]?.trial
+  // 첫 성공의 행동 설명("처음으로 먹이까지 직진")은 리포트 사건 목록에서 가져온다
   const eventLabel = report.data?.events[index]?.label ?? '성공'
   const firstLabel = eventLabel.startsWith('처음') ? eventLabel : `처음으로 ${eventLabel}`
-  const prediction = loadPrediction(id, mission.id)
-  const range = prediction ? parseRange(prediction) : null
-  const correct = range && firstSuccess !== undefined ? firstSuccess >= range[0] && firstSuccess <= range[1] : undefined
   const nextMission = unlocked.find((u) => u.kind === 'mission')
   const chips = [
     ...unlocked.filter((u) => u.kind !== 'card').map((u) => u.title),
@@ -134,9 +131,9 @@ export default function MissionClearPage() {
           </div>
           <div className={cx(styles.stat, styles.statPredict)}>
             <small>내 예측</small>
-            <strong>{prediction ?? '—'}</strong>
+            <strong>{prediction ? compactRange(prediction) : '—'}</strong>
             <span>
-              {prediction === null ? '예측하지 않았어요' : correct === undefined ? '결과 확인 중' : correct ? '정답이에요!' : '아쉽게 빗나갔어요'}
+              {!prediction ? '예측하지 않았어요' : correct == null ? '결과 확인 중' : correct ? '정답이에요!' : '아쉽게 빗나갔어요'}
             </span>
           </div>
         </div>

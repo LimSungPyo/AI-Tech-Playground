@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { getWhy } from '../../../api'
-import type { NeuronActivation, SkillLevel, WhyExplanation } from '../../../api'
+import type { NeuronActivation, SkillLevel } from '../../../api'
 import { Button, Drawer, EmptyState, Mascot, SegmentedControl, Skeleton } from '../../../components'
 import { useApi } from '../../../hooks/useApi'
 import { neuronName } from '../lib'
 import { NeuralNet } from './NeuralNet'
 import styles from './WhyDrawer.module.css'
-
-/** 백엔드가 회차별 유사 경험을 주면 그대로 그린다(아직 계약에 없음 — 공통 변경 요청) */
-type WhyWithCases = WhyExplanation & { similarCases?: { trial: number; similarity: number; reward: number }[] }
 
 const LEVELS: { value: SkillLevel; label: string }[] = [
   { value: 'beginner', label: '쉬운 말' },
@@ -21,6 +18,8 @@ export interface WhyDrawerProps {
   onClose: () => void
   experimentId: string
   trial: number
+  /** 머리글에 보일 회차(게스트는 체험 순번). 없으면 trial */
+  trialLabel?: number
   step?: number
   /** 재생한 회차의 뉴런 활성도(없으면 경로만 강조) */
   neurons?: NeuronActivation[]
@@ -30,13 +29,14 @@ export interface WhyDrawerProps {
 }
 
 /** B-05 WHY? 딥다이브 — 오른쪽 서랍. 쉬운 말 / 자세히 / 숫자만 = GET .../why?level= */
-export function WhyDrawer({ open, onClose, experimentId, trial, step, neurons, defaultLevel = 'beginner', cardId, onReplay }: WhyDrawerProps) {
+export function WhyDrawer({ open, onClose, experimentId, trial, trialLabel = trial, step, neurons, defaultLevel = 'beginner', cardId, onReplay }: WhyDrawerProps) {
   const [level, setLevel] = useState<SkillLevel>(defaultLevel)
-  const { data, error, loading, reload } = useApi<WhyWithCases>(
+  const { data, error, loading, reload } = useApi(
     open ? (signal) => getWhy(experimentId, trial, level, signal) : null,
     [open, experimentId, trial, level],
   )
   const act = (id: string) => neurons?.find((n) => n.id === id)?.activation
+  const at = data?.step ?? step
 
   return (
     <Drawer
@@ -47,8 +47,8 @@ export function WhyDrawer({ open, onClose, experimentId, trial, step, neurons, d
       title={<span className={styles.title}>WHY?</span>}
       description={
         <span className={styles.meta}>
-          TRIAL {trial}
-          {step !== undefined && ` · STEP ${step}`} · 0.4초 전의 선택
+          TRIAL {trialLabel}
+          {at !== undefined && ` · STEP ${at}`} · 0.4초 전의 선택
         </span>
       }
     >

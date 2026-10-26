@@ -1,6 +1,6 @@
 import type { WhyExplanation } from '../../../api'
 import { Mascot } from '../../../components'
-import { withRo } from '../lib'
+import { fmtDelta, withRo } from '../lib'
 import styles from './WhyCard.module.css'
 
 export interface WhyCardProps {
@@ -13,6 +13,8 @@ export interface WhyCardProps {
 /** 게임 화면 위 "WHY? 판단 근거" 카드(B-04 ③). 누르면 WHY? 딥다이브가 열린다 */
 export function WhyCard({ why, trial, step, onOpen }: WhyCardProps) {
   const top = why.choices[0]
+  // 설명이 가리키는 순간(STEP)은 응답 값을 먼저 쓴다
+  const at = why.step ?? step
   return (
     <button type="button" className={styles.card} onClick={onOpen} aria-label="WHY? 딥다이브 열기">
       <span className={styles.head}>
@@ -21,7 +23,7 @@ export function WhyCard({ why, trial, step, onOpen }: WhyCardProps) {
           <strong className={styles.title}>WHY? 왜 {top ? withRo(top.label) : '그쪽으로'} 갔을까?</strong>
           <span className={styles.meta}>
             TRIAL {trial}
-            {step !== undefined && ` · STEP ${step}`}
+            {at !== undefined && ` · STEP ${at}`}
           </span>
         </span>
       </span>
@@ -39,6 +41,7 @@ export function WhyCard({ why, trial, step, onOpen }: WhyCardProps) {
       </span>
       <span className={styles.foot}>
         근거 · 유사 상황 {why.similarExperiences}회 · 유사도 {Math.round(why.similarity)}%
+        {why.reward !== undefined && ` · 보상 ${fmtDelta(why.reward)}`}
       </span>
     </button>
   )
