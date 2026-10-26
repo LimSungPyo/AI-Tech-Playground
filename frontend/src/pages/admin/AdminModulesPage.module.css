@@ -1,0 +1,105 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(170px, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--color-track);
+}
+.column[data-stage='live'] {
+  background: var(--color-accent-success-soft);
+}
+.colHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-1) 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.count {
+  min-width: 24px;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-glass-solid);
+  font-family: var(--font-number);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-glass-solid);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-fast) var(--motion-ease);
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glass);
+}
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.noChar {
+  width: 28px;
+  height: 28px;
+}
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-link);
+}
+.badge {
+  margin-left: auto;
+}
+.cardTitle {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.empty {
+  padding: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+.note {
+  margin-top: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-accent-warning-soft);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}

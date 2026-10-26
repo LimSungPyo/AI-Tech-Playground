@@ -1,0 +1,122 @@
+.slides {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.slide {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+  background: var(--color-glass-solid);
+  transition: opacity var(--motion-fast) var(--motion-ease);
+}
+.hidden {
+  background: var(--color-admin-bg);
+}
+.hidden .slideText,
+.hidden img {
+  opacity: 0.55;
+}
+.order {
+  display: flex;
+  flex-direction: column;
+}
+.slideText {
+  flex: 1;
+  min-width: 0;
+}
+.slideText strong {
+  display: block;
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.slideText small {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.rule {
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+.saveRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-3);
+}
+
+.vote {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 var(--space-4);
+}
+.vote li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.voteBody {
+  flex: 1;
+  min-width: 0;
+}
+.voteLine {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}
+.pct {
+  font-family: var(--font-number);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-secondary);
+}
+.bar {
+  display: block;
+  height: 8px;
+  margin-top: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--color-track);
+  overflow: hidden;
+}
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-text-tertiary);
+}
+.lead .bar span {
+  background: var(--color-accent-indigo);
+}
+.lead .pct {
+  color: var(--color-accent-indigo);
+}
+.voteActions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.next {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.next li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-admin-bg);
+}
+.slide label.toggle {
+  width: auto;
+  flex-shrink: 0;
+}

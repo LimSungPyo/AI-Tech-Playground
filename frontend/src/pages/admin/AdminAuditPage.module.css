@@ -1,0 +1,44 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+tr > th.center,
+tr > td.center {
+  text-align: center;
+}
+.ok {
+  color: var(--color-accent-success);
+}
+.no {
+  color: var(--color-text-tertiary);
+}
+.admins {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.admins li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-admin-bg);
+  font-size: var(--text-sm);
+}
+.admins li > :last-child {
+  margin-left: auto;
+}
+.inviteForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: left;
+}
+tr > td.center svg {
+  display: inline-block;
+  vertical-align: middle;
+}
