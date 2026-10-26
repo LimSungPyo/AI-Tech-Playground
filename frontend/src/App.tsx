@@ -1,15 +1,11 @@
-import { useState } from 'react'
-import './App.css'
+import { RouterProvider } from 'react-router'
+import { AuthProvider } from './auth/AuthProvider'
+import { router } from './router'
 
-function App() {
-  const [count, setCount] = useState(0);
-
+export default function App() {
   return (
-    <main>
-      <h1>AI Tech Playground</h1>
-      <p>Welcome to our AI Tech Playground. 여러분의 꿈을 펼치세요!!</p>
-    </main>
-  );
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  )
 }
-
-export default App
