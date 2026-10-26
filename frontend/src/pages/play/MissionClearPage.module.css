@@ -1,0 +1,210 @@
+.page {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-10) 0 var(--space-16);
+  overflow: hidden;
+}
+
+.card {
+  composes: glass from '../../components/glass.module.css';
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  width: min(760px, 100%);
+  padding: var(--space-12) var(--space-12) var(--space-10);
+  border-radius: calc(var(--radius-popup) * 1.6);
+  background: var(--glass-sheen), var(--color-glass-solid);
+  text-align: center;
+  animation: rise 420ms var(--motion-ease-out);
+}
+.mascot {
+  animation: bounce 1.6s var(--motion-ease) 400ms both;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  color: var(--color-text-link);
+}
+.h1 {
+  margin: 0;
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-black);
+  letter-spacing: -0.02em;
+}
+.lead {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-2);
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--color-glass-clear);
+  box-shadow: var(--shadow-soft);
+}
+.stat small {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.stat strong {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+}
+.stat span {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+.statPredict {
+  box-shadow:
+    inset 0 0 0 2px var(--color-accent-indigo),
+    var(--shadow-soft);
+}
+.statPredict strong,
+.statPredict span {
+  color: var(--color-text-link);
+}
+
+.unlocked {
+  width: 100%;
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--color-accent-indigo-soft);
+  text-align: left;
+}
+.unlockedLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-link);
+}
+.unlocked ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.unlocked li {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-glass-solid);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-2);
+}
+.spacer {
+  flex: 1;
+}
+.more {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* 컨페티(CSS만) */
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.piece {
+  position: absolute;
+  top: -24px;
+  width: 6px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0.85;
+  animation-name: fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.indigo {
+  background: var(--color-accent-indigo-light);
+}
+.yellow {
+  background: var(--color-accent-why);
+}
+.green {
+  background: var(--color-accent-success);
+}
+.orange {
+  background: var(--color-accent-warning);
+}
+.pink {
+  background: var(--color-accent-pink);
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(110vh) rotate(540deg);
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-14px);
+  }
+  55% {
+    transform: translateY(0);
+  }
+  70% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: var(--space-8) var(--space-5);
+  }
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .mascot {
+    animation: none;
+  }
+  .piece {
+    display: none;
+  }
+}
