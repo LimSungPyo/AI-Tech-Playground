@@ -1,0 +1,161 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-2) var(--space-4) var(--space-16);
+}
+.heroSkeleton {
+  border-radius: var(--radius-card-lg);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.eyebrowRight {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  color: var(--color-text-link);
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.stepItem {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.step {
+  composes: glassFlat from '../../components/glass.module.css';
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-card);
+}
+.stepNo {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text-link);
+}
+.stepLabel {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.stepArrow {
+  padding: 0 var(--space-4);
+  font-size: var(--text-xl);
+  color: var(--color-text-tertiary);
+}
+
+.friends {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.friend {
+  composes: glassFlat from '../../components/glass.module.css';
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-2) var(--space-4);
+  border-radius: var(--radius-card);
+  text-align: center;
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+.friend:hover {
+  transform: translateY(-2px);
+}
+.friend[data-locked] {
+  opacity: 0.62;
+}
+.friendName {
+  margin-top: var(--space-2);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.friend[data-locked] .friendName,
+.friend[data-locked] .friendTopic {
+  color: var(--color-text-tertiary);
+}
+.friendTopic {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-link);
+}
+
+.guest {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-8) var(--space-8) var(--space-10);
+  border-radius: var(--radius-card-lg);
+  background: var(--color-glass-dark);
+  box-shadow: var(--shadow-glass);
+  color: var(--color-text-on-tint);
+}
+.guestMascot {
+  flex: none;
+}
+.guestText {
+  flex: 1;
+  min-width: 0;
+}
+.guestEyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  color: var(--color-accent-cyan);
+}
+.guestTitle {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-black);
+}
+.guestDesc {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-md);
+  color: var(--color-text-on-dark-secondary);
+}
+.guestActions {
+  display: flex;
+  gap: var(--space-3);
+  flex: none;
+}
+.guestLogin {
+  opacity: 0.85;
+}
+
+@media (max-width: 1024px) {
+  .friends {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .steps {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .stepItem {
+    flex: 1 1 30%;
+  }
+  .stepArrow {
+    display: none;
+  }
+  .guest {
+    flex-wrap: wrap;
+  }
+}

@@ -1,6 +1,33 @@
-import { PagePlaceholder } from '../../components'
+import { useState } from 'react'
+import { getRememberedEmail, setRememberedEmail } from '../../auth/storage'
+import { useAuth } from '../../auth/useAuth'
+import { Skeleton } from '../../components'
+import { GuestHome } from './GuestHome'
+import { MemberHome } from './MemberHome'
+import styles from './HomePage.module.css'
 
 // W2 hub 담당 · 경로 /
+// 회원 → B-02 로그인 홈(첫 실험 전이면 E-03), 비회원 + 기억된 이메일 → 07:M-01, 그 외 → 0-01
 export default function HomePage() {
-  return <PagePlaceholder title="0-01 홈 (비회원 · 자동 캐러셀) · M-01 홈 (기억된 회원) · B-02 로그인 홈 · E-03 첫 실험 전" frame="65:6758 · 68:7478 · 60:8608 · 70:8485" />
+  const { status } = useAuth()
+  const [remembered, setRemembered] = useState(getRememberedEmail)
+
+  if (status === 'loading') {
+    return (
+      <div className={styles.loading} aria-busy>
+        <Skeleton height={48} width="50%" />
+        <Skeleton height={420} />
+      </div>
+    )
+  }
+  if (status === 'member') return <MemberHome />
+  return (
+    <GuestHome
+      rememberedEmail={remembered}
+      onForget={() => {
+        setRememberedEmail(null)
+        setRemembered(null)
+      }}
+    />
+  )
 }
