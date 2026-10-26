@@ -221,6 +221,8 @@ def main() -> None:
             print(f"[FAIL] {label}")
 
     # 인증
+    check("GET", "/api/auth/me", 401, token="expired-smoke", error_code="SESSION_EXPIRED")
+    check("POST", "/api/experiments/001/trials", 401, {"missionId": "m1", "speed": 1}, token="expired-smoke", error_code="SESSION_EXPIRED")
     locked = call("POST", "/api/auth/login", {"email": "hyewon@playground.ai", "password": "locked", "remember": False})[1]
     expect("2026-10-17T14:30" not in json.dumps(locked), "login 423: unlockAt이 지금+10분이 아님")
     login = check("POST", "/api/auth/login", body={"email": "hyewon@playground.ai", "password": "pw1234!", "remember": True}, keys=("user",))
