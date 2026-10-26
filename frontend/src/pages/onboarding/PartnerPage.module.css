@@ -1,0 +1,289 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) 0 var(--space-16);
+}
+.topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.progress {
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+}
+.h1 {
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-black);
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+.answers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.answersLabel {
+  margin-right: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+.answer {
+  composes: glassFlat from '../../components/glass.module.css';
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  color: var(--color-text-primary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+  align-items: start;
+}
+
+.main {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: var(--space-8);
+  box-shadow:
+    inset 0 0 0 2px var(--color-accent-indigo),
+    var(--shadow-glass);
+}
+.portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 360px;
+  border-radius: var(--radius-card);
+  background: var(--color-accent-pink-soft);
+}
+.score {
+  position: absolute;
+  bottom: var(--space-10);
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-glass-tint);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-on-tint);
+}
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.nameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.name {
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-black);
+  color: var(--color-text-primary);
+}
+.species {
+  margin: 0 var(--space-2);
+  font-size: var(--text-md);
+  color: var(--color-text-tertiary);
+}
+.exp {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-glass-dark);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text-on-tint);
+}
+.h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+.reasons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  margin: calc(var(--space-2) * -1) 0 0;
+  padding: 0;
+  font-size: var(--text-md);
+  line-height: 1.6;
+  color: var(--color-text-primary);
+}
+.reasons li {
+  display: flex;
+  gap: var(--space-3);
+}
+.tick {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: var(--color-accent-indigo);
+  color: var(--color-text-on-tint);
+}
+.quote {
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-why-soft);
+  font-size: var(--text-md);
+  line-height: 1.6;
+  color: var(--color-text-primary);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.alts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.alt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.altHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.altTitle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.altTitle strong {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-black);
+  color: var(--color-text-primary);
+}
+.altReason {
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.unmet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+.unmetHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.caption {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+.unmetGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.unmetCard {
+  composes: glass from '../../components/glass.module.css';
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-3);
+  border-radius: var(--radius-card);
+  text-align: center;
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+}
+.unmetCard .caption {
+  font-size: var(--text-xs);
+}
+.silhouette {
+  position: relative;
+  display: grid;
+  place-items: center;
+  opacity: 0.6;
+}
+.q {
+  position: absolute;
+  font-family: var(--font-number);
+  font-size: 40px;
+  font-weight: var(--weight-black);
+  color: var(--color-text-secondary);
+}
+
+.why {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+.whyEyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-link);
+}
+.formula {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-glass-dark);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--color-text-on-tint);
+}
+.terms {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  font-size: var(--text-xs);
+}
+.terms dt {
+  font-weight: var(--weight-bold);
+  color: var(--color-text-link);
+}
+.terms dd {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+.whyNote {
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+.whyResult {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-link);
+}
+
+@media (max-width: 1024px) {
+  .grid,
+  .main {
+    grid-template-columns: 1fr;
+  }
+  .unmetGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
