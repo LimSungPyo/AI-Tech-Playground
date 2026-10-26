@@ -131,6 +131,7 @@ export default function AdminHomePage() {
                     </span>
                     <Pill tone={badge.tone}>{badge.label}</Pill>
                     <Toggle
+                      className={styles.toggle}
                       aria-label={`${r.slide.title} 노출`}
                       checked={r.visible}
                       onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, visible: e.target.checked } : x)))}

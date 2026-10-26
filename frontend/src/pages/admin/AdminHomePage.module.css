@@ -116,3 +116,7 @@
   border-radius: var(--radius-sm);
   background: var(--color-admin-bg);
 }
+.slide label.toggle {
+  width: auto;
+  flex-shrink: 0;
+}

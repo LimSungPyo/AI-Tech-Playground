@@ -38,3 +38,7 @@ tr > td.center {
   gap: var(--space-3);
   text-align: left;
 }
+tr > td.center svg {
+  display: inline-block;
+  vertical-align: middle;
+}

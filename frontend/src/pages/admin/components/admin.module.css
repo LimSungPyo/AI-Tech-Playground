@@ -2,7 +2,7 @@
 
 .head {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   margin-bottom: var(--space-5);
@@ -245,7 +245,8 @@
 }
 
 /* 오른쪽 스위치(토글 글자 앞에 스위치) */
-.switchFirst {
+label.switchFirst {
+  width: auto;
   flex-direction: row-reverse;
   justify-content: flex-end;
   gap: var(--space-2);

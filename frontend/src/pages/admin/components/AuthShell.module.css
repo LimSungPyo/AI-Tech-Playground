@@ -10,7 +10,9 @@
   overflow-y: auto;
 }
 .dark {
-  background: linear-gradient(160deg, var(--color-admin-nav) 0%, var(--color-glass-dark) 55%, var(--color-accent-indigo) 160%);
+  background:
+    linear-gradient(160deg, var(--color-admin-nav) 0%, var(--color-glass-dark) 55%, var(--color-accent-indigo) 160%),
+    var(--color-admin-nav);
 }
 /* G-10: 사용자 화면 위에 뜬 팝업처럼 밝은 바탕 + 딤 */
 .light {
@@ -25,7 +27,7 @@
   margin: auto;
   padding: var(--space-10) var(--space-10) var(--space-10);
   border-radius: var(--radius-popup);
-  background: var(--color-glass-solid);
+  background: linear-gradient(var(--color-glass-solid), var(--color-glass-solid)), var(--color-bg-cream);
   box-shadow: var(--shadow-glass);
   animation: pop var(--motion-duration) var(--motion-ease-out);
 }
