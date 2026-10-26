@@ -47,63 +47,81 @@ AI 기술을 글로 읽기만 하지 않고, 직접 훈련하고 결과를 확�
 
 ```
 ai-tech-playground/
-├── frontend/        # React + Vite
+├── docker-compose.yml   # db + backend + frontend 한 번에 실행
+├── frontend/            # React + Vite
+│   ├── Dockerfile
 │   └── src/
 │       ├── pages/
 │       ├── components/
 │       └── api/
-├── backend/         # FastAPI
-│   └── app/
-│       ├── api/
-│       ├── models/
-│       ├── schemas/
-│       └── services/
-└── README.md
+└── backend/             # FastAPI
+    ├── Dockerfile
+    ├── requirements.txt
+    ├── scripts/
+    │   └── smoke_test.py    # 전체 API 스모크 테스트
+    └── app/
+        ├── main.py          # 앱 · CORS · /health · 라우터 등록
+        ├── db.py            # SQLAlchemy 엔진 · 세션
+        ├── core/            # 설정 · 인증 의존성 · 오류 형식
+        ├── api/             # 라우터 (auth · users · experiments · content · support · admin)
+        ├── schemas/         # Pydantic 스키마 (camelCase JSON)
+        ├── models/          # SQLAlchemy 모델
+        ├── services/        # 도메인 로직 (지금은 샘플 반환)
+        └── fixtures/        # Figma 화면과 같은 샘플 데이터
 ```
 
 ---
 
 ## **시작하기**
 
-### **1. DB**
+### **Docker로 한 번에 실행 (권장)**
+
+Docker Desktop을 켠 뒤 저장소 루트에서:
 
 ```
-createdb ai_playground
+docker compose up --build
 ```
 
-### **2. Backend**
+| 서비스 | 주소 |
+| --- | --- |
+| 웹 (Vite) | http://localhost:5173 |
+| API 문서 | http://localhost:8000/docs |
+| PostgreSQL | localhost:5432 (`playground` / `playground`, DB `ai_playground`) |
+
+- `backend/`, `frontend/` 소스가 컨테이너에 마운트돼 있어 저장하면 바로 다시 로드됩니다.
+- 포트가 겹치면 `FRONTEND_PORT=5174 BACKEND_PORT=8001 DB_PORT=5433 docker compose up --build`처럼 바꿀 수 있습니다.
+- 종료는 `docker compose down`, DB 데이터까지 지우려면 `docker compose down -v`.
+- 지금 API는 DB를 읽지 않고 Figma 화면과 같은 샘플 데이터를 돌려줍니다. 시작할 때 테이블만 만듭니다.
+
+### **로컬에서 직접 실행**
 
 ```
+# Backend (DB 없이도 뜨고, 테이블 생성만 건너뜁니다)
 cd backend
-python -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
+uvicorn app.main:app --reload          # http://localhost:8000/docs
+python scripts/smoke_test.py http://127.0.0.1:8000   # 다른 터미널에서 API 확인
 
-API 문서: http://localhost:8000/docs
-
-### **3. Frontend**
-
-```
+# Frontend
 cd frontend
 npm install
-npm run dev
+npm run dev                            # http://localhost:5173
 ```
-
-웹: http://localhost:5173
 
 ### **환경 변수**
 
-backend/.env
+backend (기본값이 있어 `.env` 없이도 실행됩니다)
 
 ```
-DATABASE_URL=postgresql://<user>:<password>@localhost:5432/ai_playground
+DATABASE_URL=postgresql+psycopg://playground:playground@localhost:5432/ai_playground
 JWT_SECRET=<랜덤 문자열>
+CORS_ORIGINS=http://localhost:3000     # 쉼표로 구분. 5173은 기본 허용
 ```
 
-frontend/.env
+frontend
 
 ```
-VITE_API_BASE_URL=http://localhost:8000
+VITE_API_PROXY=http://localhost:8000   # Vite 개발 서버가 /api 요청을 넘길 주소
 ```
