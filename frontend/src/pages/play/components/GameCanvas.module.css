@@ -1,0 +1,159 @@
+.canvas {
+  composes: glass from '../../../components/glass.module.css';
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-card-lg);
+  aspect-ratio: 930 / 580;
+  transition: filter var(--motion-duration) var(--motion-ease);
+}
+.dimmed {
+  filter: saturate(0.7) opacity(0.75);
+}
+
+/* #001 · 격자 2D 탑뷰 */
+.grid .field {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--color-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: -1px -1px;
+}
+
+/* #000 · 페트리 접시 */
+.petri {
+  aspect-ratio: 936 / 560;
+}
+.dishWrap {
+  position: absolute;
+  inset: 4% 0 6%;
+  display: flex;
+  justify-content: center;
+}
+.field {
+  position: relative;
+}
+.dish {
+  height: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 6px solid var(--color-bg-butter);
+  background: var(--color-glass-clear-nested);
+  box-shadow: inset 0 0 0 1px var(--color-glass-rim);
+  overflow: hidden;
+}
+.scent {
+  position: absolute;
+  width: 110%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-bg-butter) 0%, var(--color-bg-peach) 35%, transparent 65%);
+  pointer-events: none;
+}
+
+.label,
+.legend {
+  position: absolute;
+  left: var(--space-5);
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.04em;
+}
+.label {
+  top: var(--space-5);
+}
+.petri .label {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+.legend {
+  bottom: var(--space-5);
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+
+.paths {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.first,
+.current {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.first {
+  stroke: var(--color-text-tertiary);
+  stroke-width: 2;
+  stroke-dasharray: 2 5;
+  opacity: 0.7;
+}
+.current {
+  stroke: var(--color-accent-indigo);
+  stroke-width: 3.5;
+  stroke-dasharray: 1 7;
+}
+
+.obstacle {
+  position: absolute;
+  border-radius: var(--radius-xs);
+  background: var(--color-line-strong);
+  opacity: 0.7;
+}
+.obstacleLabel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.food {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--color-accent-warning);
+  box-shadow:
+    0 0 0 3px var(--color-accent-danger-soft),
+    var(--shadow-soft);
+}
+.foodPetri {
+  width: 46px;
+  height: 46px;
+  background: var(--color-accent-yellow);
+  box-shadow:
+    0 0 0 3px var(--color-accent-warning),
+    var(--shadow-soft);
+}
+.foodLabel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.foodPetri .foodLabel {
+  color: var(--color-accent-why-ink);
+  font-weight: var(--weight-medium);
+}
+
+.agent {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px var(--color-ink-dim));
+}
