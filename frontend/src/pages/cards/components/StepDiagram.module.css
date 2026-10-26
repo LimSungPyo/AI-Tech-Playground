@@ -1,0 +1,41 @@
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  background: var(--color-glass-clear-nested);
+  box-shadow: inset 0 0 0 1px var(--color-glass-rim);
+}
+.hot {
+  fill: var(--color-accent-indigo);
+}
+.mid {
+  fill: var(--color-accent-indigo-light);
+}
+.dim {
+  fill: var(--color-accent-indigo-faint);
+}
+.box {
+  fill: var(--color-accent-why-soft);
+  stroke: var(--color-accent-yellow);
+}
+.arrow {
+  fill: none;
+  stroke: var(--color-text-tertiary);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.head {
+  fill: var(--color-text-tertiary);
+}
+.label,
+.labelOn {
+  font-size: 11px;
+  font-family: var(--font-sans);
+  text-anchor: middle;
+  fill: var(--color-text-secondary);
+}
+.labelOn {
+  fill: var(--color-text-on-tint);
+  font-weight: 700;
+}

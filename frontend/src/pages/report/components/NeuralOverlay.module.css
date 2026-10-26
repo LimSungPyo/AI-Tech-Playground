@@ -1,0 +1,47 @@
+.net {
+  overflow: visible;
+}
+.ring {
+  fill: none;
+  stroke: var(--color-accent-cyan);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 2;
+  opacity: 0.5;
+}
+.edge {
+  stroke: var(--color-accent-cyan);
+  stroke-width: 0.7;
+  opacity: 0;
+  animation: on 400ms var(--motion-ease-out) forwards;
+  animation-delay: inherit;
+}
+.node {
+  fill: var(--color-accent-cyan);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pop 400ms var(--motion-ease-out) forwards;
+  filter: drop-shadow(0 0 2px var(--color-accent-cyan));
+}
+@keyframes on {
+  to {
+    opacity: 0.8;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .edge,
+  .node {
+    animation: none;
+    opacity: 1;
+  }
+}
