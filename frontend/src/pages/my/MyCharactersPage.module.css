@@ -1,0 +1,188 @@
+/* 파트너(선택) 카드 */
+.featured {
+  display: flex;
+  gap: var(--space-8);
+  align-items: center;
+}
+.featuredArt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 260px;
+  height: 260px;
+  border-radius: var(--radius-card);
+}
+.featuredBody {
+  flex: 1;
+  min-width: 0;
+}
+.featuredName {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.featuredName h2 {
+  margin-right: var(--space-2);
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-black);
+}
+.species {
+  margin-top: var(--space-2);
+  color: var(--color-text-secondary);
+}
+.featuredStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+.featuredStats > div {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-glass-clear-nested);
+}
+.featuredStats dt {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+.featuredStats dd {
+  font-family: var(--font-number);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+}
+.checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-track);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-tertiary);
+}
+.checkOk {
+  background: var(--color-accent-success-soft);
+  color: var(--color-text-primary);
+}
+.checkOk svg {
+  color: var(--color-accent-success);
+}
+.featuredActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+.meet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+.meetLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-link);
+}
+
+/* TEAM READY */
+.team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.teamEyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.08em;
+  color: var(--color-accent-cyan);
+}
+.teamText {
+  margin-top: var(--space-1);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+
+/* 캐릭터 그리드 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  max-width: 820px;
+}
+.card {
+  composes: glass from '../../components/glass.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  text-align: left;
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+.card:hover {
+  transform: translateY(-2px);
+}
+.cardSelected {
+  outline: 2px solid var(--color-accent-indigo);
+  outline-offset: -2px;
+}
+.cardOff {
+  box-shadow: var(--shadow-soft);
+}
+.cardOff .cardArt {
+  opacity: 0.6;
+}
+.cardArt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 140px;
+  border-radius: var(--radius-lg);
+}
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.cardName {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+.cardOff .cardName {
+  color: var(--color-text-tertiary);
+}
+.cardLine {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 1024px) {
+  .featured {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .featuredArt {
+    width: 100%;
+  }
+  .featuredStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

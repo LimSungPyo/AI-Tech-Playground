@@ -1,0 +1,9 @@
+.back {
+  align-self: flex-start;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  transition: color var(--motion-fast) var(--motion-ease);
+}
+.back:hover {
+  color: var(--color-text-link);
+}
