@@ -1,0 +1,46 @@
+.popover {
+  composes: glass from '../glass.module.css';
+  position: fixed;
+  z-index: var(--z-popover);
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--radius-popup);
+  background: var(--glass-sheen), var(--color-glass-solid);
+  opacity: 0;
+  translate: 0 -6px;
+  scale: 0.96;
+  transition:
+    opacity 180ms var(--motion-ease),
+    translate 180ms var(--motion-ease),
+    scale 180ms var(--motion-ease);
+}
+.bottom {
+  transform-origin: top right;
+}
+.top {
+  translate: 0 6px;
+  transform-origin: bottom right;
+}
+.popover.in {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+}
+.popover:focus-visible {
+  outline: none;
+}
+
+.dim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-popover) - 1);
+  background: var(--color-ink-dim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms var(--motion-ease);
+}
+.dim.in {
+  opacity: 1;
+}

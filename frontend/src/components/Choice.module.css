@@ -1,0 +1,111 @@
+.row {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+}
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.native {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.label {
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-primary);
+  line-height: 22px;
+}
+.desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+.box {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  background: var(--color-glass-solid);
+  box-shadow: inset 0 0 0 1.5px var(--color-line-strong);
+  color: transparent;
+  transition:
+    background-color var(--motion-duration) var(--motion-ease),
+    box-shadow var(--motion-duration) var(--motion-ease);
+}
+.checkbox {
+  border-radius: 7px;
+}
+.radio {
+  border-radius: 50%;
+}
+.radio::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-text-on-tint);
+  transform: scale(0);
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+
+.native:checked + .box {
+  background: var(--color-accent-indigo);
+  box-shadow: none;
+  color: var(--color-text-on-tint);
+}
+.native:checked + .radio::after {
+  transform: scale(1);
+}
+.native:focus-visible + .box,
+.native:focus-visible + .track {
+  outline: 2px solid var(--color-accent-indigo);
+  outline-offset: 3px;
+}
+
+.track {
+  flex: none;
+  position: relative;
+  width: 48px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  background: var(--color-line-strong);
+  transition: background-color var(--motion-duration) var(--motion-ease);
+}
+.thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-text-on-tint);
+  box-shadow: var(--shadow-soft);
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+.native:checked + .track {
+  background: var(--color-accent-indigo);
+}
+.native:checked + .track .thumb {
+  transform: translateX(20px);
+}

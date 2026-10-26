@@ -1,0 +1,85 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  pointer-events: none;
+}
+.center {
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+.right {
+  justify-content: flex-end;
+}
+.bottom {
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* 뒤 화면 레이어 블러 28 + 잉크 12% 딤 */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--color-ink-dim);
+  backdrop-filter: blur(var(--blur-backdrop));
+  -webkit-backdrop-filter: blur(var(--blur-backdrop));
+  opacity: 0;
+  pointer-events: auto;
+  transition: opacity var(--motion-duration) var(--motion-ease);
+}
+.in .backdrop {
+  opacity: 1;
+}
+
+.panel {
+  composes: glass from '../glass.module.css';
+  background: var(--glass-sheen), var(--color-glass-solid);
+  pointer-events: auto;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  opacity: 0;
+  transition:
+    opacity var(--motion-duration) var(--motion-ease),
+    transform var(--motion-duration) var(--motion-ease);
+}
+.panel:focus-visible {
+  outline: none;
+}
+.in .panel {
+  opacity: 1;
+}
+
+/* 팝업: Scale 0.96 → 1 + Fade 220ms, 닫기는 반대 */
+.panel-center {
+  width: min(420px, 100%);
+  border-radius: var(--radius-popup);
+  transform: scale(0.96);
+}
+.in .panel-center {
+  transform: scale(1);
+}
+
+.panel-right {
+  width: min(480px, 100vw);
+  height: 100vh;
+  max-height: none;
+  border-radius: var(--radius-popup) 0 0 var(--radius-popup);
+  transform: translateX(32px);
+}
+.in .panel-right {
+  transform: translateX(0);
+}
+
+.panel-bottom {
+  width: min(560px, 100vw);
+  max-height: 88vh;
+  border-radius: var(--radius-popup) var(--radius-popup) 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  transform: translateY(40px);
+}
+.in .panel-bottom {
+  transform: translateY(0);
+}

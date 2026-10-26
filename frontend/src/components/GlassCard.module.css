@@ -1,0 +1,63 @@
+.card {
+  composes: glass from './glass.module.css';
+  color: var(--color-text-primary);
+}
+
+.nested {
+  background: var(--color-glass-clear-nested);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.tint {
+  background: var(--color-glass-tint);
+  color: var(--color-text-on-tint);
+  box-shadow: var(--shadow-glass), var(--shadow-inset-highlight);
+}
+
+.dark {
+  background: var(--color-glass-dark);
+  color: var(--color-text-on-tint);
+}
+
+.tint::before,
+.dark::before {
+  opacity: 0.25;
+}
+
+.r-card {
+  border-radius: var(--radius-card);
+}
+.r-lg {
+  border-radius: var(--radius-card-lg);
+}
+.r-popup {
+  border-radius: var(--radius-popup);
+}
+
+.pad-none {
+  padding: 0;
+}
+.pad-sm {
+  padding: var(--space-4);
+}
+.pad-md {
+  padding: var(--space-6);
+}
+.pad-lg {
+  padding: var(--space-8);
+}
+
+.interactive {
+  cursor: pointer;
+  transition:
+    transform var(--motion-duration) var(--motion-ease),
+    box-shadow var(--motion-duration) var(--motion-ease);
+}
+.interactive:hover {
+  transform: translateY(-2px);
+}
+.interactive:active {
+  transform: translateY(0) scale(0.99);
+}

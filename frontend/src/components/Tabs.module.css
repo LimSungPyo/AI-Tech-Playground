@@ -1,0 +1,102 @@
+.tabs {
+  display: flex;
+  gap: var(--space-6);
+  border-bottom: 1px solid var(--color-line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  transition: color var(--motion-duration) var(--motion-ease);
+}
+.tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: var(--color-accent-indigo);
+  transform: scaleX(0);
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+.tab:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+.active {
+  color: var(--color-text-primary);
+}
+.active::after {
+  transform: scaleX(1);
+}
+.tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-indigo-soft);
+  color: var(--color-text-link);
+  font-family: var(--font-number);
+  font-size: 11px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.segmented {
+  composes: glassFlat from './glass.module.css';
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-pill);
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-pill);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  transition:
+    background-color var(--motion-duration) var(--motion-ease),
+    color var(--motion-duration) var(--motion-ease);
+}
+.md .segment {
+  height: 36px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+}
+.sm .segment {
+  height: 28px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+}
+.segment:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+.segmentActive,
+.segmentActive:hover:not(:disabled) {
+  background: var(--color-glass-tint);
+  color: var(--color-text-on-tint);
+  box-shadow: var(--shadow-inset-highlight);
+}
+.segmentActive .count {
+  background: var(--color-glass-dark-line);
+  color: var(--color-text-on-tint);
+}

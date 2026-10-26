@@ -1,0 +1,52 @@
+.banner {
+  composes: glass from '../glass.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 72px;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-banner);
+  text-align: left;
+  color: var(--color-text-primary);
+}
+.clickable {
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+.clickable:hover {
+  transform: translateY(-1px);
+}
+.clickable:active {
+  transform: scale(0.99);
+}
+
+.icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--color-glass-solid);
+  box-shadow: var(--shadow-soft);
+  color: var(--color-accent-indigo);
+}
+.text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+}
+.desc {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.chevron {
+  flex: none;
+  color: var(--color-text-secondary);
+}

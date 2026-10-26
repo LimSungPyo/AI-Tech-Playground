@@ -1,0 +1,40 @@
+.sk {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: var(--color-skeleton);
+}
+.sk::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--color-skeleton-shine), transparent);
+  animation: shine 1.4s ease-in-out infinite;
+}
+.rect {
+  width: 100%;
+  height: 120px;
+  border-radius: var(--radius-card);
+}
+.text {
+  width: 100%;
+  height: 14px;
+  border-radius: var(--radius-xs);
+}
+.circle {
+  width: 40px;
+  border-radius: 50%;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+@keyframes shine {
+  to {
+    transform: translateX(100%);
+  }
+}
