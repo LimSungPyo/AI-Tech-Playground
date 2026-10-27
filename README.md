@@ -37,9 +37,24 @@ AI 기술을 글로 읽기만 하지 않고, 직접 훈련하고 결과를 확�
 
 | **영역** | **기술** |
 | --- | --- |
-| Frontend | React + Vite |
-| Backend | FastAPI |
+| Frontend | React 19 · TypeScript · Vite · React Router 7 · CSS Modules |
+| Backend | FastAPI · Pydantic v2 · SQLAlchemy 2 (psycopg 3) |
 | DB | PostgreSQL 16 |
+| 실행 환경 | Docker Compose |
+
+---
+
+## **현재 구현 상태**
+
+| **영역** | **상태** |
+| --- | --- |
+| 화면 | Figma 기획안의 화면 구현 완료 (관리자 콘솔 포함). 장기 컨셉 2개(Create Your AI, RAG 탐정)는 "준비 중" 화면 |
+| API | 모든 엔드포인트와 요청 · 응답 스키마 완성. 응답은 `backend/app/fixtures/`의 샘플 데이터 |
+| DB | 테이블만 생성. 아직 읽기 · 쓰기 없음 (저장 동작은 성공 응답만 돌려주고 새로고침하면 원래 값) |
+| 인증 | 가짜 로그인. 어떤 계정으로 들어가도 샘플 사용자 "혜원"으로 처리 (비밀번호 검증 · JWT 없음) |
+| AI · 학습 | 미연동. 플레이 결과 · ×10 훈련 · WHY? 설명 · 성장 곡선은 모두 샘플 값 (학습 시뮬레이션 · Claude API 없음) |
+
+실제 로직이 들어갈 자리는 `backend/app/services/`의 각 함수에 `TODO`로 적어 두었습니다. 응답 형태는 고정돼 있어서 서비스 함수 안만 바꾸면 프론트는 그대로 동작합니다.
 
 ---
 
@@ -79,8 +94,18 @@ ai-tech-playground/
 Docker Desktop을 켠 뒤 저장소 루트에서:
 
 ```
-docker compose up --build
+docker compose up --build    # 처음 한 번: 이미지를 만들고 실행
+docker compose up            # 그다음부터: 만들어 둔 이미지로 실행
 ```
+
+`--build`는 아래 파일을 바꿨을 때만 다시 붙이면 됩니다. 소스 코드만 고쳤다면 필요 없습니다.
+
+| 바꾼 파일 | 실행 명령 |
+| --- | --- |
+| `backend/requirements.txt`, `backend/Dockerfile` | `docker compose up --build` |
+| `frontend/package.json`, `package-lock.json`, `frontend/Dockerfile` | `docker compose up --build -V` |
+
+프론트의 `node_modules`는 별도 볼륨에 있어서, 이미지만 새로 만들면 예전 패키지가 남습니다. `-V`를 붙이면 이 볼륨을 새 이미지 기준으로 다시 만듭니다.
 
 | 서비스 | 주소 |
 | --- | --- |
@@ -89,7 +114,7 @@ docker compose up --build
 | PostgreSQL | localhost:5432 (`playground` / `playground`, DB `ai_playground`) |
 
 - `backend/`, `frontend/` 소스가 컨테이너에 마운트돼 있어 저장하면 바로 다시 로드됩니다.
-- 포트가 겹치면 `FRONTEND_PORT=5174 BACKEND_PORT=8001 DB_PORT=5433 docker compose up --build`처럼 바꿀 수 있습니다.
+- 포트가 겹치면 `FRONTEND_PORT=5174 BACKEND_PORT=8001 DB_PORT=5433 docker compose up`처럼 바꿀 수 있습니다.
 - 종료는 `docker compose down`, DB 데이터까지 지우려면 `docker compose down -v`.
 - 지금 API는 DB를 읽지 않고 Figma 화면과 같은 샘플 데이터를 돌려줍니다. 시작할 때 테이블만 만듭니다.
 
@@ -109,6 +134,21 @@ cd frontend
 npm install
 npm run dev                            # http://localhost:5173
 ```
+
+### **개발용 테스트 입력**
+
+인증이 가짜라서 아래 입력으로 오류 · 관리자 화면을 확인할 수 있습니다.
+
+| 입력 | 결과 |
+| --- | --- |
+| 아무 이메일 · 비밀번호 | 샘플 사용자 "혜원"으로 로그인 |
+| `admin`으로 시작하는 이메일 | 관리자 계정 (프로필 메뉴 → 관리자 콘솔) |
+| 비밀번호 `wrong` | 비밀번호 오류 (401) |
+| 비밀번호 `locked` | 계정 잠김 (423) |
+| 인증 코드 `000000` | 인증 코드 오류 |
+| 관리자 OTP `999999` | IP 차단 화면 |
+
+공통 UI 컴포넌트와 팝업은 http://localhost:5173/_kit 에서 한눈에 볼 수 있습니다 (메뉴에는 없음).
 
 ### **환경 변수**
 
