@@ -62,6 +62,7 @@ AI 기술을 글로 읽기만 하지 않고, 직접 훈련하고 결과를 확�
 
 ```
 ai-tech-playground/
+├── .env.example         # 환경 변수 목록 (복사해서 .env로 사용)
 ├── docker-compose.yml   # db + backend + frontend 한 번에 실행
 ├── frontend/            # React + Vite
 │   ├── Dockerfile
@@ -94,6 +95,7 @@ ai-tech-playground/
 Docker Desktop을 켠 뒤 저장소 루트에서:
 
 ```
+cp .env.example .env         # 처음 한 번: 환경 변수 파일 만들기 (아래 환경 변수 참고)
 docker compose up --build    # 처음 한 번: 이미지를 만들고 실행
 docker compose up            # 그다음부터: 만들어 둔 이미지로 실행
 ```
@@ -107,6 +109,8 @@ docker compose up            # 그다음부터: 만들어 둔 이미지로 실�
 
 프론트의 `node_modules`는 별도 볼륨에 있어서, 이미지만 새로 만들면 예전 패키지가 남습니다. `-V`를 붙이면 이 볼륨을 새 이미지 기준으로 다시 만듭니다.
 
+`.env.example` 값 그대로 쓸 때의 주소입니다.
+
 | 서비스 | 주소 |
 | --- | --- |
 | 웹 (Vite) | http://localhost:5173 |
@@ -119,6 +123,8 @@ docker compose up            # 그다음부터: 만들어 둔 이미지로 실�
 - 지금 API는 DB를 읽지 않고 Figma 화면과 같은 샘플 데이터를 돌려줍니다. 시작할 때 테이블만 만듭니다.
 
 ### **로컬에서 직접 실행**
+
+루트에 `.env`가 있어야 합니다. (`cp .env.example .env`)
 
 ```
 # Backend (DB 없이도 뜨고, 테이블 생성만 건너뜁니다)
