@@ -1,14 +1,14 @@
 # 로컬 개발 환경: docker compose up --build
-# 호스트 포트는 FRONTEND_PORT · BACKEND_PORT · DB_PORT 환경 변수로 바꿀 수 있다.
+# 값은 모두 루트 .env에서 읽는다. 없는 값이 있으면 어떤 변수인지 알려 주고 멈춘다.
 services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ai_playground
-      POSTGRES_USER: ${POSTGRES_USER:-playground}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-playground}
+      POSTGRES_DB: ${POSTGRES_DB:?.env에 POSTGRES_DB가 없습니다}
+      POSTGRES_USER: ${POSTGRES_USER:?.env에 POSTGRES_USER가 없습니다}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?.env에 POSTGRES_PASSWORD가 없습니다}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${DB_PORT:?.env에 DB_PORT가 없습니다}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -22,13 +22,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # 루트 .env를 그대로 넘긴다. 아래 environment는 Docker 안에서 값이 달라야 하는 것만 덮어쓴다.
+    env_file: .env
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-playground}:${POSTGRES_PASSWORD:-playground}@db:5432/ai_playground
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
-      CORS_ORIGINS: ${CORS_ORIGINS:-}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # 컨테이너 안에서는 localhost가 아니라 db 서비스로 접속한다
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "${BACKEND_PORT:?.env에 BACKEND_PORT가 없습니다}:8000"
     volumes:
       - ./backend:/app
 
@@ -37,11 +37,12 @@ services:
     depends_on:
       - backend
     environment:
+      # Docker 안에서는 백엔드를 서비스 이름으로 찾는다
       VITE_API_PROXY: http://backend:8000
       # Docker 볼륨에서는 파일 변경 이벤트가 안 와서 폴링으로 감시한다
       CHOKIDAR_USEPOLLING: "true"
     ports:
-      - "${FRONTEND_PORT:-5173}:5173"
+      - "${FRONTEND_PORT:?.env에 FRONTEND_PORT가 없습니다}:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules

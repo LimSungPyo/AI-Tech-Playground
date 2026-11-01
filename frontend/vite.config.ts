@@ -6,9 +6,13 @@ import { defineConfig, loadEnv } from 'vite'
 const envDir = fileURLToPath(new URL('..', import.meta.url))
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   // 설정 파일에서는 .env가 process.env에 안 들어가서 직접 읽는다. 셸 환경 변수가 우선한다.
   const env = loadEnv(mode, envDir, '')
+  // 프록시는 개발 서버에서만 쓰므로 빌드할 때는 확인하지 않는다
+  if (command === 'serve' && !env.VITE_API_PROXY) {
+    throw new Error('.env에 VITE_API_PROXY가 없습니다. 루트에서 cp .env.example .env를 먼저 하세요.')
+  }
 
   return {
     envDir,
@@ -19,7 +23,7 @@ export default defineConfig(({ mode }) => {
       // 포트는 CLI(`--port`)로 받는다. /api는 백엔드로 넘긴다.
       proxy: {
         '/api': {
-          target: env.VITE_API_PROXY || 'http://localhost:8000',
+          target: env.VITE_API_PROXY,
           changeOrigin: true,
         },
       },

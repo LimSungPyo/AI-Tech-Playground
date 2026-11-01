@@ -114,7 +114,7 @@ docker compose up            # 그다음부터: 만들어 둔 이미지로 실�
 | PostgreSQL | localhost:5432 (`playground` / `playground`, DB `ai_playground`) |
 
 - `backend/`, `frontend/` 소스가 컨테이너에 마운트돼 있어 저장하면 바로 다시 로드됩니다.
-- 포트가 겹치면 `FRONTEND_PORT=5174 BACKEND_PORT=8001 DB_PORT=5433 docker compose up`처럼 바꿀 수 있습니다.
+- 포트가 겹치면 `.env`의 `FRONTEND_PORT` · `BACKEND_PORT` · `DB_PORT`를 바꿉니다.
 - 종료는 `docker compose down`, DB 데이터까지 지우려면 `docker compose down -v`.
 - 지금 API는 DB를 읽지 않고 Figma 화면과 같은 샘플 데이터를 돌려줍니다. 시작할 때 테이블만 만듭니다.
 
@@ -152,7 +152,7 @@ npm run dev                            # http://localhost:5173
 
 ### **환경 변수**
 
-환경 변수는 레포 루트의 `.env` 하나로 관리합니다. 모두 기본값이 있어 `.env` 없이도 실행됩니다.
+환경 변수는 레포 루트의 `.env` 하나로만 관리합니다. 코드에는 기본값이 없어서, 실행하기 전에 먼저 `.env`를 만들어야 합니다.
 
 ```
 cp .env.example .env
