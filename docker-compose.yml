@@ -26,6 +26,7 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-playground}:${POSTGRES_PASSWORD:-playground}@db:5432/ai_playground
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:

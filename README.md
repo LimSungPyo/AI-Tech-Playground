@@ -152,16 +152,10 @@ npm run dev                            # http://localhost:5173
 
 ### **환경 변수**
 
-backend (기본값이 있어 `.env` 없이도 실행됩니다)
+환경 변수는 레포 루트의 `.env` 하나로 관리합니다. 모두 기본값이 있어 `.env` 없이도 실행됩니다.
 
 ```
-DATABASE_URL=postgresql+psycopg://playground:playground@localhost:5432/ai_playground
-JWT_SECRET=<랜덤 문자열>
-CORS_ORIGINS=http://localhost:3000     # 쉼표로 구분. 5173은 기본 허용
+cp .env.example .env
 ```
 
-frontend
-
-```
-VITE_API_PROXY=http://localhost:8000   # Vite 개발 서버가 /api 요청을 넘길 주소
-```
+docker compose, backend(로컬 uvicorn), frontend(로컬 Vite)가 모두 이 파일을 읽습니다. 변수 목록과 설명은 `.env.example`에 있습니다.
