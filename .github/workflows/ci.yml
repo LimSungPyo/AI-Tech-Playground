@@ -73,7 +73,8 @@ jobs:
         with:
           working-directory: backend
           enable-cache: true
-          cache-dependency-glob: backend/uv.lock
+          # working-directory(backend) 기준 경로다
+          cache-dependency-glob: uv.lock
 
       # uv.lock과 pyproject.toml이 어긋나면 여기서 실패한다
       - name: Install
