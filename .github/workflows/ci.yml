@@ -67,8 +67,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Python 버전은 .python-version을 따른다
-      - uses: astral-sh/setup-uv@v10
+      # Python 버전은 .python-version을 따른다.
+      # setup-uv는 v10 같은 큰 버전 태그를 만들지 않아서 전체 버전으로 적는다.
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           working-directory: backend
           enable-cache: true
