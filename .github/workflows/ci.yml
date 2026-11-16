@@ -1,20 +1,107 @@
-# dev, main에 머지(푸시)될 때 빌드한다. 결과는 discord-notify.yml이 받아서 알린다.
+# dev, main에 머지(푸시)될 때 frontend와 backend를 검사한다. 결과는 discord-notify.yml이 받아서 알린다.
 # 이름(name)을 바꾸면 discord-notify.yml의 workflow_run.workflows도 같이 바꿔야 한다.
+# 다른 브랜치는 Actions 탭 → CI → Run workflow에서 브랜치를 골라 수동으로 돌린다.
 name: CI
 
 on:
   push:
     branches: [dev, main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  frontend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      # TODO: 프로젝트가 생기면 실제 빌드 명령으로 바꾼다. (예: pnpm install --frozen-lockfile && pnpm build, uv sync --locked)
+      # Node 버전은 .nvmrc, pnpm 버전은 package.json의 packageManager를 따른다
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+          cache: true
+          cache_dependency_path: frontend/pnpm-lock.yaml
+
+      # lock 파일과 package.json이 어긋나면 여기서 실패한다
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
       - name: Build
-        run: echo "아직 빌드할 프로젝트가 없어요"
+        run: pnpm build
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ai_playground
+          POSTGRES_USER: playground
+          POSTGRES_PASSWORD: playground
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U playground -d ai_playground"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    # CI에는 .env가 없어서 backend가 필수로 읽는 값만 여기서 넘긴다
+    env:
+      DATABASE_URL: postgresql+psycopg://playground:playground@localhost:5432/ai_playground
+      JWT_SECRET: ci-only-secret
+    steps:
+      - uses: actions/checkout@v7
+
+      # Python 버전은 .python-version을 따른다
+      - uses: astral-sh/setup-uv@v10
+        with:
+          working-directory: backend
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      # uv.lock과 pyproject.toml이 어긋나면 여기서 실패한다
+      - name: Install
+        run: uv sync --locked
+
+      - name: Start API
+        run: |
+          uv run uvicorn app.main:app --port 8000 > uvicorn.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/health && exit 0
+            sleep 1
+          done
+          echo "API가 30초 안에 뜨지 않았습니다"
+          exit 1
+
+      # 시작할 때 create_all이 실패해도 API는 뜨므로, 테이블이 실제로 생겼는지 따로 확인한다
+      - name: Check DB tables
+        run: |
+          uv run python -c "
+          from sqlalchemy import inspect
+          from app.db import engine
+          tables = inspect(engine).get_table_names()
+          assert tables, 'DB에 테이블이 없습니다. uvicorn.log를 확인하세요.'
+          print(f'테이블 {len(tables)}개:', ', '.join(sorted(tables)))
+          "
+
+      - name: Smoke test
+        run: uv run python scripts/smoke_test.py http://127.0.0.1:8000
+
+      - name: Show API log
+        if: always()
+        run: cat uvicorn.log
