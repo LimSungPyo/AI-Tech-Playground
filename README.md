@@ -131,12 +131,30 @@ docker compose up            # 그다음부터: 만들어 둔 이미지로 실�
 
 필요한 도구와 버전입니다. 버전은 저장소의 파일에 적혀 있습니다.
 
-| 도구 | 버전 | 정해 둔 곳 | 설치 |
-| --- | --- | --- | --- |
-| Python | 3.12 | `backend/.python-version`, `pyproject.toml` | uv가 없으면 자동으로 받습니다 |
-| uv | 최신 | | `brew install uv` |
-| Node.js | 24 | `frontend/.nvmrc`, `package.json`의 `engines` | `nvm use` (또는 `fnm use`) |
-| pnpm | 12.21.0 | `package.json`의 `packageManager` | `corepack enable` 한 번이면 이 버전을 알아서 씁니다 |
+| 도구 | 버전 | 정해 둔 곳 |
+| --- | --- | --- |
+| Python | 3.12 | `backend/.python-version`, `pyproject.toml` |
+| uv | 최신 | |
+| Node.js | 24 | `frontend/.nvmrc`, `package.json`의 `engines` |
+| pnpm | 12.21.0 | `package.json`의 `packageManager` |
+
+**처음 한 번: 도구 설치**
+
+```
+# Node 24 (nvm 기준, .nvmrc를 읽습니다)
+cd frontend
+nvm install                # Node 24 설치
+nvm use                    # 이 터미널에서 Node 24 사용
+nvm alias default 24       # 새 터미널도 24로 시작 (선택)
+
+# pnpm: Node 24로 바꾼 다음에 켭니다. corepack은 Node 버전마다 따로 켜야 합니다.
+corepack enable            # packageManager에 적힌 pnpm 12.21.0을 알아서 받아 씀
+
+# uv: Python 3.12가 없으면 uv sync가 알아서 받습니다
+brew install uv
+```
+
+**실행**
 
 ```
 # Backend (DB 없이도 뜨고, 테이블 생성만 건너뜁니다)
@@ -150,6 +168,22 @@ cd frontend
 pnpm install
 pnpm dev                               # http://localhost:5173
 ```
+
+- `source .venv/bin/activate`는 하지 않아도 됩니다. `uv run`이 `backend/.venv`를 알아서 씁니다.
+- IDE에서 Python 인터프리터는 `backend/.venv/bin/python`을 고릅니다.
+- `uv.lock`이나 `pnpm-lock.yaml`이 바뀐 코드를 받았다면 `uv sync`, `pnpm install`을 다시 실행합니다.
+
+**npm · pip로 세팅해 둔 환경에서 옮겨 오는 경우**
+
+예전 방식으로 깔린 폴더가 남아 있으면 지우고 다시 설치합니다.
+
+```
+rm -rf frontend/node_modules && (cd frontend && pnpm install)
+rm -rf backend/.venv && (cd backend && uv sync)   # pip로 만든 .venv가 있었다면
+docker compose up --build -V                      # Docker: 이미지와 node_modules 볼륨을 새로 만듦
+```
+
+npm · pip를 쓰던 브랜치와 오가며 작업하면 브랜치를 바꿀 때마다 위처럼 다시 설치해야 할 수 있습니다.
 
 패키지를 추가하거나 뺄 때는 lock 파일이 같이 바뀌도록 명령으로 합니다. 파일을 직접 고쳤다면 backend는 `uv lock`, frontend는 `pnpm install`을 한 번 실행합니다.
 
