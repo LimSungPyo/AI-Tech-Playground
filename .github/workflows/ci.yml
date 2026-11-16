@@ -15,6 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # TODO: 프로젝트가 생기면 실제 빌드 명령으로 바꾼다. (예: npm ci && npm run build)
+      # TODO: 프로젝트가 생기면 실제 빌드 명령으로 바꾼다. (예: pnpm install --frozen-lockfile && pnpm build, uv sync --locked)
       - name: Build
         run: echo "아직 빌드할 프로젝트가 없어요"

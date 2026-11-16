@@ -1,0 +1,18 @@
+[project]
+name = "ai-tech-playground-backend"
+version = "0.0.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi==0.147.0",
+    "uvicorn[standard]==0.54.0",
+    "pydantic==2.14.1",
+    "pydantic-settings==2.16.0",
+    "sqlalchemy==2.1.6",
+    "psycopg[binary]==3.3.6",
+    "python-multipart==0.0.32",
+    "email-validator==2.3.0",
+]
+
+[tool.uv]
+# 배포할 패키지가 아니라 앱이라서, 의존성만 설치하고 프로젝트 자체는 설치하지 않는다
+package = false

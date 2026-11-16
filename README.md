@@ -66,13 +66,16 @@ ai-tech-playground/
 ├── docker-compose.yml   # db + backend + frontend 한 번에 실행
 ├── frontend/            # React + Vite
 │   ├── Dockerfile
+│   ├── package.json     # 의존성 목록 · pnpm 버전 (packageManager)
+│   ├── pnpm-lock.yaml
 │   └── src/
 │       ├── pages/
 │       ├── components/
 │       └── api/
 └── backend/             # FastAPI
     ├── Dockerfile
-    ├── requirements.txt
+    ├── pyproject.toml   # 의존성 목록 (uv)
+    ├── uv.lock          # 하위 의존성까지 고정한 버전
     ├── scripts/
     │   └── smoke_test.py    # 전체 API 스모크 테스트
     └── app/
@@ -104,8 +107,8 @@ docker compose up            # 그다음부터: 만들어 둔 이미지로 실�
 
 | 바꾼 파일 | 실행 명령 |
 | --- | --- |
-| `backend/requirements.txt`, `backend/Dockerfile` | `docker compose up --build` |
-| `frontend/package.json`, `package-lock.json`, `frontend/Dockerfile` | `docker compose up --build -V` |
+| `backend/pyproject.toml`, `uv.lock`, `backend/Dockerfile` | `docker compose up --build` |
+| `frontend/package.json`, `pnpm-lock.yaml`, `frontend/Dockerfile` | `docker compose up --build -V` |
 
 프론트의 `node_modules`는 별도 볼륨에 있어서, 이미지만 새로 만들면 예전 패키지가 남습니다. `-V`를 붙이면 이 볼륨을 새 이미지 기준으로 다시 만듭니다.
 
@@ -126,19 +129,33 @@ docker compose up            # 그다음부터: 만들어 둔 이미지로 실�
 
 루트에 `.env`가 있어야 합니다. (`cp .env.example .env`)
 
+필요한 도구와 버전입니다. 버전은 저장소의 파일에 적혀 있습니다.
+
+| 도구 | 버전 | 정해 둔 곳 | 설치 |
+| --- | --- | --- | --- |
+| Python | 3.12 | `backend/.python-version`, `pyproject.toml` | uv가 없으면 자동으로 받습니다 |
+| uv | 최신 | | `brew install uv` |
+| Node.js | 24 | `frontend/.nvmrc`, `package.json`의 `engines` | `nvm use` (또는 `fnm use`) |
+| pnpm | 12.21.0 | `package.json`의 `packageManager` | `corepack enable` 한 번이면 이 버전을 알아서 씁니다 |
+
 ```
 # Backend (DB 없이도 뜨고, 테이블 생성만 건너뜁니다)
 cd backend
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload          # http://localhost:8000/docs
-python scripts/smoke_test.py http://127.0.0.1:8000   # 다른 터미널에서 API 확인
+uv sync                                # .venv를 만들고 uv.lock 그대로 설치
+uv run uvicorn app.main:app --reload   # http://localhost:8000/docs
+uv run python scripts/smoke_test.py http://127.0.0.1:8000   # 다른 터미널에서 API 확인
 
 # Frontend
 cd frontend
-npm install
-npm run dev                            # http://localhost:5173
+pnpm install
+pnpm dev                               # http://localhost:5173
+```
+
+패키지를 추가하거나 뺄 때는 lock 파일이 같이 바뀌도록 명령으로 합니다. 파일을 직접 고쳤다면 backend는 `uv lock`, frontend는 `pnpm install`을 한 번 실행합니다.
+
+```
+cd backend  && uv add <패키지>    # 빼기: uv remove <패키지>
+cd frontend && pnpm add <패키지>  # 개발용은 pnpm add -D, 빼기: pnpm remove <패키지>
 ```
 
 ### **개발용 테스트 입력**
