@@ -1,5 +1,5 @@
 # 베이스 이미지는 태그가 가리키는 내용이 바뀌지 않게 해시로 고정한다. 해시는 Dependabot이 올린다.
-FROM python:3.12-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b
+FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928
 
 # uv는 공식 이미지에서 실행 파일만 가져온다 (버전 고정). CI의 setup-uv version과 맞춘다.
 COPY --from=ghcr.io/astral-sh/uv:0.13.8@sha256:5cc1805e2426484abca4ad46ea783bab281fdb225fd82d8ce6d66a81254bac85 /uv /bin/uv
