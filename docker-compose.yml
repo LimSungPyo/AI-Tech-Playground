@@ -3,7 +3,7 @@
 services:
   db:
     # 해시로 고정한다. CI(ci.yml)의 postgres와 같은 이미지이고 해시는 Dependabot이 올린다.
-    image: postgres:16-alpine@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d
+    image: postgres:19-alpine@sha256:8b0ff4cdf221f0c53d7fcda681d3b461be725c492cd881c5ec9c0ad25023f188
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?.env에 POSTGRES_DB가 없습니다}
       POSTGRES_USER: ${POSTGRES_USER:?.env에 POSTGRES_USER가 없습니다}
