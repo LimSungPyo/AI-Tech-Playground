@@ -8,8 +8,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:?.env에 POSTGRES_DB가 없습니다}
       POSTGRES_USER: ${POSTGRES_USER:?.env에 POSTGRES_USER가 없습니다}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?.env에 POSTGRES_PASSWORD가 없습니다}
+    # 127.0.0.1에만 연다. 그냥 포트만 적으면 와이파이 등 모든 네트워크에 열려 같은 망의 누구나 DB에 접속할 수 있다.
     ports:
-      - "${DB_PORT:?.env에 DB_PORT가 없습니다}:5432"
+      - "127.0.0.1:${DB_PORT:?.env에 DB_PORT가 없습니다}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -28,8 +29,9 @@ services:
     environment:
       # 컨테이너 안에서는 localhost가 아니라 db 서비스로 접속한다
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    # 127.0.0.1에만 연다. 프론트는 Docker 네트워크(backend:8000)로 붙어서 영향이 없다.
     ports:
-      - "${BACKEND_PORT:?.env에 BACKEND_PORT가 없습니다}:8000"
+      - "127.0.0.1:${BACKEND_PORT:?.env에 BACKEND_PORT가 없습니다}:8000"
     volumes:
       - ./backend:/app
 
@@ -42,6 +44,8 @@ services:
       VITE_API_PROXY: http://backend:8000
       # Docker 볼륨에서는 파일 변경 이벤트가 안 와서 폴링으로 감시한다
       CHOKIDAR_USEPOLLING: "true"
+    # 같은 와이파이의 휴대폰 등에서도 열 수 있게 모든 네트워크에 연다.
+    # 같은 망의 다른 사람도 접속할 수 있으니 공용 와이파이에서는 주의한다.
     ports:
       - "${FRONTEND_PORT:?.env에 FRONTEND_PORT가 없습니다}:5173"
     volumes:

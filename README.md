@@ -122,6 +122,7 @@ docker compose up            # 그다음부터: 만들어 둔 이미지로 실�
 
 - `backend/`, `frontend/` 소스가 컨테이너에 마운트돼 있어 저장하면 바로 다시 로드됩니다.
 - 포트가 겹치면 `.env`의 `FRONTEND_PORT` · `BACKEND_PORT` · `DB_PORT`를 바꿉니다.
+- DB와 API 포트는 이 컴퓨터(`127.0.0.1`)에서만 열립니다. 웹(5173)은 휴대폰 확인용으로 같은 와이파이에도 열려 있으니 공용 와이파이에서는 주의합니다.
 - 종료는 `docker compose down`, DB 데이터까지 지우려면 `docker compose down -v`.
 - 지금 API는 DB를 읽지 않고 Figma 화면과 같은 샘플 데이터를 돌려줍니다. 시작할 때 테이블만 만듭니다.
 
