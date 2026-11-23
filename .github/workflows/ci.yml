@@ -11,6 +11,9 @@ on:
 permissions:
   contents: read
 
+# 액션은 태그가 아니라 커밋 해시로 고정한다. 태그는 액션 저장소가 털리면 다른 코드로 옮겨질 수 있다.
+# 해시 옆 주석의 버전은 Dependabot이 해시와 같이 올려 준다 (.github/dependabot.yml).
+
 jobs:
   frontend:
     runs-on: ubuntu-latest
@@ -18,14 +21,17 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # 이후 단계(패키지 설치 스크립트 등)가 .git/config에 남은 토큰을 읽지 못하게 한다
+          persist-credentials: false
 
       # Node 버전은 .nvmrc, pnpm 버전은 package.json의 packageManager를 따른다
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: frontend/.nvmrc
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:
           package_json_file: frontend/package.json
           cache: true
@@ -34,6 +40,10 @@ jobs:
       # lock 파일과 package.json이 어긋나면 여기서 실패한다
       - name: Install
         run: pnpm install --frozen-lockfile
+
+      # 알려진 취약점이 high 이상이면 실패한다
+      - name: Audit
+        run: pnpm audit --audit-level high
 
       - name: Lint
         run: pnpm lint
@@ -48,7 +58,8 @@ jobs:
         working-directory: backend
     services:
       db:
-        image: postgres:16-alpine
+        # docker-compose.yml과 같은 이미지. 해시는 Dependabot이 올린다.
+        image: postgres:16-alpine@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d
         env:
           POSTGRES_DB: ai_playground
           POSTGRES_USER: playground
@@ -65,12 +76,16 @@ jobs:
       DATABASE_URL: postgresql+psycopg://playground:playground@localhost:5432/ai_playground
       JWT_SECRET: ci-only-secret
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # 이후 단계(패키지 설치 스크립트 등)가 .git/config에 남은 토큰을 읽지 못하게 한다
+          persist-credentials: false
 
       # Python 버전은 .python-version을 따른다.
-      # setup-uv는 v10 같은 큰 버전 태그를 만들지 않아서 전체 버전으로 적는다.
-      - uses: astral-sh/setup-uv@v10.3.3
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
+          # 지정하지 않으면 그때그때 최신 uv를 받는다. backend/Dockerfile의 uv 이미지 버전과 맞춘다.
+          version: "0.13.8"
           working-directory: backend
           enable-cache: true
           # working-directory(backend) 기준 경로다
@@ -79,6 +94,10 @@ jobs:
       # uv.lock과 pyproject.toml이 어긋나면 여기서 실패한다
       - name: Install
         run: uv sync --locked
+
+      # 알려진 취약점이 있으면 실패한다. uv audit은 아직 미리보기 기능이라 경고를 끄는 옵션을 붙인다.
+      - name: Audit
+        run: uv audit --locked --preview-features audit-command
 
       - name: Start API
         run: |

@@ -13,7 +13,9 @@ name: Discord Notify
 on:
   push:
   # ci.yml의 name과 맞춰야 한다.
-  workflow_run:
+  # workflow_run은 시크릿을 쓸 수 있어서 포크 PR이 실행시키면 위험하다. CI는 push·수동 실행만 받고
+  # 이 job은 코드를 checkout하지 않으며 이벤트 값은 jq로만 다루므로 안전하다. CI에 pull_request를 추가하면 다시 검토한다.
+  workflow_run: # zizmor: ignore[dangerous-triggers]
     workflows: ["CI"]
     types: [completed]
   # Actions 탭에서 수동으로 테스트 알림을 보낼 때 쓴다.
@@ -26,7 +28,9 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      # 채널 ID는 GITHUB_ENV(이후 모든 단계의 환경 변수)가 아니라 이 단계의 출력으로 넘긴다
       - name: Build message
+        id: message
         env:
           REPO: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
@@ -37,7 +41,7 @@ jobs:
         run: |
           case "$EVENT_NAME" in
             push)
-              echo "CHANNEL_ID=$CHANNEL_COMMITS" >> "$GITHUB_ENV"
+              echo "CHANNEL_ID=$CHANNEL_COMMITS" >> "$GITHUB_OUTPUT"
               # 브랜치 삭제처럼 커밋이 없는 푸시는 알리지 않는다.
               if [ "$(jq '.commits | length' "$GITHUB_EVENT_PATH")" -eq 0 ]; then
                 echo "커밋이 없는 푸시라 건너뜀"
@@ -60,9 +64,9 @@ jobs:
               ;;
             workflow_run)
               if [ "$(jq -r '.workflow_run.head_branch' "$GITHUB_EVENT_PATH")" = "main" ]; then
-                echo "CHANNEL_ID=$CHANNEL_RELEASE" >> "$GITHUB_ENV"
+                echo "CHANNEL_ID=$CHANNEL_RELEASE" >> "$GITHUB_OUTPUT"
               else
-                echo "CHANNEL_ID=$CHANNEL_BUILD_STATUS" >> "$GITHUB_ENV"
+                echo "CHANNEL_ID=$CHANNEL_BUILD_STATUS" >> "$GITHUB_OUTPUT"
               fi
               # 실패 시 실행자를 멘션하기 위한 GitHub 사용자명 → Discord 사용자 ID 대응표
               USER_MAP="$DISCORD_USER_MAP"
@@ -99,7 +103,7 @@ jobs:
                 | if .content == null then del(.content) else . end' "$GITHUB_EVENT_PATH" > payload.json
               ;;
             workflow_dispatch)
-              echo "CHANNEL_ID=$CHANNEL_COMMITS" >> "$GITHUB_ENV"
+              echo "CHANNEL_ID=$CHANNEL_COMMITS" >> "$GITHUB_OUTPUT"
               jq -n --arg repo "$REPO" '{content: "🔔 \($repo) 테스트 알림이에요. 봇이 정상적으로 연결됐어요!"}' > payload.json
               ;;
           esac
@@ -108,10 +112,13 @@ jobs:
         if: hashFiles('payload.json') != ''
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          REPO: ${{ github.repository }}
+          CHANNEL_ID: ${{ steps.message.outputs.CHANNEL_ID }}
+        # ${{ }} 값은 셸 스크립트에 그대로 끼워 넣지 않고 환경 변수로 넘긴다
         run: |
           curl -sS --fail-with-body -o /dev/null \
             -X POST "https://discord.com/api/v10/channels/${CHANNEL_ID}/messages" \
             -H "Authorization: Bot ${DISCORD_BOT_TOKEN}" \
             -H "Content-Type: application/json" \
-            -H "User-Agent: DiscordBot (https://github.com/${{ github.repository }}, 1.0)" \
+            -H "User-Agent: DiscordBot (https://github.com/${REPO}, 1.0)" \
             -d @payload.json

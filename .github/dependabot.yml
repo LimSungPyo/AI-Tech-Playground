@@ -1,0 +1,64 @@
+# 의존성 버전 업데이트 PR을 dev로 매주 올린다.
+# - cooldown: 새 버전이 나오고 3일 지나야 PR을 올린다. 악성 버전은 보통 며칠 안에 내려가기 때문이다.
+#   pnpm의 minimumReleaseAge, uv의 exclude-newer(둘 다 3일)와 맞춘 값이라 같이 바꾼다.
+#   보안 업데이트 PR(저장소 설정)은 cooldown을 기다리지 않는다.
+# - 생태계마다 PR 하나로 묶어 PR이 쌓이지 않게 한다.
+version: 2
+updates:
+  # 워크플로의 액션 커밋 해시와 옆 버전 주석
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    target-branch: dev
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3
+    groups:
+      frontend:
+        patterns: ["*"]
+
+  - package-ecosystem: uv
+    directory: /backend
+    target-branch: dev
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3
+    groups:
+      backend:
+        patterns: ["*"]
+
+  # Dockerfile의 베이스 이미지 해시
+  - package-ecosystem: docker
+    directories: [/backend, /frontend]
+    target-branch: dev
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3
+    groups:
+      docker:
+        patterns: ["*"]
+
+  # docker-compose.yml의 postgres 이미지 해시
+  - package-ecosystem: docker-compose
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3
+    groups:
+      compose:
+        patterns: ["*"]
