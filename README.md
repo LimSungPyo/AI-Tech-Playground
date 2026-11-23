@@ -192,6 +192,8 @@ cd backend  && uv add <패키지>    # 빼기: uv remove <패키지>
 cd frontend && pnpm add <패키지>  # 개발용은 pnpm add -D, 빼기: pnpm remove <패키지>
 ```
 
+나온 지 3일이 안 된 버전은 설치되지 않습니다. 공급망 공격으로 올라온 악성 버전은 보통 며칠 안에 발견돼 내려가기 때문입니다. 설정은 `frontend/pnpm-workspace.yaml`의 `minimumReleaseAge`, `backend/pyproject.toml`의 `exclude-newer`에 있고, 의존성 업데이트 PR(`.github/dependabot.yml`)도 같은 기준으로 3일을 기다립니다. 급한 보안 패치처럼 바로 받아야 하면 frontend는 `minimumReleaseAgeExclude`에 패키지 이름을, backend는 `exclude-newer-package`에 `패키지 = false`를 넣습니다.
+
 ### **개발용 테스트 입력**
 
 인증이 가짜라서 아래 입력으로 오류 · 관리자 화면을 확인할 수 있습니다.

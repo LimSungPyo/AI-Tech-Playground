@@ -16,3 +16,6 @@ dependencies = [
 [tool.uv]
 # 배포할 패키지가 아니라 앱이라서, 의존성만 설치하고 프로젝트 자체는 설치하지 않는다
 package = false
+# 나온 지 3일 안 된 버전은 받지 않는다. 악성 버전은 보통 며칠 안에 발견돼 내려간다.
+# frontend의 minimumReleaseAge, .github/dependabot.yml의 cooldown과 같은 값이다.
+exclude-newer = "3 days"

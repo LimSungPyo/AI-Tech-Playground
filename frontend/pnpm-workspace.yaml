@@ -1,0 +1,6 @@
+# pnpm 설정. 워크스페이스(여러 패키지)는 쓰지 않고 설정만 둔다.
+
+# 나온 지 3일(분 단위) 안 된 버전은 설치하지 않는다. 악성 버전은 보통 며칠 안에 발견돼 내려간다.
+# .github/dependabot.yml의 cooldown, backend의 exclude-newer와 같은 값이다.
+# 급한 보안 패치처럼 바로 받아야 하는 패키지는 minimumReleaseAgeExclude에 이름을 넣는다.
+minimumReleaseAge: 4320

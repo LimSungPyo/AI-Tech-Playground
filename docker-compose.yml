@@ -2,7 +2,8 @@
 # 값은 모두 루트 .env에서 읽는다. 없는 값이 있으면 어떤 변수인지 알려 주고 멈춘다.
 services:
   db:
-    image: postgres:16-alpine
+    # 해시로 고정한다. CI(ci.yml)의 postgres와 같은 이미지이고 해시는 Dependabot이 올린다.
+    image: postgres:16-alpine@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?.env에 POSTGRES_DB가 없습니다}
       POSTGRES_USER: ${POSTGRES_USER:?.env에 POSTGRES_USER가 없습니다}
