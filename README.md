@@ -135,7 +135,7 @@ docker compose up            # 그다음부터: 만들어 둔 이미지로 실�
 | 도구 | 버전 | 정해 둔 곳 |
 | --- | --- | --- |
 | Python | 3.12 | `backend/.python-version`, `pyproject.toml` |
-| uv | 최신 | |
+| uv | 0.10 이상 | |
 | Node.js | 24 | `frontend/.nvmrc`, `package.json`의 `engines` |
 | pnpm | 12.21.0 | `package.json`의 `packageManager` |
 
@@ -170,6 +170,7 @@ pnpm install
 pnpm dev                               # http://localhost:5173
 ```
 
+- uv는 0.10 이상이어야 합니다(`uv --version`). 0.9 이하는 `uv.lock`을 예전 형식으로 다시 써 버려서 그대로 커밋하면 CI가 실패합니다. `brew upgrade uv`로 올립니다.
 - `source .venv/bin/activate`는 하지 않아도 됩니다. `uv run`이 `backend/.venv`를 알아서 씁니다.
 - IDE에서 Python 인터프리터는 `backend/.venv/bin/python`을 고릅니다.
 - `uv.lock`이나 `pnpm-lock.yaml`이 바뀐 코드를 받았다면 `uv sync`, `pnpm install`을 다시 실행합니다.
