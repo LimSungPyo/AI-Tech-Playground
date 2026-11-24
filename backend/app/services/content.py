@@ -33,15 +33,17 @@ def dex() -> list[dict]:
 def radar(week: str | None = None) -> dict:
     # TODO: 관리자가 승인한 그 주(기본 이번 주) 키워드를 상승률 순으로 읽고 수집 규모 · AI 해설을 붙인다.
     if week in (None, fx.RADAR_WEEK):
-        return deepcopy({
-            "week": fx.RADAR_WEEK,
-            "updated_at": fx.RADAR_UPDATED_AT,
-            "keywords": fx.RADAR_KEYWORDS,
-            "source_count": fx.RADAR_SOURCE_COUNT,
-            "post_count": fx.RADAR_POST_COUNT,
-            "commentary": fx.RADAR_COMMENTARY,
-            "available_weeks": fx.RADAR_WEEKS,
-        })
+        return deepcopy(
+            {
+                "week": fx.RADAR_WEEK,
+                "updated_at": fx.RADAR_UPDATED_AT,
+                "keywords": fx.RADAR_KEYWORDS,
+                "source_count": fx.RADAR_SOURCE_COUNT,
+                "post_count": fx.RADAR_POST_COUNT,
+                "commentary": fx.RADAR_COMMENTARY,
+                "available_weeks": fx.RADAR_WEEKS,
+            }
+        )
     if week not in fx.RADAR_PAST:
         raise AppError(404, "RADAR_WEEK_NOT_FOUND", f"{week} 주의 레이더가 없어요.")
     offset = fx.RADAR_WEEKS.index(week)

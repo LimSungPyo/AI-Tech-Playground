@@ -1,6 +1,7 @@
 """실험·플레이·리포트·랭킹 샘플. 값은 Figma G-01, G-02, B-03~B-08, H-05 화면과 같다."""
 
 import math
+from itertools import pairwise
 
 # 캐릭터 로스터 표 순서: #000 웜이 ~ #008 맵피
 EXPERIMENTS = [
@@ -279,7 +280,7 @@ def success_rate_at(trial: int) -> int:
     """기준점 사이를 직선으로 이은 샘플 성공률(%)."""
     if trial <= RATE_ANCHORS[0][0]:
         return RATE_ANCHORS[0][1]
-    for (t0, r0), (t1, r1) in zip(RATE_ANCHORS, RATE_ANCHORS[1:]):
+    for (t0, r0), (t1, r1) in pairwise(RATE_ANCHORS):
         if trial <= t1:
             return round(r0 + (r1 - r0) * (trial - t0) / (t1 - t0))
     return RATE_ANCHORS[-1][1]

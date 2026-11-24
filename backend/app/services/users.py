@@ -11,24 +11,26 @@ from app.fixtures import users as fx
 def home(user: dict, dormant: bool = False) -> dict:
     # TODO: 마지막 플레이 실험·미션, 어제 대비 성공률 변화, 파트너 메시지, 주간 학습 시간,
     #       추천(관심사·수준·기록 기반 점수), 레이더 상위 5개, Tech Drop, 팀 미션 해금 여부를 모은다.
-    return deepcopy({
-        "user": user,
-        "continue": {
-            "experiment": exp_fx.EXPERIMENTS_BY_ID["001"],
-            "mission": exp_fx.MISSIONS_001[1],
-            "last_played_at": "2026-10-16T14:20:00+09:00",
-            "delta_pct": 6,
-            "last_why": fx.LAST_WHY,
-        },
-        "partner": fx.HOME_PARTNER,
-        "week": fx.WEEK,
-        "recommendations": content_fx.RECOMMENDATIONS,
-        "radar": content_fx.RADAR_KEYWORDS,
-        "tech_drop": fx.HOME_TECH_DROP,
-        "team": fx.HOME_TEAM,
-        # TODO: 마지막 접속이 7일 이상 지났으면 그동안 바뀐 것(Tech Drop · 레이더 · 연속 기록)을 모은다.
-        "dormant": fx.DORMANT if dormant else None,
-    })
+    return deepcopy(
+        {
+            "user": user,
+            "continue": {
+                "experiment": exp_fx.EXPERIMENTS_BY_ID["001"],
+                "mission": exp_fx.MISSIONS_001[1],
+                "last_played_at": "2026-10-16T14:20:00+09:00",
+                "delta_pct": 6,
+                "last_why": fx.LAST_WHY,
+            },
+            "partner": fx.HOME_PARTNER,
+            "week": fx.WEEK,
+            "recommendations": content_fx.RECOMMENDATIONS,
+            "radar": content_fx.RADAR_KEYWORDS,
+            "tech_drop": fx.HOME_TECH_DROP,
+            "team": fx.HOME_TEAM,
+            # TODO: 마지막 접속이 7일 이상 지났으면 그동안 바뀐 것(Tech Drop · 레이더 · 연속 기록)을 모은다.
+            "dormant": fx.DORMANT if dormant else None,
+        }
+    )
 
 
 def save_onboarding(user: dict, interests: list[str], skill: str) -> dict:
@@ -49,23 +51,25 @@ def set_partner(user: dict, character: str) -> dict:
 def dashboard(user: dict) -> dict:
     # TODO: 실험·트라이얼·카드·배지 수를 집계하고 최근 실험, 학습 잔디, 파트너 도감 정보를 읽는다.
     recent = [exp_fx.EXPERIMENTS_BY_ID[i] for i in ("001", "007", "000")]
-    return deepcopy({
-        "user": user,
-        "stats": fx.DASHBOARD_STATS,
-        "recent": recent,
-        "streak": {
-            "days": user["streak_days"],
-            "calendar": fx.STREAK_CALENDAR,
-            "best": fx.BEST_STREAK,
-            "protections_left": fx.STREAK_PROTECTIONS_LEFT,
-        },
-        "partner": fx.DEX[0],
-        # TODO: XP는 실험·배지 활동으로 쌓고, 총 실험 시간은 세션 기록 합으로 계산한다.
-        "xp": fx.DASHBOARD_XP,
-        "total_minutes": fx.DASHBOARD_TOTAL_MINUTES,
-        "week_minutes_delta": fx.DASHBOARD_WEEK_DELTA,
-        "best_streak": fx.BEST_STREAK,
-    })
+    return deepcopy(
+        {
+            "user": user,
+            "stats": fx.DASHBOARD_STATS,
+            "recent": recent,
+            "streak": {
+                "days": user["streak_days"],
+                "calendar": fx.STREAK_CALENDAR,
+                "best": fx.BEST_STREAK,
+                "protections_left": fx.STREAK_PROTECTIONS_LEFT,
+            },
+            "partner": fx.DEX[0],
+            # TODO: XP는 실험·배지 활동으로 쌓고, 총 실험 시간은 세션 기록 합으로 계산한다.
+            "xp": fx.DASHBOARD_XP,
+            "total_minutes": fx.DASHBOARD_TOTAL_MINUTES,
+            "week_minutes_delta": fx.DASHBOARD_WEEK_DELTA,
+            "best_streak": fx.BEST_STREAK,
+        }
+    )
 
 
 def my_experiments(user: dict) -> list[dict]:
@@ -105,15 +109,17 @@ def history(user: dict, period: str = "week") -> dict:
         if rate is not None:
             day["success_rate"] = rate
         days.append(day)
-    return deepcopy({
-        "days": days,
-        "logs": fx.HISTORY_LOGS,
-        "period": period,
-        "range_label": fx.HISTORY_RANGE_LABEL[period],
-        "stats": fx.HISTORY_STATS[period],
-        "weekly_summary": fx.WEEKLY_SUMMARY,
-        "records": fx.HISTORY_RECORDS,
-    })
+    return deepcopy(
+        {
+            "days": days,
+            "logs": fx.HISTORY_LOGS,
+            "period": period,
+            "range_label": fx.HISTORY_RANGE_LABEL[period],
+            "stats": fx.HISTORY_STATS[period],
+            "weekly_summary": fx.WEEKLY_SUMMARY,
+            "records": fx.HISTORY_RECORDS,
+        }
+    )
 
 
 def get_settings(user: dict) -> dict:
@@ -124,7 +130,13 @@ def get_settings(user: dict) -> dict:
 def update_settings(user: dict, settings: dict) -> dict:
     # TODO: 사용자 설정을 저장한다. 연결 계정 · 비밀번호 변경일 · 이메일은 읽기 전용이라 무시한다.
     merged = deepcopy(fx.SETTINGS)
-    merged.update({k: v for k, v in settings.items() if v is not None and k not in ("connections", "password_changed_at", "email")})
+    merged.update(
+        {
+            k: v
+            for k, v in settings.items()
+            if v is not None and k not in ("connections", "password_changed_at", "email")
+        }
+    )
     return merged
 
 

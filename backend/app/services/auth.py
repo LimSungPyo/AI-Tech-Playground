@@ -36,7 +36,9 @@ def social_login(provider: str, code: str) -> dict:
     # TODO: provider(google·kakao·github)의 OAuth code를 토큰으로 교환해 이메일을 확인하고,
     #       같은 이메일의 기존 계정이 있으면 연결 확인(409)을, 없으면 가입·로그인을 처리한다.
     if code == "conflict":
-        raise AppError(409, "SOCIAL_CONFLICT", "이미 이메일로 가입된 계정이에요.", email="hyewon@gmail.com", provider=provider)
+        raise AppError(
+            409, "SOCIAL_CONFLICT", "이미 이메일로 가입된 계정이에요.", email="hyewon@gmail.com", provider=provider
+        )
     return {"token": _sample_token(), "user": deepcopy(fx.HYEWON)}
 
 
