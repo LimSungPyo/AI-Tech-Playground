@@ -3,14 +3,14 @@ name = "ai-tech-playground-backend"
 version = "0.0.0"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "fastapi==0.147.0",
+    "fastapi==0.165.0",
     "uvicorn[standard]==0.54.0",
-    "pydantic==2.14.1",
-    "pydantic-settings==2.16.0",
-    "sqlalchemy==2.1.6",
-    "psycopg[binary]==3.3.6",
-    "python-multipart==0.0.32",
-    "email-validator==2.3.0",
+    "pydantic==2.14.4",
+    "pydantic-settings==2.16.3",
+    "sqlalchemy==2.1.9",
+    "psycopg[binary]==3.3.9",
+    "python-multipart==0.0.34",
+    "email-validator==2.4.0",
 ]
 
 [tool.uv]
