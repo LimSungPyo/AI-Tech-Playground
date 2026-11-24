@@ -1,4 +1,5 @@
-# 의존성 버전 업데이트 PR을 dev로 매주 올린다.
+# 의존성 버전 업데이트 PR을 dev로 매월 1일 09:00(한국 시간)에 올린다.
+# - 매주 받기엔 PR이 많아 월 1회로 했다. 보안 업데이트 PR(저장소 설정)은 이 일정과 상관없이 취약점이 알려지면 바로 온다.
 # - cooldown: 새 버전이 나오고 3일 지나야 PR을 올린다. 악성 버전은 보통 며칠 안에 내려가기 때문이다.
 #   pnpm의 minimumReleaseAge, uv의 exclude-newer(둘 다 3일)와 맞춘 값이라 같이 바꾼다.
 #   보안 업데이트 PR(저장소 설정)은 cooldown을 기다리지 않는다.
@@ -17,7 +18,9 @@ updates:
     directory: /
     target-branch: dev
     schedule:
-      interval: weekly
+      interval: monthly
+      time: "09:00"
+      timezone: Asia/Seoul
     cooldown:
       default-days: 3
     groups:
@@ -29,7 +32,9 @@ updates:
     directory: /frontend
     target-branch: dev
     schedule:
-      interval: weekly
+      interval: monthly
+      time: "09:00"
+      timezone: Asia/Seoul
     cooldown:
       default-days: 3
     groups:
@@ -45,7 +50,9 @@ updates:
     directory: /backend
     target-branch: dev
     schedule:
-      interval: weekly
+      interval: monthly
+      time: "09:00"
+      timezone: Asia/Seoul
     cooldown:
       default-days: 3
     groups:
@@ -58,7 +65,9 @@ updates:
     directories: [/backend, /frontend]
     target-branch: dev
     schedule:
-      interval: weekly
+      interval: monthly
+      time: "09:00"
+      timezone: Asia/Seoul
     cooldown:
       default-days: 3
     groups:
@@ -77,7 +86,9 @@ updates:
     directory: /
     target-branch: dev
     schedule:
-      interval: weekly
+      interval: monthly
+      time: "09:00"
+      timezone: Asia/Seoul
     cooldown:
       default-days: 3
     groups:
