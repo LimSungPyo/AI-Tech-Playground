@@ -87,7 +87,7 @@ jobs:
           persist-credentials: false
 
       # Python 버전은 .python-version을 따른다.
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           # 지정하지 않으면 그때그때 최신 uv를 받는다. backend/Dockerfile의 uv 이미지 버전과 맞춘다.
           version: "0.13.8"
