@@ -13,8 +13,8 @@ name: Discord Notify
 on:
   push:
   # ci.yml의 name과 맞춰야 한다.
-  # workflow_run은 시크릿을 쓸 수 있어서 포크 PR이 실행시키면 위험하다. CI는 push·수동 실행만 받고
-  # 이 job은 코드를 checkout하지 않으며 이벤트 값은 jq로만 다루므로 안전하다. CI에 pull_request를 추가하면 다시 검토한다.
+  # workflow_run은 시크릿을 쓸 수 있어서 포크 PR이 실행시키면 위험하다. CI는 pull_request도 받지만
+  # PR에서 돈 CI는 아래 job의 if에서 건너뛰고, 이 job은 코드를 checkout하지 않으며 이벤트 값은 jq로만 다룬다.
   workflow_run: # zizmor: ignore[dangerous-triggers]
     workflows: ["CI"]
     types: [completed]
@@ -26,6 +26,12 @@ permissions:
 
 jobs:
   notify:
+    # - Dependabot이 실행한 워크플로는 Actions 시크릿을 받지 못해 봇 토큰이 비어 401로 실패한다.
+    #   Dependabot 브랜치 푸시는 알릴 필요도 없어서 건너뛴다. PR을 사람이 머지하면 그 푸시는 알린다.
+    # - PR에서 돈 CI 결과는 PR 화면에서 보므로 알리지 않는다. 포크 PR이 시크릿을 쓰는 이 job을 부르지 못하게 하는 역할도 한다.
+    if: >-
+      github.actor != 'dependabot[bot]'
+      && !(github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')
     runs-on: ubuntu-latest
     steps:
       # 채널 ID는 GITHUB_ENV(이후 모든 단계의 환경 변수)가 아니라 이 단계의 출력으로 넘긴다

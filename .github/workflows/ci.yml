@@ -1,10 +1,15 @@
-# dev, main에 머지(푸시)될 때 frontend와 backend를 검사한다. 결과는 discord-notify.yml이 받아서 알린다.
+# dev, main에 머지(푸시)될 때와 dev, main으로 가는 PR에서 frontend와 backend를 검사한다.
+# 푸시 결과는 discord-notify.yml이 받아서 알리고, PR 결과는 PR 화면의 체크로만 본다.
 # 이름(name)을 바꾸면 discord-notify.yml의 workflow_run.workflows도 같이 바꿔야 한다.
 # 다른 브랜치는 Actions 탭 → CI → Run workflow에서 브랜치를 골라 수동으로 돌린다.
 name: CI
 
 on:
   push:
+    branches: [dev, main]
+  # Dependabot PR처럼 머지 전에 검사가 필요한 PR. pull_request는 시크릿을 받지 못하고 토큰도 읽기 전용이라
+  # 포크 PR이 돌려도 안전하다. 이 워크플로는 시크릿을 쓰지 않는다 (JWT_SECRET은 CI 전용 값).
+  pull_request:
     branches: [dev, main]
   workflow_dispatch:
 
