@@ -48,8 +48,11 @@ def list_experiments(level: str | None, q: str | None) -> list[dict]:
     if q:
         needle = q.lower()
         items = [
-            e for e in items
-            if needle in e["title"].lower() or needle in e["subtitle"].lower() or needle in e["code"]
+            e
+            for e in items
+            if needle in e["title"].lower()
+            or needle in e["subtitle"].lower()
+            or needle in e["code"]
             or any(needle in t.lower() for t in e["tags"])
         ]
     return deepcopy(items)
@@ -87,18 +90,20 @@ def run_trial(exp_id: str, mission_id: str, speed: float) -> dict:
     #       경로·뉴런 활성·WHY? 근거를 기록한 뒤 돌려준다.
     _require_mission(exp_id, mission_id)
     (trial,) = _next_trials(exp_id, 1)
-    return deepcopy({
-        "trial": trial,
-        "success": trial % 5 != 0,
-        "path": fx.trained_path(trial),
-        "first_path": fx.first_path(),
-        "time_sec": round(max(5.8, 24.1 - trial * 0.18), 1),
-        "collisions": max(0, 9 - trial // 5),
-        "neurons": fx.NEURONS,
-        "why": fx.why_for("beginner"),
-        "curve": fx.curve_until(trial),
-        "journal": fx.JOURNAL.get(trial, fx.JOURNAL_DEFAULT),
-    })
+    return deepcopy(
+        {
+            "trial": trial,
+            "success": trial % 5 != 0,
+            "path": fx.trained_path(trial),
+            "first_path": fx.first_path(),
+            "time_sec": round(max(5.8, 24.1 - trial * 0.18), 1),
+            "collisions": max(0, 9 - trial // 5),
+            "neurons": fx.NEURONS,
+            "why": fx.why_for("beginner"),
+            "curve": fx.curve_until(trial),
+            "journal": fx.JOURNAL.get(trial, fx.JOURNAL_DEFAULT),
+        }
+    )
 
 
 def train_batch(exp_id: str, mission_id: str, count: int) -> dict:
@@ -108,24 +113,28 @@ def train_batch(exp_id: str, mission_id: str, count: int) -> dict:
     rows = []
     for i, t in enumerate(trials):
         success = fx.BATCH_SUCCESS[i % len(fx.BATCH_SUCCESS)]
-        rows.append({
-            "trial": t,
-            "success_rate": fx.success_rate_at(t),
-            "success": success,
-            "time_sec": fx.BATCH_TIMES[i % len(fx.BATCH_TIMES)],
-            # 실패 회차는 1회차처럼 헤매는 경로
-            "path": fx.trained_path(t, points=20) if success else fx.first_path(points=20),
-        })
-    return deepcopy({
-        "job_id": f"job-{uuid.uuid4().hex[:12]}",
-        "from_trial": trials[0],
-        "to_trial": trials[-1],
-        "status": "done",
-        "progress": 100,
-        "trials": rows,
-        "connections": fx.BATCH_CONNECTIONS,
-        "journal": fx.BATCH_JOURNAL,
-    })
+        rows.append(
+            {
+                "trial": t,
+                "success_rate": fx.success_rate_at(t),
+                "success": success,
+                "time_sec": fx.BATCH_TIMES[i % len(fx.BATCH_TIMES)],
+                # 실패 회차는 1회차처럼 헤매는 경로
+                "path": fx.trained_path(t, points=20) if success else fx.first_path(points=20),
+            }
+        )
+    return deepcopy(
+        {
+            "job_id": f"job-{uuid.uuid4().hex[:12]}",
+            "from_trial": trials[0],
+            "to_trial": trials[-1],
+            "status": "done",
+            "progress": 100,
+            "trials": rows,
+            "connections": fx.BATCH_CONNECTIONS,
+            "journal": fx.BATCH_JOURNAL,
+        }
+    )
 
 
 def why(exp_id: str, trial: int, level: str) -> dict:
@@ -138,17 +147,19 @@ def mission_clear(exp_id: str, mission_id: str) -> dict:
     # TODO: 미션 성공 조건을 확인하고 다음 미션·도감 카드·기술 카드·배지를 해금한다.
     mission = _require_mission(exp_id, mission_id)
     prophet = next(b for b in user_fx.BADGES if b["id"] == "prophet")
-    return deepcopy({
-        "mission": {**mission, "status": "cleared"},
-        "rate": mission.get("best_rate") or 86,
-        "trials": 100,
-        "unlocked": fx.CLEAR_UNLOCKED.get(mission_id, []),
-        "badge": prophet if mission_id == "m1" else None,
-        # TODO: 첫 성공 회차는 트라이얼 기록에서, 예측 정답은 브리핑 때 저장한 예측과 비교해 정한다.
-        "first_success_trial": fx.FIRST_SUCCESS_TRIAL.get(mission_id),
-        "my_prediction": fx.MY_PREDICTION.get(mission_id),
-        "prediction_correct": True if mission_id in fx.MY_PREDICTION else None,
-    })
+    return deepcopy(
+        {
+            "mission": {**mission, "status": "cleared"},
+            "rate": mission.get("best_rate") or 86,
+            "trials": 100,
+            "unlocked": fx.CLEAR_UNLOCKED.get(mission_id, []),
+            "badge": prophet if mission_id == "m1" else None,
+            # TODO: 첫 성공 회차는 트라이얼 기록에서, 예측 정답은 브리핑 때 저장한 예측과 비교해 정한다.
+            "first_success_trial": fx.FIRST_SUCCESS_TRIAL.get(mission_id),
+            "my_prediction": fx.MY_PREDICTION.get(mission_id),
+            "prediction_correct": True if mission_id in fx.MY_PREDICTION else None,
+        }
+    )
 
 
 def report(exp_id: str) -> dict:
@@ -156,17 +167,19 @@ def report(exp_id: str) -> dict:
     _require_experiment(exp_id)
     data = {**fx.REPORT_001, "experiment_id": exp_id}
     detail = fx.detail_for(exp_id)
-    return deepcopy({
-        **data,
-        "curve": fx.curve_until(100),
-        "next_recommendations": content_fx.RECOMMENDATIONS[:2],
-        "mission_title": "미션 1 · 먹이 찾기",
-        "metrics": fx.report_metrics(),
-        "replay": {"first": fx.first_path(), "last": fx.trained_path(100)},
-        "prediction": {"option": fx.MY_PREDICTION["m1"], "correct": True},
-        "participants": detail["participants"],
-        "avg_improvement": detail["avg_improvement"],
-    })
+    return deepcopy(
+        {
+            **data,
+            "curve": fx.curve_until(100),
+            "next_recommendations": content_fx.RECOMMENDATIONS[:2],
+            "mission_title": "미션 1 · 먹이 찾기",
+            "metrics": fx.report_metrics(),
+            "replay": {"first": fx.first_path(), "last": fx.trained_path(100)},
+            "prediction": {"option": fx.MY_PREDICTION["m1"], "correct": True},
+            "participants": detail["participants"],
+            "avg_improvement": detail["avg_improvement"],
+        }
+    )
 
 
 def ranking(exp_id: str, mission_id: str | None = None, period: str = "week") -> list[dict]:
@@ -182,14 +195,30 @@ def ranking(exp_id: str, mission_id: str | None = None, period: str = "week") ->
     # 다른 열린 실험: 그 실험 캐릭터로 짧은 샘플 순위표를 만든다
     best = fx.detail_for(exp_id)["stats"]["hundredth_trial_rate"] or 80
     rows = [
-        {"rank": i + 1, "nickname": nick, "character": exp["character"], "success_rate": max(0, best + 4 - i * 2),
-         "trials": 20 + i * 3, "is_me": False, "first_success_trial": 3 + i}
+        {
+            "rank": i + 1,
+            "nickname": nick,
+            "character": exp["character"],
+            "success_rate": max(0, best + 4 - i * 2),
+            "trials": 20 + i * 3,
+            "is_me": False,
+            "first_success_trial": 3 + i,
+        }
         for i, nick in enumerate(fx.RANKING_NICKNAMES)
     ]
     progress = exp.get("progress")
     if progress:
-        rows.append({"rank": 12, "nickname": "혜원", "character": exp["character"], "success_rate": progress["success_rate"],
-                     "trials": progress["trial"], "is_me": True, "first_success_trial": 6})
+        rows.append(
+            {
+                "rank": 12,
+                "nickname": "혜원",
+                "character": exp["character"],
+                "success_rate": progress["success_rate"],
+                "trials": progress["trial"],
+                "is_me": True,
+                "first_success_trial": 6,
+            }
+        )
     return rows
 
 

@@ -163,6 +163,7 @@ cd backend
 uv sync                                # .venv를 만들고 uv.lock 그대로 설치
 uv run uvicorn app.main:app --reload   # http://localhost:8000/docs
 uv run python scripts/smoke_test.py http://127.0.0.1:8000   # 다른 터미널에서 API 확인
+uv run ruff check --fix && uv run ruff format   # 린트·포맷 (CI는 고치지 않고 검사만 함)
 
 # Frontend
 cd frontend
@@ -171,6 +172,7 @@ pnpm dev                               # http://localhost:5173
 ```
 
 - uv는 0.10 이상이어야 합니다(`uv --version`). 0.9 이하는 `uv.lock`을 예전 형식으로 다시 써 버려서 그대로 커밋하면 CI가 실패합니다. `brew upgrade uv`로 올립니다.
+- CI는 frontend 린트·빌드, backend 린트·포맷·스모크 테스트, Docker 이미지 빌드를 확인합니다. backend 포맷은 `app/fixtures`와 `scripts/smoke_test.py`를 빼고 검사합니다(린트는 함).
 - `source .venv/bin/activate`는 하지 않아도 됩니다. `uv run`이 `backend/.venv`를 알아서 씁니다.
 - IDE에서 Python 인터프리터는 `backend/.venv/bin/python`을 고릅니다.
 - `uv.lock`이나 `pnpm-lock.yaml`이 바뀐 코드를 받았다면 `uv sync`, `pnpm install`을 다시 실행합니다.

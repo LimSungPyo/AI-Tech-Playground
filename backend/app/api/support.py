@@ -65,7 +65,11 @@ async def create_inquiry(request: Request, user: CurrentUser):
         # 첨부 필드 이름은 attachments(계약) · files(프론트 createInquiry) 둘 다 받는다
         files = [*form.getlist("attachments"), *form.getlist("files")]
         attachments = len([f for f in files if hasattr(f, "filename")])
-        raw = {k: form.get(k) for k in ("category", "title", "body", "notify", "experimentId", "trial") if form.get(k) is not None}
+        raw = {
+            k: form.get(k)
+            for k in ("category", "title", "body", "notify", "experimentId", "trial")
+            if form.get(k) is not None
+        }
     else:
         try:
             raw = await request.json()

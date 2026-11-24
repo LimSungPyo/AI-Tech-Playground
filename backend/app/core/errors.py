@@ -39,9 +39,7 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
-        details = [
-            {"loc": list(e.get("loc", [])), "msg": e.get("msg", "")} for e in exc.errors()
-        ]
+        details = [{"loc": list(e.get("loc", [])), "msg": e.get("msg", "")} for e in exc.errors()]
         return JSONResponse(
             error_body("VALIDATION_ERROR", "요청 값이 올바르지 않아요.", details=details),
             status_code=422,

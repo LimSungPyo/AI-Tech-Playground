@@ -19,3 +19,16 @@ package = false
 # 나온 지 3일 안 된 버전은 받지 않는다. 악성 버전은 보통 며칠 안에 발견돼 내려간다.
 # frontend의 minimumReleaseAge, .github/dependabot.yml의 cooldown과 같은 값이다.
 exclude-newer = "3 days"
+
+[tool.ruff]
+# 한 줄에 검사 항목을 길게 쓰는 코드(scripts/smoke_test.py 등)가 많아 기본값 88 대신 120으로 둔다
+line-length = 120
+
+[tool.ruff.format]
+# 화면 값을 옮겨 적은 샘플 데이터와 한 줄에 검사 하나씩 쓴 스모크 테스트는 포맷하면 줄이 몇 배로 늘어나 뺀다 (린트는 한다)
+exclude = ["app/fixtures/*", "scripts/smoke_test.py"]
+
+[dependency-groups]
+dev = [
+    "ruff==0.17.6",
+]

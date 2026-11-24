@@ -20,7 +20,7 @@ logger = logging.getLogger("uvicorn.error")
 async def lifespan(_: FastAPI):
     try:
         Base.metadata.create_all(bind=engine)
-    except Exception as exc:  # DB가 없어도 샘플 API는 뜨게 한다
+    except Exception as exc:  # noqa: BLE001 - DB가 없어도 샘플 API는 뜨게 한다
         logger.warning("DB 테이블 생성을 건너뜀 (연결 실패): %s", exc)
     yield
 
@@ -46,8 +46,11 @@ async def sample_expired_session(request: Request, call_next):
     """
     auth = request.headers.get("authorization", "")
     if request.url.path.startswith("/api") and auth.lower().startswith("bearer expired"):
-        return JSONResponse(error_body("SESSION_EXPIRED", "로그인이 만료됐어요. 다시 로그인해 주세요."), status_code=401)
+        return JSONResponse(
+            error_body("SESSION_EXPIRED", "로그인이 만료됐어요. 다시 로그인해 주세요."), status_code=401
+        )
     return await call_next(request)
+
 
 for module in (auth, users, experiments, content, support, admin):
     app.include_router(module.router)

@@ -8,7 +8,6 @@ from app.core.errors import AppError
 from app.fixtures import admin as fx
 from app.fixtures import content as content_fx
 
-
 KST = timezone(timedelta(hours=9))
 
 
@@ -25,8 +24,11 @@ def verify_otp(otp_id: str, code: str) -> dict:
     # TODO: Authenticator 6자리를 검증하고 접속 IP가 허용 목록(사내 VPN)인지 확인한 뒤 관리자 토큰을 발급한다.
     if code == "999999":
         raise AppError(
-            403, "IP_BLOCKED", "허용되지 않은 IP에서 접속했어요. 사내 VPN에서 다시 시도해 주세요.",
-            ip="203.0.113.42", at=_now(),
+            403,
+            "IP_BLOCKED",
+            "허용되지 않은 IP에서 접속했어요. 사내 VPN에서 다시 시도해 주세요.",
+            ip="203.0.113.42",
+            at=_now(),
         )
     return {"admin_token": f"admin-{uuid.uuid4()}", "ip_verified": True}
 
@@ -55,8 +57,12 @@ def list_cards() -> dict:
     # TODO: 카드 초안 · 검토 · 승인 · 게시 단계와 작성자를 읽는다.
     items = [
         {
-            "id": c["id"], "title": c["title"], "experiment_id": c["experiment_id"], "status": c["status"],
-            "unlocked": c["unlocked"], **content_fx.ADMIN_CARD_META[c["id"]],
+            "id": c["id"],
+            "title": c["title"],
+            "experiment_id": c["experiment_id"],
+            "status": c["status"],
+            "unlocked": c["unlocked"],
+            **content_fx.ADMIN_CARD_META[c["id"]],
         }
         for c in content_fx.CARDS
     ]

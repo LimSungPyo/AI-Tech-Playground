@@ -19,7 +19,9 @@ class TechCard(Base):
     sources: Mapped[list] = mapped_column(JSON, default=list)
     reveal: Mapped[dict] = mapped_column(JSON, default=dict)
     stage: Mapped[str] = mapped_column(String(20), default="draft")  # draft | review | approved | published
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
 
 class TreeNode(Base):
