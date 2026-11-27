@@ -45,6 +45,9 @@ updates:
       # Node 24에 맞춘 타입이라 Node와 같이 올린다
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # 8은 바뀐 점이 많아 기획이 정해진 뒤 직접 올린다 (#9). 7.x 업데이트는 그대로 받는다
+      - dependency-name: react-router
+        versions: [">= 8"]
 
   - package-ecosystem: uv
     directory: /backend
